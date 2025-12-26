@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/core/auth/authStore'
 import { useScopeStore } from '@/core/scope/scopeStore'
@@ -28,34 +28,44 @@ export function Header({ title }: { title?: string }) {
   const nav = useNavigate()
   const { user, logout } = useAuthStore()
   const { scope, setScope } = useScopeStore()
+  const [createOpen, setCreateOpen] = useState(false)
+  const createRef = useRef<HTMLDivElement | null>(null)
 
   const showOrg = useMemo(() => user?.role === 'EVZONE_ADMIN' || user?.role === 'EVZONE_OPERATOR' || user?.role === 'OWNER', [user?.role])
   const showStation = useMemo(() => user?.role !== 'SITE_OWNER', [user?.role])
   const showSite = useMemo(() => user?.role === 'SITE_OWNER', [user?.role])
 
-  const quickActions = useMemo(() => {
-    switch (user?.role) {
-      case 'EVZONE_ADMIN':
-        return ['Create broadcast', 'Open incident', 'Export', 'Impersonate']
-      case 'EVZONE_OPERATOR':
-        return ['Create station', 'Approve user', 'Dispatch job', 'Send notice']
-      case 'SITE_OWNER':
-        return ['New site draft', 'Export', 'Message tenant']
-      case 'OWNER':
-        return ['Add station', 'Add asset', 'Create tariff', 'Open incident']
-      case 'STATION_ADMIN':
-        return ['Open incident', 'Start shift', 'Create request']
-      case 'MANAGER':
-        return ['Assign attendant', 'Open incident', 'Request technician']
-      case 'ATTENDANT':
-        return ['New session', 'Report incident', 'Call technician']
-      case 'TECHNICIAN_ORG':
-        return ['Start job', 'Upload photos', 'Close job']
-      case 'TECHNICIAN_PUBLIC':
-        return ['Accept job', 'Navigate', 'Escalate']
-      default:
-        return []
+  useEffect(() => {
+    function onDown(e: MouseEvent) {
+      if (!createOpen) return
+      const el = createRef.current
+      if (!el) return
+      if (e.target instanceof Node && !el.contains(e.target)) setCreateOpen(false)
     }
+    window.addEventListener('mousedown', onDown)
+    return () => window.removeEventListener('mousedown', onDown)
+  }, [createOpen])
+
+  const createItems = useMemo(() => {
+    const fallback = '/admin/stations'
+    const addChargePoint = user?.role === 'OWNER' ? '/owner/charge/connectors' : fallback
+    const addSwapStation = user?.role === 'OWNER' ? '/owner/swap/stations' : fallback
+    const inviteOperator = '/admin/users'
+    const requestTechnician =
+      user?.role === 'EVZONE_ADMIN'
+        ? '/admin/dispatches'
+        : user?.role === 'EVZONE_OPERATOR'
+          ? '/operator/stations'
+          : '/admin/dispatches'
+    const listParkingSite = user?.role === 'SITE_OWNER' ? '/site-owner/sites' : fallback
+
+    return [
+      { label: 'Add Charge Point', to: addChargePoint },
+      { label: 'Add Swap Station', to: addSwapStation },
+      { label: 'Invite Operator', to: inviteOperator },
+      { label: 'Request Technician', to: requestTechnician },
+      { label: 'List Parking Site', to: listParkingSite },
+    ]
   }, [user?.role])
 
   const profileInitial = user?.name?.[0]?.toUpperCase?.() ?? 'U'
@@ -123,16 +133,42 @@ export function Header({ title }: { title?: string }) {
         ))}
       </select>
 
-      <div className="inline-flex gap-2 items-center flex-shrink-0">
-        {quickActions.map((action) => (
-          <button
-            key={action}
-            className="bg-panel border border-border text-text py-2 px-3 rounded-lg cursor-pointer text-[13px] font-semibold transition-all duration-200 whitespace-nowrap hover:bg-panel-2 hover:border-border hover:shadow-[0_2px_4px_rgba(0,0,0,.2)]"
-            type="button"
+      <div className="relative flex-shrink-0" ref={createRef}>
+        <button
+          className="bg-panel border border-border text-text py-2 px-3 rounded-lg cursor-pointer text-[13px] font-semibold transition-all duration-200 whitespace-nowrap hover:bg-panel-2 hover:border-border hover:shadow-[0_2px_4px_rgba(0,0,0,.2)] inline-flex items-center gap-2"
+          type="button"
+          aria-haspopup="menu"
+          aria-expanded={createOpen}
+          onClick={() => setCreateOpen((v) => !v)}
+        >
+          <span>Create</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" className={createOpen ? 'rotate-180 transition-transform' : 'transition-transform'}>
+            <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+
+        {createOpen ? (
+          <div
+            className="absolute right-0 mt-2 w-[240px] rounded-xl border border-border-light bg-bg-secondary shadow-[0_16px_50px_rgba(0,0,0,.55)] p-2 z-[95]"
+            role="menu"
           >
-            {action}
-          </button>
-        ))}
+            {createItems.map((it) => (
+              <button
+                key={it.label}
+                className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 transition-colors flex items-center gap-3 text-sm text-text"
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setCreateOpen(false)
+                  nav(it.to)
+                }}
+              >
+                <span className="h-2 w-2 rounded-full bg-emerald-400 flex-shrink-0" />
+                <span className="truncate">{it.label}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <div className="flex-1" />
