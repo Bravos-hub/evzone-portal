@@ -1,164 +1,23 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { DashboardLayout } from '@/app/layouts/DashboardLayout'
 import type { Role } from '@/core/auth/types'
 import { RolePill } from '@/ui/components/RolePill'
 import { StatusPill, type ApprovalStatus } from '@/ui/components/StatusPill'
 import { OnboardingApprovalsPanel } from '@/features/admin/approvals/OnboardingApprovalsPanel'
-
-type Region = 'AFRICA' | 'EUROPE' | 'AMERICAS' | 'ASIA' | 'MIDDLE_EAST'
-type UserStatus = 'Active' | 'Suspended' | 'Pending'
-
-type UserRow = {
-  id: string
-  name: string
-  email: string
-  phone: string
-  role: Role
-  status: UserStatus
-  region: Region | 'ALL'
-  orgId: string | '—'
-  stations: string[]
-  lastActive: string
-  createdAt: string
-  approvalStatus?: ApprovalStatus
-}
-
-const ROLES: Role[] = [
-  'EVZONE_ADMIN',
-  'EVZONE_OPERATOR',
-  'SITE_OWNER',
-  'OWNER',
-  'STATION_ADMIN',
-  'MANAGER',
-  'ATTENDANT',
-  'TECHNICIAN_ORG',
-  'TECHNICIAN_PUBLIC',
-]
-
-const regions: Array<{ id: Region | 'ALL'; label: string }> = [
-  { id: 'ALL', label: 'All Regions' },
-  { id: 'AFRICA', label: 'Africa' },
-  { id: 'EUROPE', label: 'Europe' },
-  { id: 'AMERICAS', label: 'Americas' },
-  { id: 'ASIA', label: 'Asia' },
-  { id: 'MIDDLE_EAST', label: 'Middle East' },
-]
-
-const seed: UserRow[] = [
-  {
-    id: 'U-0001',
-    name: 'Delta',
-    email: 'delta@evzone.app',
-    phone: '+256 7xx xxx xxx',
-    role: 'EVZONE_ADMIN',
-    status: 'Active',
-    region: 'ALL',
-    orgId: '—',
-    stations: [],
-    lastActive: '2m ago',
-    createdAt: '2025-03-02',
-  },
-  {
-    id: 'U-0042',
-    name: 'Jon Ops',
-    email: 'jon@sunrun.com',
-    phone: '+256 7xx xxx xxx',
-    role: 'EVZONE_OPERATOR',
-    status: 'Active',
-    region: 'AFRICA',
-    orgId: 'SUNRUN_OPS',
-    stations: ['ST-0001', 'ST-0002', 'ST-0092'],
-    lastActive: '14m ago',
-    createdAt: '2025-06-18',
-  },
-  {
-    id: 'U-0112',
-    name: 'Sarah Owner',
-    email: 'sarah@volt.co',
-    phone: '+256 7xx xxx xxx',
-    role: 'OWNER',
-    status: 'Active',
-    region: 'AFRICA',
-    orgId: 'VOLT_MOBILITY',
-    stations: ['ST-0001', 'ST-0017'],
-    lastActive: '1h ago',
-    createdAt: '2025-07-01',
-  },
-  {
-    id: 'U-0180',
-    name: 'Grace SiteOwner',
-    email: 'grace@mall.com',
-    phone: '+256 7xx xxx xxx',
-    role: 'SITE_OWNER',
-    status: 'Active',
-    region: 'AFRICA',
-    orgId: 'MALL_HOLDINGS',
-    stations: [],
-    lastActive: '3d ago',
-    createdAt: '2025-08-22',
-  },
-  {
-    id: 'U-0208',
-    name: 'Allan Tech',
-    email: 'allan@tech.me',
-    phone: '+256 7xx xxx xxx',
-    role: 'TECHNICIAN_PUBLIC',
-    status: 'Pending',
-    region: 'AFRICA',
-    orgId: '—',
-    stations: [],
-    lastActive: '—',
-    createdAt: '2025-11-04',
-    approvalStatus: 'Pending',
-  },
-  {
-    id: 'U-0255',
-    name: 'Mary Manager',
-    email: 'mary@volt.co',
-    phone: '+256 7xx xxx xxx',
-    role: 'MANAGER',
-    status: 'Active',
-    region: 'AFRICA',
-    orgId: 'VOLT_MOBILITY',
-    stations: ['ST-0001'],
-    lastActive: '20m ago',
-    createdAt: '2025-10-10',
-  },
-  {
-    id: 'U-0261',
-    name: 'Asha Attendant',
-    email: 'asha@volt.co',
-    phone: '+256 7xx xxx xxx',
-    role: 'ATTENDANT',
-    status: 'Suspended',
-    region: 'AFRICA',
-    orgId: 'VOLT_MOBILITY',
-    stations: ['ST-0001'],
-    lastActive: '10d ago',
-    createdAt: '2025-10-14',
-  },
-]
-
-async function apiList(): Promise<UserRow[]> {
-  await new Promise((r) => setTimeout(r, 140))
-  return seed
-}
-
-async function apiUpdate(_id: string): Promise<{ ok: true }> {
-  await new Promise((r) => setTimeout(r, 220))
-  return { ok: true }
-}
+import { ALL_ROLES as ROLES, apiListUsers as apiList, apiUpdateUser as apiUpdate, regions, type UserRow, type UserStatus } from './mockUsers'
 
 type DrawerTab = 'profile' | 'access' | 'assignments' | 'activity'
-type InviteModal = { open: boolean; name: string; email: string; role: Role; region: Region | 'ALL'; orgId: string }
+type InviteModal = { open: boolean; name: string; email: string; role: Role; region: UserRow['region']; orgId: string }
 
 export function AdminUsersRolesPage() {
+  const nav = useNavigate()
   const [view, setView] = useState<'users' | 'approvals'>('users')
   const [rows, setRows] = useState<UserRow[]>([])
   const [q, setQ] = useState('')
   const [role, setRole] = useState<Role | 'All'>('All')
   const [status, setStatus] = useState<UserStatus | 'All'>('All')
-  const [region, setRegion] = useState<Region | 'ALL'>('ALL')
+  const [region, setRegion] = useState<UserRow['region']>('ALL')
   const [org, setOrg] = useState<string>('ALL')
   const [openId, setOpenId] = useState<string | null>(null)
   const [tab, setTab] = useState<DrawerTab>('profile')
@@ -208,7 +67,7 @@ export function AdminUsersRolesPage() {
     setBusy(true)
     setNotice('')
     try {
-      await apiUpdate(openRow.id)
+      await apiUpdate(openRow.id, patch)
       setRows((list) => list.map((u) => (u.id === openRow.id ? { ...u, ...patch } : u)))
     } catch (e) {
       setNotice(e instanceof Error ? e.message : 'Save failed')
@@ -416,14 +275,7 @@ export function AdminUsersRolesPage() {
             {filtered.map((r) => (
               <tr key={r.id}>
                 <td style={{ fontWeight: 900 }}>
-                  <button
-                    className="btn secondary"
-                    style={{ padding: '6px 10px' }}
-                    onClick={() => {
-                      setOpenId(r.id)
-                      setTab('profile')
-                    }}
-                  >
+                  <button className="btn secondary" style={{ padding: '6px 10px' }} onClick={() => nav(`/admin/users/${r.id}`)}>
                     {r.id}
                   </button>
                 </td>
@@ -441,6 +293,9 @@ export function AdminUsersRolesPage() {
                 <td className="small">{r.lastActive}</td>
                 <td style={{ textAlign: 'right' }}>
                   <div style={{ display: 'inline-flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    <button className="btn secondary" onClick={() => nav(`/admin/users/${r.id}`)}>
+                      View
+                    </button>
                     <button
                       className="btn secondary"
                       onClick={() =>

@@ -8,6 +8,7 @@ import { AdminDashboard } from '@/features/admin/dashboard/AdminDashboard'
 import { AdminApprovalsPage } from '@/features/admin/approvals/AdminApprovalsPage'
 import { AdminStationsPage } from '@/features/admin/stations/AdminStationsPage'
 import { AdminUsersRolesPage } from '@/features/admin/users/AdminUsersRolesPage'
+import { AdminUserDetailPage } from '@/features/admin/users/AdminUserDetailPage'
 import { AdminSupportDeskPage } from '@/features/admin/support/AdminSupportDeskPage'
 import { AdminIncidentsPage } from '@/features/admin/incidents/AdminIncidentsPage'
 import { AdminDispatchesPage } from '@/features/admin/dispatch/AdminDispatchesPage'
@@ -69,6 +70,7 @@ export function AppRoutes() {
       <Route path="/admin/approvals" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminApprovalsPage /></RequireRole>} />
       <Route path="/admin/stations" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminStationsPage /></RequireRole>} />
       <Route path="/admin/users" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminUsersRolesPage /></RequireRole>} />
+      <Route path="/admin/users/:id" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminUserDetailPage /></RequireRole>} />
       <Route path="/admin/support" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminSupportDeskPage /></RequireRole>} />
       <Route path="/admin/health" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminSystemHealthPage /></RequireRole>} />
       <Route path="/admin/audit" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminAuditLogsPage /></RequireRole>} />
