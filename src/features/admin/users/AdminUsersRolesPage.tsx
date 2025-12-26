@@ -330,45 +330,6 @@ export function AdminUsersRolesPage() {
 
       <div className="row2">
         <div className="card">
-          <div className="card-title">Role → Dashboard → Scope (guide)</div>
-          <div className="mini-grid">
-            <div className="panel">
-              <div style={{ fontWeight: 600, color: 'var(--text)', fontSize: '14px', marginBottom: '8px' }}>EVzone Admin</div>
-              <div className="small" style={{ marginBottom: '4px' }}>Dashboard: <code style={{ background: 'var(--bg-secondary)', padding: '2px 6px', borderRadius: '4px', fontSize: '11px' }}>/admin</code></div>
-              <div className="small">Scope: Global (all regions/orgs/stations)</div>
-            </div>
-            <div className="panel">
-              <div style={{ fontWeight: 600, color: 'var(--text)', fontSize: '14px', marginBottom: '8px' }}>Operator</div>
-              <div className="small" style={{ marginBottom: '4px' }}>Dashboard: <code style={{ background: 'var(--bg-secondary)', padding: '2px 6px', borderRadius: '4px', fontSize: '11px' }}>/operator</code></div>
-              <div className="small">Scope: Region → orgs → stations</div>
-            </div>
-            <div className="panel">
-              <div style={{ fontWeight: 600, color: 'var(--text)', fontSize: '14px', marginBottom: '8px' }}>Station Owner</div>
-              <div className="small" style={{ marginBottom: '4px' }}>Dashboard: <code style={{ background: 'var(--bg-secondary)', padding: '2px 6px', borderRadius: '4px', fontSize: '11px' }}>/owner/charge|swap|both</code></div>
-              <div className="small">Scope: org + owned stations</div>
-            </div>
-          </div>
-          <div className="divider" />
-          <div className="mini-grid">
-            <div className="panel">
-              <div style={{ fontWeight: 600, color: 'var(--text)', fontSize: '14px', marginBottom: '8px' }}>Station Admin</div>
-              <div className="small" style={{ marginBottom: '4px' }}>Dashboard: <code style={{ background: 'var(--bg-secondary)', padding: '2px 6px', borderRadius: '4px', fontSize: '11px' }}>/station-admin</code></div>
-              <div className="small">Scope: assigned stations (org)</div>
-            </div>
-            <div className="panel">
-              <div style={{ fontWeight: 600, color: 'var(--text)', fontSize: '14px', marginBottom: '8px' }}>Manager</div>
-              <div className="small" style={{ marginBottom: '4px' }}>Dashboard: <code style={{ background: 'var(--bg-secondary)', padding: '2px 6px', borderRadius: '4px', fontSize: '11px' }}>/manager</code></div>
-              <div className="small">Scope: managed stations only</div>
-            </div>
-            <div className="panel">
-              <div style={{ fontWeight: 600, color: 'var(--text)', fontSize: '14px', marginBottom: '8px' }}>Attendant</div>
-              <div className="small" style={{ marginBottom: '4px' }}>Dashboard: <code style={{ background: 'var(--bg-secondary)', padding: '2px 6px', borderRadius: '4px', fontSize: '11px' }}>/attendant</code></div>
-              <div className="small">Scope: one station (shift)</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
           <div className="card-title">Risk controls</div>
           <div className="grid">
             <div className="panel">
