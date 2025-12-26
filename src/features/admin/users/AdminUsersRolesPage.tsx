@@ -3,6 +3,7 @@ import { DashboardLayout } from '@/app/layouts/DashboardLayout'
 import type { Role } from '@/core/auth/types'
 import { RolePill } from '@/ui/components/RolePill'
 import { StatusPill, type ApprovalStatus } from '@/ui/components/StatusPill'
+import { OnboardingApprovalsPanel } from '@/features/admin/approvals/OnboardingApprovalsPanel'
 
 type Region = 'AFRICA' | 'EUROPE' | 'AMERICAS' | 'ASIA' | 'MIDDLE_EAST'
 type UserStatus = 'Active' | 'Suspended' | 'Pending'
@@ -152,6 +153,7 @@ type DrawerTab = 'profile' | 'access' | 'assignments' | 'activity'
 type InviteModal = { open: boolean; name: string; email: string; role: Role; region: Region | 'ALL'; orgId: string }
 
 export function AdminUsersRolesPage() {
+  const [view, setView] = useState<'users' | 'approvals'>('users')
   const [rows, setRows] = useState<UserRow[]>([])
   const [q, setQ] = useState('')
   const [role, setRole] = useState<Role | 'All'>('All')
@@ -225,6 +227,21 @@ export function AdminUsersRolesPage() {
 
   return (
     <DashboardLayout pageTitle="Users & Roles">
+      <div className="tabs">
+        <button className={`tab ${view === 'users' ? 'active' : ''}`} onClick={() => setView('users')}>
+          Users & roles
+        </button>
+        <button className={`tab ${view === 'approvals' ? 'active' : ''}`} onClick={() => setView('approvals')}>
+          Onboarding approvals
+        </button>
+      </div>
+
+      <div style={{ height: 12 }} />
+
+      {view === 'approvals' ? (
+        <OnboardingApprovalsPanel />
+      ) : (
+      <>
       <div className="card">
         <div className="split">
           <input className="input" placeholder="Search id/name/email/org" value={q} onChange={(e) => setQ(e.target.value)} />
@@ -441,6 +458,8 @@ export function AdminUsersRolesPage() {
           }}
         />
       ) : null}
+      </>
+      )}
     </DashboardLayout>
   )
 }
