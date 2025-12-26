@@ -30,6 +30,8 @@ export function Header({ title }: { title?: string }) {
   const { scope, setScope } = useScopeStore()
   const [createOpen, setCreateOpen] = useState(false)
   const createRef = useRef<HTMLDivElement | null>(null)
+  const createBtnRef = useRef<HTMLButtonElement | null>(null)
+  const createMenuRef = useRef<HTMLDivElement | null>(null)
 
   const showOrg = useMemo(() => user?.role === 'EVZONE_ADMIN' || user?.role === 'EVZONE_OPERATOR' || user?.role === 'OWNER', [user?.role])
   const showStation = useMemo(() => user?.role !== 'SITE_OWNER', [user?.role])
@@ -44,6 +46,14 @@ export function Header({ title }: { title?: string }) {
     }
     window.addEventListener('mousedown', onDown)
     return () => window.removeEventListener('mousedown', onDown)
+  }, [createOpen])
+
+  useEffect(() => {
+    if (!createOpen) return
+    requestAnimationFrame(() => {
+      const first = createMenuRef.current?.querySelector<HTMLButtonElement>('button[role="menuitem"]')
+      first?.focus()
+    })
   }, [createOpen])
 
   const createItems = useMemo(() => {
@@ -71,109 +81,125 @@ export function Header({ title }: { title?: string }) {
   const profileInitial = user?.name?.[0]?.toUpperCase?.() ?? 'U'
 
   return (
-    <header className="sticky top-0 z-[90] flex items-center gap-3 px-6 border-b border-border-light bg-bg-secondary shadow-[0_1px_3px_rgba(0,0,0,.2)] min-h-[72px] flex-nowrap overflow-x-auto">
-      <input
-        className="bg-panel border border-border-light text-text rounded-lg py-[9px] px-[14px] text-[13px] transition-all duration-200 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,130,246,.15)] placeholder:text-muted w-[320px] max-w-[60vw] min-w-[200px] flex-shrink"
-        placeholder="Search (station/user/ticket/job)…"
-      />
+    <header className="sticky top-0 z-[90] flex items-center gap-3 px-6 border-b border-border-light bg-bg-secondary shadow-[0_1px_3px_rgba(0,0,0,.2)] min-h-[72px] flex-nowrap">
+      <div className="flex items-center gap-3 flex-nowrap min-w-0 flex-1 overflow-x-auto scrollbar-hide">
+        <input
+          className="bg-panel border border-border-light text-text rounded-lg py-[9px] px-[14px] text-[13px] transition-all duration-200 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,130,246,.15)] placeholder:text-muted w-[320px] max-w-[60vw] min-w-[200px] flex-shrink"
+          placeholder="Search (station/user/ticket/job)…"
+        />
 
-      <select
-        className="bg-panel border border-border-light text-text rounded-lg py-[9px] pr-8 pl-[14px] text-[13px] transition-all duration-200 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,130,246,.15)] cursor-pointer select-arrow whitespace-nowrap flex-shrink-0"
-        value={scope.region}
-        onChange={(e) => setScope({ region: e.target.value as any })}
-      >
-        {regions.map((r) => (
-          <option key={r.id} value={r.id}>{r.label}</option>
-        ))}
-      </select>
-
-      {showOrg ? (
         <select
           className="bg-panel border border-border-light text-text rounded-lg py-[9px] pr-8 pl-[14px] text-[13px] transition-all duration-200 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,130,246,.15)] cursor-pointer select-arrow whitespace-nowrap flex-shrink-0"
-          value={scope.orgId}
-          onChange={(e) => setScope({ orgId: e.target.value })}
+          value={scope.region}
+          onChange={(e) => setScope({ region: e.target.value as any })}
         >
-          {orgs.map((o) => (
-            <option key={o} value={o}>{o === 'ALL' ? 'All Orgs' : o}</option>
+          {regions.map((r) => (
+            <option key={r.id} value={r.id}>{r.label}</option>
           ))}
         </select>
-      ) : null}
 
-      {showSite ? (
-        <select
-          className="bg-panel border border-border-light text-text rounded-lg py-[9px] pr-8 pl-[14px] text-[13px] transition-all duration-200 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,130,246,.15)] cursor-pointer select-arrow whitespace-nowrap flex-shrink-0"
-          value={scope.siteId}
-          onChange={(e) => setScope({ siteId: e.target.value })}
-        >
-          {sites.map((s) => (
-            <option key={s} value={s}>{s === 'ALL' ? 'All Sites' : s}</option>
-          ))}
-        </select>
-      ) : null}
-
-      {showStation ? (
-        <select
-          className="bg-panel border border-border-light text-text rounded-lg py-[9px] pr-8 pl-[14px] text-[13px] transition-all duration-200 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,130,246,.15)] cursor-pointer select-arrow whitespace-nowrap flex-shrink-0"
-          value={scope.stationId}
-          onChange={(e) => setScope({ stationId: e.target.value })}
-        >
-          {stations.map((s) => (
-            <option key={s} value={s}>{s === 'ALL' ? 'All Stations' : s}</option>
-          ))}
-        </select>
-      ) : null}
-
-      <select
-        className="bg-panel border border-border-light text-text rounded-lg py-[9px] pr-8 pl-[14px] text-[13px] transition-all duration-200 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,130,246,.15)] cursor-pointer select-arrow whitespace-nowrap flex-shrink-0"
-        value={scope.dateRange}
-        onChange={(e) => setScope({ dateRange: e.target.value as any })}
-      >
-        {dateRanges.map((d) => (
-          <option key={d.id} value={d.id}>{d.label}</option>
-        ))}
-      </select>
-
-      <div className="relative flex-shrink-0" ref={createRef}>
-        <button
-          className="bg-panel border border-border text-text py-2 px-3 rounded-lg cursor-pointer text-[13px] font-semibold transition-all duration-200 whitespace-nowrap hover:bg-panel-2 hover:border-border hover:shadow-[0_2px_4px_rgba(0,0,0,.2)] inline-flex items-center gap-2"
-          type="button"
-          aria-haspopup="menu"
-          aria-expanded={createOpen}
-          onClick={() => setCreateOpen((v) => !v)}
-        >
-          <span>Create</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" className={createOpen ? 'rotate-180 transition-transform' : 'transition-transform'}>
-            <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-
-        {createOpen ? (
-          <div
-            className="absolute right-0 mt-2 w-[240px] rounded-xl border border-border-light bg-bg-secondary shadow-[0_16px_50px_rgba(0,0,0,.55)] p-2 z-[95]"
-            role="menu"
+        {showOrg ? (
+          <select
+            className="bg-panel border border-border-light text-text rounded-lg py-[9px] pr-8 pl-[14px] text-[13px] transition-all duration-200 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,130,246,.15)] cursor-pointer select-arrow whitespace-nowrap flex-shrink-0"
+            value={scope.orgId}
+            onChange={(e) => setScope({ orgId: e.target.value })}
           >
-            {createItems.map((it) => (
-              <button
-                key={it.label}
-                className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 transition-colors flex items-center gap-3 text-sm text-text"
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  setCreateOpen(false)
-                  nav(it.to)
-                }}
-              >
-                <span className="h-2 w-2 rounded-full bg-emerald-400 flex-shrink-0" />
-                <span className="truncate">{it.label}</span>
-              </button>
+            {orgs.map((o) => (
+              <option key={o} value={o}>{o === 'ALL' ? 'All Orgs' : o}</option>
             ))}
-          </div>
+          </select>
         ) : null}
+
+        {showSite ? (
+          <select
+            className="bg-panel border border-border-light text-text rounded-lg py-[9px] pr-8 pl-[14px] text-[13px] transition-all duration-200 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,130,246,.15)] cursor-pointer select-arrow whitespace-nowrap flex-shrink-0"
+            value={scope.siteId}
+            onChange={(e) => setScope({ siteId: e.target.value })}
+          >
+            {sites.map((s) => (
+              <option key={s} value={s}>{s === 'ALL' ? 'All Sites' : s}</option>
+            ))}
+          </select>
+        ) : null}
+
+        {showStation ? (
+          <select
+            className="bg-panel border border-border-light text-text rounded-lg py-[9px] pr-8 pl-[14px] text-[13px] transition-all duration-200 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,130,246,.15)] cursor-pointer select-arrow whitespace-nowrap flex-shrink-0"
+            value={scope.stationId}
+            onChange={(e) => setScope({ stationId: e.target.value })}
+          >
+            {stations.map((s) => (
+              <option key={s} value={s}>{s === 'ALL' ? 'All Stations' : s}</option>
+            ))}
+          </select>
+        ) : null}
+
+        <select
+          className="bg-panel border border-border-light text-text rounded-lg py-[9px] pr-8 pl-[14px] text-[13px] transition-all duration-200 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,130,246,.15)] cursor-pointer select-arrow whitespace-nowrap flex-shrink-0"
+          value={scope.dateRange}
+          onChange={(e) => setScope({ dateRange: e.target.value as any })}
+        >
+          {dateRanges.map((d) => (
+            <option key={d.id} value={d.id}>{d.label}</option>
+          ))}
+        </select>
       </div>
 
-      <div className="flex-1" />
-
       <div className="inline-flex items-center gap-2 flex-shrink-0">
+        <div className="relative flex-shrink-0" ref={createRef}>
+          <button
+            ref={createBtnRef}
+            className="bg-panel border border-border text-text py-2 px-3 rounded-lg cursor-pointer text-[13px] font-semibold transition-all duration-200 whitespace-nowrap hover:bg-panel-2 hover:border-border hover:shadow-[0_2px_4px_rgba(0,0,0,.2)] inline-flex items-center gap-2"
+            type="button"
+            aria-haspopup="menu"
+            aria-expanded={createOpen}
+            onClick={() => setCreateOpen((v) => !v)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setCreateOpen(false)
+              if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                setCreateOpen(true)
+              }
+            }}
+          >
+            <span>Create</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" className={createOpen ? 'rotate-180 transition-transform' : 'transition-transform'}>
+              <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+
+          {createOpen ? (
+            <div
+              ref={createMenuRef}
+              className="absolute right-0 mt-2 w-[240px] rounded-xl border border-border-light bg-bg-secondary shadow-[0_16px_50px_rgba(0,0,0,.55)] p-2 z-[120]"
+              role="menu"
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  e.preventDefault()
+                  setCreateOpen(false)
+                  requestAnimationFrame(() => createBtnRef.current?.focus())
+                }
+              }}
+            >
+              {createItems.map((it) => (
+                <button
+                  key={it.label}
+                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 transition-colors flex items-center gap-3 text-sm text-text"
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setCreateOpen(false)
+                    nav(it.to)
+                  }}
+                >
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 flex-shrink-0" />
+                  <span className="truncate">{it.label}</span>
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
         <button
           className="bg-panel border border-border-light text-text h-10 w-10 rounded-lg cursor-pointer inline-flex items-center justify-center hover:border-accent hover:text-text transition-colors"
           type="button"
