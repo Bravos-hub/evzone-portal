@@ -66,50 +66,45 @@ styles.css              Tailwind layers + component primitives (.btn, .card, .ta
 
 ---
 
-## Architecture (High-Level)
+## Dashboard Layouts (Wireframes)
 
-### Routing & Layout
+These Mermaid diagrams describe **what each dashboard contains and how it is arranged** (high-level UI “shape”), not routing.
+
+### Admin Overview (`/admin`)
 ```mermaid
-flowchart TD
-  mainTsx[main.tsx] --> providers[Providers]
-  providers --> router[BrowserRouter]
-  router --> app[App]
-  app --> routes[AppRoutes]
-  routes --> guards[RequireAuth/RequireRole]
-  guards --> layout[DashboardLayout]
-  layout --> header[Header]
-  layout --> sidebar[Sidebar]
-  layout --> pages[RolePages]
-```
-
-### Auth & RBAC Flow
-```mermaid
-sequenceDiagram
-  participant UI as UI
-  participant Auth as authStore
-  participant Guard as RequireRole
-  participant Router as Router
-
-  UI->>Auth: login(role,name,capability)
-  Auth-->>UI: user set
-  UI->>Router: navigate(/)
-  Router->>Guard: check user + role
-  alt allowed
-    Guard-->>Router: allow
-    Router-->>UI: render DashboardLayout + page
-  else denied
-    Guard-->>Router: redirect /errors/unauthorized
-    Router-->>UI: UnauthorizedPage
+flowchart TB
+  subgraph A[Admin Overview]
+    direction TB
+    K[KPI Row (4-up)\nTotal stations • Incidents (24h) • Revenue (30d) • SLA] --> M
+    M[Main Row (2 cols)\nLeft: World metrics map (choropleth + metric switch)\nRight: Region distribution table] --> W
+    W[Worldwide Alerts\nIncidents list • Dispatch queue • Compliance queue] --> F
+    F[Bottom Row (2 cols)\nLeft: Financial & settlement (payment exceptions + exports)\nRight: Governance & reliability (audit + health + comms)]
   end
 ```
 
-### Data Layer (Mock Today, API Tomorrow)
+### Admin Stations (`/admin/stations`)
 ```mermaid
-flowchart LR
-  page[FeaturePage] --> rq[react-query]
-  rq --> repo[RepositoryInterface]
-  repo --> mockDb[mockDb/*]
-  repo -. future .-> api[(RealAPI)]
+flowchart TB
+  subgraph S[Admin Stations]
+    direction TB
+    FLT[Filters Bar\nSearch • Region • Org • Type • Status • Bulk actions] --> SUM
+    SUM[Summary Chips\nCounts: total/online/degraded/offline/incidents/avg health] --> TOP
+    TOP[Top Row (2 cols)\nLeft: Station Map (heatmap + dots + tooltip)\nRight: Watchlist (degraded • repeat incidents • heartbeat gaps)] --> TBL
+    TBL[Stations Table\nSelect • Status pill • Health/Utilization • Row actions] --> DRW
+    DRW[Station Drawer (right)\nOverview • Assets • Incidents • Config + quick actions]
+  end
+```
+
+### Generic Role Dashboard Pattern (Operator / Owner / Manager / Attendant / Technician)
+```mermaid
+flowchart TB
+  subgraph R[Role Dashboard (Pattern)]
+    direction TB
+    K2[KPI Row\nRole-specific KPIs] --> G
+    G[Primary Grid\nLeft: Performance/Activity\nRight: Queue/Alerts] --> B
+    B[Secondary Grid\nTables • Panels • Quick actions] --> X
+    X[Detail Views\nDrawers/modals as needed]
+  end
 ```
 
 ---
