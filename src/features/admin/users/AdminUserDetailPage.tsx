@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { DashboardLayout } from '@/app/layouts/DashboardLayout'
 import type { Role } from '@/core/auth/types'
+import { useAuthStore } from '@/core/auth/authStore'
 import { RolePill } from '@/ui/components/RolePill'
 import { Card } from '@/ui/components/Card'
 import { KpiCard } from '@/ui/components/KpiCard'
@@ -123,10 +124,12 @@ export function AdminUserDetailPage() {
   const nav = useNavigate()
   const params = useParams()
   const id = params.id ?? 'U-0001'
+  const { impersonator, startImpersonation, stopImpersonation, user: sessionUser, logout } = useAuthStore()
 
   const [u, setU] = useState<UserRow | null>(null)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<string>('')
+  const [pwModal, setPwModal] = useState<{ open: boolean; temp: string; when: string } | null>(null)
   const [sessions, setSessions] = useState<SessionRow[]>([])
   const [audit, setAudit] = useState<AuditRow[]>([])
 
@@ -152,6 +155,12 @@ export function AdminUserDetailPage() {
       await apiUpdateUser(u.id, p)
       setU((prev) => (prev ? { ...prev, ...p } : prev))
       if (typeof window !== 'undefined') setAudit(appendAudit(u.id, auditEvent))
+      if (p.status === 'Suspended' && sessionUser?.id?.toLowerCase() === u.id.toLowerCase()) {
+        // if we suspended the currently logged-in user (including impersonated user), end the session
+        if (impersonator) stopImpersonation()
+        else logout()
+        nav('/auth/login')
+      }
     } catch (e) {
       setNotice(e instanceof Error ? e.message : 'Action failed')
     } finally {
@@ -173,6 +182,35 @@ export function AdminUserDetailPage() {
   const isPending = u.status === 'Pending'
   const canImpersonate = u.role !== 'EVZONE_ADMIN'
   const mfaLabel = u.mfaEnabled ? 'Enabled' : 'Disabled'
+
+  function roleHome(r: Role) {
+    switch (r) {
+      case 'EVZONE_ADMIN':
+        return '/admin'
+      case 'EVZONE_OPERATOR':
+        return '/operator'
+      case 'SITE_OWNER':
+        return '/site-owner'
+      case 'OWNER':
+        return '/owner/charge'
+      case 'STATION_ADMIN':
+        return '/station-admin'
+      case 'MANAGER':
+        return '/manager'
+      case 'ATTENDANT':
+        return '/attendant'
+      case 'TECHNICIAN_ORG':
+        return '/technician/org'
+      case 'TECHNICIAN_PUBLIC':
+        return '/technician/public'
+    }
+  }
+
+  function genTempPassword() {
+    // readable, demo-safe (mock)
+    const part = () => Math.random().toString(16).slice(2, 6).toUpperCase()
+    return `EVZ-${part()}-${part()}`
+  }
 
   return (
     <DashboardLayout pageTitle={pageTitle}>
@@ -224,7 +262,15 @@ export function AdminUserDetailPage() {
               </button>
               <button
                 className="btn secondary"
-                onClick={() => patch({}, { when: 'now', event: 'Reset password', details: 'Password reset link issued (mock)' })}
+                onClick={async () => {
+                  const temp = genTempPassword()
+                  const when = new Date().toISOString()
+                  await patch(
+                    { passwordResetAt: when, tempPassword: temp },
+                    { when: 'now', event: 'Reset password', details: 'Temporary password generated (mock)' },
+                  )
+                  setPwModal({ open: true, temp, when })
+                }}
                 disabled={busy}
               >
                 <span className="inline-flex items-center gap-2">{icon('key')} Reset password</span>
@@ -235,7 +281,7 @@ export function AdminUserDetailPage() {
                   const next: SessionRow[] = []
                   setSessions(next)
                   saveSessions(u.id, next)
-                  setAudit(appendAudit(u.id, { when: 'now', event: 'Force logout', details: 'All sessions revoked (mock)' }))
+                  void patch({ tokensRevokedAt: new Date().toISOString() }, { when: 'now', event: 'Force logout', details: 'All sessions revoked (mock)' })
                 }}
                 disabled={busy}
               >
@@ -244,8 +290,14 @@ export function AdminUserDetailPage() {
               <button
                 className="btn secondary"
                 onClick={() => {
-                  setAudit(appendAudit(u.id, { when: 'now', event: 'Impersonate', details: 'Entered impersonation mode (mock)' }))
-                  setNotice('Impersonation is mocked here (no auth switching implemented).')
+                  startImpersonation({
+                    id: u.id,
+                    name: u.name,
+                    role: u.role,
+                    ownerCapability: u.role === 'OWNER' ? 'CHARGE' : undefined,
+                  })
+                  setAudit(appendAudit(u.id, { when: 'now', event: 'Impersonate', details: 'Started impersonation' }))
+                  nav(roleHome(u.role))
                 }}
                 disabled={!canImpersonate || busy}
                 title={!canImpersonate ? 'Cannot impersonate an admin in this demo.' : undefined}
@@ -425,6 +477,39 @@ export function AdminUserDetailPage() {
           </table>
         </div>
       </Card>
+
+      {pwModal?.open ? (
+        <div className="fixed inset-0 grid place-items-center z-[80]">
+          <div className="fixed inset-0 bg-[rgba(0,0,0,.6)] backdrop-blur-sm" onClick={() => setPwModal(null)} />
+          <div className="w-[min(560px,92vw)] bg-panel border border-border-light rounded-2xl p-6 shadow-[0_20px_60px_rgba(0,0,0,.5)] relative z-10">
+            <div className="flex items-center justify-between gap-3">
+              <div className="font-black">Temporary password</div>
+              <button className="btn secondary" onClick={() => setPwModal(null)}>Close</button>
+            </div>
+            <div className="h-2" />
+            <div className="text-xs text-muted">Share this once. It is stored only in this demo (mock).</div>
+            <div className="h-3" />
+            <div className="panel flex items-center justify-between gap-3">
+              <div className="font-mono text-sm text-text">{pwModal.temp}</div>
+              <button
+                className="btn secondary"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(pwModal.temp)
+                    setNotice('Temporary password copied.')
+                  } catch {
+                    setNotice('Copy failed.')
+                  }
+                }}
+              >
+                Copy
+              </button>
+            </div>
+            <div className="h-3" />
+            <div className="text-xs text-muted">Reset at: {pwModal.when}</div>
+          </div>
+        </div>
+      ) : null}
     </DashboardLayout>
   )
 }

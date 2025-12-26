@@ -298,11 +298,11 @@ export function AdminUsersRolesPage() {
                     </button>
                     <button
                       className="btn secondary"
-                      onClick={() =>
-                        setRows((list) =>
-                          list.map((u) => (u.id === r.id ? { ...u, status: u.status === 'Suspended' ? 'Active' : 'Suspended' } : u)),
-                        )
-                      }
+                      onClick={async () => {
+                        const next = r.status === 'Suspended' ? 'Active' : 'Suspended'
+                        await apiUpdate(r.id, { status: next })
+                        setRows((list) => list.map((u) => (u.id === r.id ? { ...u, status: next } : u)))
+                      }}
                     >
                       {r.status === 'Suspended' ? 'Activate' : 'Suspend'}
                     </button>

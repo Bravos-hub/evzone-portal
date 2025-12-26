@@ -17,6 +17,9 @@ export type UserRow = {
   createdAt: string
   approvalStatus?: ApprovalStatus
   mfaEnabled?: boolean
+  tokensRevokedAt?: string
+  passwordResetAt?: string
+  tempPassword?: string
 }
 
 export const ALL_ROLES: Role[] = [

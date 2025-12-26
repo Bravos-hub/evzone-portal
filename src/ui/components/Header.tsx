@@ -26,7 +26,7 @@ const sites = ['ALL', 'SITE_001', 'SITE_002', 'SITE_003']
 
 export function Header({ title }: { title?: string }) {
   const nav = useNavigate()
-  const { user, logout } = useAuthStore()
+  const { user, impersonator, logout, stopImpersonation } = useAuthStore()
   const { scope, setScope } = useScopeStore()
   const [createOpen, setCreateOpen] = useState(false)
   const createRef = useRef<HTMLDivElement | null>(null)
@@ -146,6 +146,24 @@ export function Header({ title }: { title?: string }) {
       </div>
 
       <div className="inline-flex items-center gap-2 flex-shrink-0">
+        {impersonator ? (
+          <div className="inline-flex items-center gap-2 rounded-xl border border-[rgba(59,130,246,.25)] bg-[rgba(59,130,246,.12)] px-3 py-2">
+            <span className="text-xs font-semibold text-[#93c5fd]">Impersonating</span>
+            <span className="text-xs text-text">{user?.name}</span>
+            <button
+              className="bg-panel border border-border-light text-text h-8 w-8 rounded-lg cursor-pointer inline-flex items-center justify-center hover:border-accent hover:text-text transition-colors"
+              type="button"
+              aria-label="Stop impersonation"
+              title="Stop impersonation"
+              onClick={() => stopImpersonation()}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
+        ) : null}
+
         <div className="relative flex-shrink-0" ref={createRef}>
           <button
             ref={createBtnRef}
