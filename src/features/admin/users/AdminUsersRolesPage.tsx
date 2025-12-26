@@ -225,6 +225,28 @@ export function AdminUsersRolesPage() {
     setOrg('ALL')
   }
 
+  const risk = useMemo(() => {
+    const privileged = [
+      { when: '06m ago', actor: 'd.admin', action: 'Role change', target: 'U-0112 → MANAGER', sev: 'High' as const },
+      { when: '19m ago', actor: 'c.sre', action: 'API key rotated', target: 'Platform', sev: 'Med' as const },
+      { when: '42m ago', actor: 'b.billing', action: 'Ledger export', target: 'Region=EU', sev: 'Low' as const },
+    ]
+
+    const scopeChecks = [
+      { label: 'Org mismatch', value: 2, hint: 'Users with role requiring org but orgId is missing/invalid' },
+      { label: 'Station assignment drift', value: 3, hint: 'Assigned stations outside org scope (mock validation)' },
+      { label: 'Privileged approvals pending', value: 5, hint: 'EVZONE_ADMIN/OPERATOR role change requests awaiting approval' },
+    ]
+
+    const sessionControls = [
+      { when: 'Today 08:12', action: 'Suspended user', target: 'U-0261 (ATTENDANT)', result: 'Tokens revoked' },
+      { when: 'Today 07:44', action: 'Force logout', target: 'U-0042 (EVZONE_OPERATOR)', result: 'All sessions invalidated' },
+      { when: 'Yesterday 21:06', action: 'Unlock login', target: 'U-0180 (SITE_OWNER)', result: 'MFA reset requested' },
+    ]
+
+    return { privileged, scopeChecks, sessionControls }
+  }, [])
+
   return (
     <DashboardLayout pageTitle="Users & Roles">
       <div className="tabs">
@@ -347,11 +369,67 @@ export function AdminUsersRolesPage() {
         </div>
 
         <div className="card">
-          <div className="card-title">Risk controls (placeholders)</div>
+          <div className="card-title">Risk controls</div>
           <div className="grid">
-            <div className="panel">Privileged role changes require approval + audit log entry.</div>
-            <div className="panel">Region/org/station scoping must be enforced by backend RBAC.</div>
-            <div className="panel">Suspensions lock login and invalidate tokens.</div>
+            <div className="panel">
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
+                <div style={{ fontWeight: 900, color: 'var(--text)' }}>Privileged actions (last hour)</div>
+                <span className="pill pending">{risk.privileged.length} events</span>
+              </div>
+              <div style={{ display: 'grid', gap: 8 }}>
+                {risk.privileged.map((e) => (
+                  <div key={e.when + e.actor + e.action} style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+                    <div>
+                      <div style={{ fontWeight: 800, color: 'var(--text)' }}>
+                        {e.action}: {e.target}
+                      </div>
+                      <div className="small">{e.actor} • {e.when}</div>
+                    </div>
+                    <span className={`pill ${e.sev === 'High' ? 'rejected' : e.sev === 'Med' ? 'sendback' : 'approved'}`}>{e.sev}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="panel">
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
+                <div style={{ fontWeight: 900, color: 'var(--text)' }}>RBAC scope checks</div>
+                <span className="pill sendback">Auto-check</span>
+              </div>
+              <div style={{ display: 'grid', gap: 8 }}>
+                {risk.scopeChecks.map((c) => (
+                  <div key={c.label} style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+                    <div>
+                      <div style={{ fontWeight: 800, color: 'var(--text)' }}>{c.label}</div>
+                      <div className="small">{c.hint}</div>
+                    </div>
+                    <span className={`pill ${c.value === 0 ? 'approved' : c.value <= 2 ? 'sendback' : 'rejected'}`}>{c.value}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ height: 10 }} />
+              <div className="small" style={{ color: 'var(--muted)', fontStyle: 'italic' }}>
+                Note: backend enforcement is required; this UI simulates monitoring + drift detection with mocked signals.
+              </div>
+            </div>
+
+            <div className="panel">
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
+                <div style={{ fontWeight: 900, color: 'var(--text)' }}>Session controls</div>
+                <span className="pill approved">Enforced</span>
+              </div>
+              <div style={{ display: 'grid', gap: 8 }}>
+                {risk.sessionControls.map((x) => (
+                  <div key={x.when + x.action} style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+                    <div>
+                      <div style={{ fontWeight: 800, color: 'var(--text)' }}>{x.action}</div>
+                      <div className="small">{x.target} • {x.when}</div>
+                    </div>
+                    <span className="pill pending">{x.result}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
