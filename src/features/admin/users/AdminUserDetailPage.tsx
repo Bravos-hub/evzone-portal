@@ -5,7 +5,7 @@ import { useAuthStore } from '@/core/auth/authStore'
 import { RolePill } from '@/ui/components/RolePill'
 import { Card } from '@/ui/components/Card'
 import { KpiCard } from '@/ui/components/KpiCard'
-import { apiGetUser, apiUpdateUser, ALL_ROLES, type UserRow, type UserStatus } from './mockUsers'
+import { apiGetUser, apiUpdateUser, ALL_ROLES, appendAudit, loadAudit, type AuditRow, type UserRow, type UserStatus } from './mockUsers'
 
 type SessionRow = {
   id: string
@@ -14,8 +14,6 @@ type SessionRow = {
   location: string
   lastActive: string
 }
-
-type AuditRow = { when: string; event: string; details: string }
 
 function icon(name: 'bolt' | 'mail' | 'pause' | 'key' | 'x' | 'user' | 'clock' | 'shield') {
   switch (name) {
@@ -78,9 +76,6 @@ function icon(name: 'bolt' | 'mail' | 'pause' | 'key' | 'x' | 'user' | 'clock' |
 function sessionKey(id: string) {
   return `mock.sessions.${id}`
 }
-function auditKey(id: string) {
-  return `mock.audit.${id}`
-}
 
 function loadSessions(id: string): SessionRow[] {
   try {
@@ -95,23 +90,6 @@ function loadSessions(id: string): SessionRow[] {
 function saveSessions(id: string, rows: SessionRow[]) {
   localStorage.setItem(sessionKey(id), JSON.stringify(rows))
 }
-function loadAudit(id: string): AuditRow[] {
-  try {
-    const raw = localStorage.getItem(auditKey(id))
-    if (raw) return JSON.parse(raw) as AuditRow[]
-  } catch {}
-  return [
-    { when: '11:40', event: 'Viewed user', details: 'Opened detail page' },
-    { when: '10:12', event: 'Viewed report', details: '/operator/reports' },
-    { when: 'Yesterday', event: 'Logged in', details: 'IP 41.75.12.33' },
-  ]
-}
-function appendAudit(id: string, row: AuditRow) {
-  const list = loadAudit(id)
-  const next = [row, ...list].slice(0, 25)
-  localStorage.setItem(auditKey(id), JSON.stringify(next))
-  return next
-}
 
 function statusPill(status: UserStatus) {
   if (status === 'Active') return <span className="pill approved">Active</span>
@@ -124,6 +102,7 @@ export function AdminUserDetailPage() {
   const params = useParams()
   const id = params.id ?? 'U-0001'
   const { impersonator, impersonationReturnTo, startImpersonation, stopImpersonation, user: sessionUser, logout } = useAuthStore()
+  const actor = impersonator?.name ?? sessionUser?.name ?? sessionUser?.id ?? 'system'
 
   const [u, setU] = useState<UserRow | null>(null)
   const [busy, setBusy] = useState(false)
@@ -139,10 +118,10 @@ export function AdminUserDetailPage() {
       if (typeof window !== 'undefined') {
         setSessions(loadSessions(id))
         setAudit(loadAudit(id))
-        setAudit(appendAudit(id, { when: 'now', event: 'Viewed user', details: `Opened /admin/users/${id}` }))
+        setAudit(appendAudit(id, { when: 'now', event: 'Viewed user', details: `Opened /admin/users/${id}`, actor }))
       }
     })()
-  }, [id])
+  }, [id, actor])
 
   const pageTitle = useMemo(() => (u ? `User: ${u.name}` : 'User'), [u])
 
@@ -153,7 +132,7 @@ export function AdminUserDetailPage() {
     try {
       await apiUpdateUser(u.id, p)
       setU((prev) => (prev ? { ...prev, ...p } : prev))
-      if (typeof window !== 'undefined') setAudit(appendAudit(u.id, auditEvent))
+      if (typeof window !== 'undefined') setAudit(appendAudit(u.id, { ...auditEvent, actor: auditEvent.actor ?? actor }))
       if (p.status === 'Suspended' && sessionUser?.id?.toLowerCase() === u.id.toLowerCase()) {
         // if we suspended the currently logged-in user (including impersonated user), end the session appropriately
         if (impersonator) {
@@ -299,7 +278,7 @@ export function AdminUserDetailPage() {
                   if (isImpersonatingThisUser) {
                     const back = impersonationReturnTo || `/admin/users/${u.id}`
                     stopImpersonation()
-                    setAudit(appendAudit(u.id, { when: 'now', event: 'Stop impersonation', details: 'Stopped impersonation' }))
+                    setAudit(appendAudit(u.id, { when: 'now', event: 'Stop impersonation', details: 'Stopped impersonation', actor }))
                     nav(back)
                     setNotice('Stopped impersonation.')
                     return
@@ -309,7 +288,7 @@ export function AdminUserDetailPage() {
                     { id: u.id, name: u.name, role: u.role, ownerCapability: u.role === 'OWNER' ? 'CHARGE' : undefined },
                     window.location.pathname + window.location.search,
                   )
-                  setAudit(appendAudit(u.id, { when: 'now', event: 'Impersonate', details: 'Started impersonation' }))
+                  setAudit(appendAudit(u.id, { when: 'now', event: 'Impersonate', details: 'Started impersonation', actor }))
                   nav(roleHome(u.role))
                 }}
                 disabled={!canImpersonate || busy}
@@ -380,7 +359,7 @@ export function AdminUserDetailPage() {
               <div className="inline-flex items-center gap-2">{icon('clock')} Tokens</div>
               <button
                 className="btn secondary"
-                onClick={() => setAudit(appendAudit(u.id, { when: 'now', event: 'Rotate tokens', details: 'Issued new refresh tokens (mock)' }))}
+                onClick={() => setAudit(appendAudit(u.id, { when: 'now', event: 'Rotate tokens', details: 'Issued new refresh tokens (mock)', actor }))}
                 disabled={busy}
               >
                 Rotate tokens
@@ -448,7 +427,7 @@ export function AdminUserDetailPage() {
                           const next = sessions.filter((x) => x.id !== s.id)
                           setSessions(next)
                           saveSessions(u.id, next)
-                          setAudit(appendAudit(u.id, { when: 'now', event: 'Revoke session', details: `${s.device} (${s.ip})` }))
+                          setAudit(appendAudit(u.id, { when: 'now', event: 'Revoke session', details: `${s.device} (${s.ip})`, actor }))
                         }}
                       >
                         Revoke

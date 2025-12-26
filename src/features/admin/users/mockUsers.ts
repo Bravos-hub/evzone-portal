@@ -186,4 +186,32 @@ export async function apiUpdateUser(id: string, patch: Partial<UserRow>): Promis
   return { ok: true }
 }
 
+export type AuditRow = { when: string; event: string; details: string; actor?: string }
+
+function auditKey(id: string) {
+  return `mock.audit.${id}`
+}
+
+export function loadAudit(id: string): AuditRow[] {
+  try {
+    const raw = localStorage.getItem(auditKey(id))
+    if (raw) return JSON.parse(raw) as AuditRow[]
+  } catch {}
+  // default seed for demos
+  return [
+    { when: '11:40', event: 'Viewed user', details: 'Opened detail page', actor: 'system' },
+    { when: '10:12', event: 'Viewed report', details: '/operator/reports', actor: 'system' },
+    { when: 'Yesterday', event: 'Logged in', details: 'IP 41.75.12.33', actor: 'system' },
+  ]
+}
+
+export function appendAudit(id: string, row: AuditRow) {
+  const list = loadAudit(id)
+  const next = [{ ...row }, ...list].slice(0, 50)
+  localStorage.setItem(auditKey(id), JSON.stringify(next))
+  // allow UI to refresh without polling
+  window.dispatchEvent(new CustomEvent('evzone:mockAudit'))
+  return next
+}
+
 

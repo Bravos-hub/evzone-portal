@@ -2,16 +2,19 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DashboardLayout } from '@/app/layouts/DashboardLayout'
 import type { Role } from '@/core/auth/types'
+import { useAuthStore } from '@/core/auth/authStore'
 import { RolePill } from '@/ui/components/RolePill'
 import { StatusPill, type ApprovalStatus } from '@/ui/components/StatusPill'
 import { OnboardingApprovalsPanel } from '@/features/admin/approvals/OnboardingApprovalsPanel'
-import { ALL_ROLES as ROLES, apiListUsers as apiList, apiUpdateUser as apiUpdate, regions, type UserRow, type UserStatus } from './mockUsers'
+import { ALL_ROLES as ROLES, appendAudit, loadAudit, apiListUsers as apiList, apiUpdateUser as apiUpdate, regions, type AuditRow, type UserRow, type UserStatus } from './mockUsers'
 
 type DrawerTab = 'profile' | 'access' | 'assignments' | 'activity'
 type InviteModal = { open: boolean; name: string; email: string; role: Role; region: UserRow['region']; orgId: string }
 
 export function AdminUsersRolesPage() {
   const nav = useNavigate()
+  const { user: sessionUser, impersonator } = useAuthStore()
+  const actor = impersonator?.name ?? sessionUser?.name ?? sessionUser?.id ?? 'system'
   const [view, setView] = useState<'users' | 'approvals'>('users')
   const [rows, setRows] = useState<UserRow[]>([])
   const [q, setQ] = useState('')
@@ -31,6 +34,14 @@ export function AdminUsersRolesPage() {
     region: 'AFRICA',
     orgId: 'ORG_DEMO',
   })
+
+  const [auditTick, setAuditTick] = useState(0)
+
+  useEffect(() => {
+    const onAudit = () => setAuditTick((t) => t + 1)
+    window.addEventListener('evzone:mockAudit', onAudit as EventListener)
+    return () => window.removeEventListener('evzone:mockAudit', onAudit as EventListener)
+  }, [])
 
   useEffect(() => {
     void (async () => setRows(await apiList()))()
@@ -62,6 +73,11 @@ export function AdminUsersRolesPage() {
 
   const openRow = rows.find((r) => r.id === openId) ?? null
 
+  function writeAudit(userId: string, row: Omit<AuditRow, 'actor'> & { actor?: string }) {
+    if (typeof window === 'undefined') return
+    appendAudit(userId, { ...row, actor: row.actor ?? actor })
+  }
+
   async function saveUser(patch: Partial<UserRow>) {
     if (!openRow) return
     setBusy(true)
@@ -69,6 +85,12 @@ export function AdminUsersRolesPage() {
     try {
       await apiUpdate(openRow.id, patch)
       setRows((list) => list.map((u) => (u.id === openRow.id ? { ...u, ...patch } : u)))
+      // audit (mock)
+      if (patch.role && patch.role !== openRow.role) writeAudit(openRow.id, { when: 'now', event: 'Role changed', details: `→ ${patch.role}` })
+      if (patch.status && patch.status !== openRow.status) writeAudit(openRow.id, { when: 'now', event: patch.status === 'Suspended' ? 'Suspended user' : 'Activated user', details: 'Changed status via Users & Roles' })
+      if (patch.orgId && patch.orgId !== openRow.orgId) writeAudit(openRow.id, { when: 'now', event: 'Org changed', details: `→ ${patch.orgId}` })
+      if (patch.region && patch.region !== openRow.region) writeAudit(openRow.id, { when: 'now', event: 'Region changed', details: `→ ${patch.region}` })
+      if (patch.stations) writeAudit(openRow.id, { when: 'now', event: 'Assignments updated', details: `Stations: ${patch.stations.length || 0}` })
     } catch (e) {
       setNotice(e instanceof Error ? e.message : 'Save failed')
     } finally {
@@ -85,26 +107,86 @@ export function AdminUsersRolesPage() {
   }
 
   const risk = useMemo(() => {
-    const privileged = [
-      { when: '06m ago', actor: 'd.admin', action: 'Role change', target: 'U-0112 → MANAGER', sev: 'High' as const },
-      { when: '19m ago', actor: 'c.sre', action: 'API key rotated', target: 'Platform', sev: 'Med' as const },
-      { when: '42m ago', actor: 'b.billing', action: 'Ledger export', target: 'Region=EU', sev: 'Low' as const },
-    ]
+    function rankWhen(when: string) {
+      const w = (when || '').toLowerCase().trim()
+      if (w === 'now') return 0
+      const m = w.match(/(\d+)\s*m\s*ago/)
+      if (m) return Number(m[1])
+      const h = w.match(/(\d+)\s*h\s*ago/)
+      if (h) return Number(h[1]) * 60
+      if (w.startsWith('today')) return 240
+      if (w.startsWith('yesterday')) return 24 * 60 + 120
+      return 99999
+    }
+
+    function sevFor(event: string): 'High' | 'Med' | 'Low' {
+      if (event === 'Role changed' || event === 'Impersonate' || event === 'Reset password' || event === 'Force logout') return 'High'
+      if (event === 'Rotate tokens' || event === 'Revoke session' || event === 'Suspended user' || event === 'Activated user' || event === 'MFA toggled') return 'Med'
+      return 'Low'
+    }
+
+    const all = rows.flatMap((u) => {
+      const list = typeof window === 'undefined' ? [] : loadAudit(u.id)
+      return list.map((a) => ({ ...a, userId: u.id, userRole: u.role, userName: u.name }))
+    })
+
+    const privilegedEvents = new Set([
+      'Role changed',
+      'Impersonate',
+      'Stop impersonation',
+      'Reset password',
+      'Force logout',
+      'Rotate tokens',
+      'Revoke session',
+      'MFA toggled',
+      'Invite sent',
+    ])
+
+    const privileged = all
+      .filter((a) => privilegedEvents.has(a.event))
+      .sort((a, b) => rankWhen(a.when) - rankWhen(b.when))
+      .slice(0, 6)
+      .map((a) => ({
+        when: a.when,
+        actor: a.actor ?? 'system',
+        action: a.event,
+        target: `${a.userId} • ${a.details}`,
+        sev: sevFor(a.event),
+      }))
+
+    const orgMismatch = rows.filter((r) => r.role !== 'EVZONE_ADMIN' && r.orgId === '—').length
+    const stationDrift = rows.filter((r) => (r.role === 'MANAGER' || r.role === 'ATTENDANT' || r.role === 'STATION_ADMIN') && r.stations.length === 0).length
+    const approvalsPending = rows.filter((r) => r.status === 'Pending').length
 
     const scopeChecks = [
-      { label: 'Org mismatch', value: 2, hint: 'Users with role requiring org but orgId is missing/invalid' },
-      { label: 'Station assignment drift', value: 3, hint: 'Assigned stations outside org scope (mock validation)' },
-      { label: 'Privileged approvals pending', value: 5, hint: 'EVZONE_ADMIN/OPERATOR role change requests awaiting approval' },
+      { label: 'Org mismatch', value: orgMismatch, hint: 'Users with role requiring org but orgId is missing/invalid' },
+      { label: 'Station assignment drift', value: stationDrift, hint: 'Roles requiring station assignment but stations list is empty' },
+      { label: 'Privileged approvals pending', value: approvalsPending, hint: 'Pending users / access requests awaiting approval (mock)' },
     ]
 
-    const sessionControls = [
-      { when: 'Today 08:12', action: 'Suspended user', target: 'U-0261 (ATTENDANT)', result: 'Tokens revoked' },
-      { when: 'Today 07:44', action: 'Force logout', target: 'U-0042 (EVZONE_OPERATOR)', result: 'All sessions invalidated' },
-      { when: 'Yesterday 21:06', action: 'Unlock login', target: 'U-0180 (SITE_OWNER)', result: 'MFA reset requested' },
-    ]
+    function sessionResult(event: string) {
+      if (event === 'Suspended user') return 'Tokens revoked'
+      if (event === 'Force logout') return 'All sessions invalidated'
+      if (event === 'Revoke session') return 'Session revoked'
+      if (event === 'Reset password') return 'Password reset issued'
+      if (event === 'Rotate tokens') return 'Tokens rotated'
+      if (event === 'MFA toggled') return 'MFA updated'
+      return 'Updated'
+    }
 
-    return { privileged, scopeChecks, sessionControls }
-  }, [])
+    const sessionEvents = all
+      .filter((a) => ['Suspended user', 'Activated user', 'Force logout', 'Revoke session', 'Reset password', 'Rotate tokens', 'MFA toggled'].includes(a.event))
+      .sort((a, b) => rankWhen(a.when) - rankWhen(b.when))
+      .slice(0, 3)
+      .map((a) => ({
+        when: a.when.startsWith('Today') || a.when.startsWith('Yesterday') ? a.when : `Today ${a.when}`,
+        action: a.event,
+        target: `${a.userId} (${a.userRole})`,
+        result: sessionResult(a.event),
+      }))
+
+    return { privileged, scopeChecks, sessionControls: sessionEvents }
+  }, [rows, auditTick])
 
   return (
     <DashboardLayout pageTitle="Users & Roles">
@@ -302,6 +384,11 @@ export function AdminUsersRolesPage() {
                         const next = r.status === 'Suspended' ? 'Active' : 'Suspended'
                         await apiUpdate(r.id, { status: next })
                         setRows((list) => list.map((u) => (u.id === r.id ? { ...u, status: next } : u)))
+                        writeAudit(r.id, {
+                          when: 'now',
+                          event: next === 'Suspended' ? 'Suspended user' : 'Activated user',
+                          details: 'Changed status via Users & Roles',
+                        })
                       }}
                     >
                       {r.status === 'Suspended' ? 'Activate' : 'Suspend'}
@@ -348,6 +435,7 @@ export function AdminUsersRolesPage() {
               approvalStatus: 'Pending',
             }
             setRows((list) => [newUser, ...list])
+            writeAudit(newUser.id, { when: 'now', event: 'Invite sent', details: `Invited as ${newUser.role}` })
             setInvite((m) => ({ ...m, open: false, name: '', email: '' }))
           }}
         />
