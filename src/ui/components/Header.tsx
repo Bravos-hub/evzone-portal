@@ -26,7 +26,7 @@ const sites = ['ALL', 'SITE_001', 'SITE_002', 'SITE_003']
 
 export function Header({ title }: { title?: string }) {
   const nav = useNavigate()
-  const { user, actingAs, actAsReturnTo, logout, stopActAs } = useAuthStore()
+  const { user, impersonator, impersonationReturnTo, logout, stopImpersonation } = useAuthStore()
   const { scope, setScope } = useScopeStore()
   const [createOpen, setCreateOpen] = useState(false)
   const createRef = useRef<HTMLDivElement | null>(null)
@@ -146,18 +146,18 @@ export function Header({ title }: { title?: string }) {
       </div>
 
       <div className="inline-flex items-center gap-2 flex-shrink-0">
-        {actingAs ? (
+        {impersonator ? (
           <div className="inline-flex items-center gap-2 rounded-xl border border-[rgba(59,130,246,.25)] bg-[rgba(59,130,246,.12)] px-3 py-2">
-            <span className="text-xs font-semibold text-[#93c5fd]">Acting as</span>
-            <span className="text-xs text-text">{actingAs.name}</span>
+            <span className="text-xs font-semibold text-[#93c5fd]">Impersonating</span>
+            <span className="text-xs text-text">{user?.name}</span>
             <button
               className="bg-panel border border-border-light text-text h-8 w-8 rounded-lg cursor-pointer inline-flex items-center justify-center hover:border-accent hover:text-text transition-colors"
               type="button"
-              aria-label="Stop acting as"
-              title="Stop acting as"
+              aria-label="Stop impersonation"
+              title="Stop impersonation"
               onClick={() => {
-                const back = actAsReturnTo || '/admin/users'
-                stopActAs()
+                const back = impersonationReturnTo || '/admin/users'
+                stopImpersonation()
                 nav(back)
               }}
             >

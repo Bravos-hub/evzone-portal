@@ -123,7 +123,7 @@ export function AdminUserDetailPage() {
   const nav = useNavigate()
   const params = useParams()
   const id = params.id ?? 'U-0001'
-  const { actingAs, startActAs, stopActAs } = useAuthStore()
+  const { impersonator, impersonationReturnTo, startImpersonation, stopImpersonation, user: sessionUser, logout } = useAuthStore()
 
   const [u, setU] = useState<UserRow | null>(null)
   const [busy, setBusy] = useState(false)
@@ -154,10 +154,17 @@ export function AdminUserDetailPage() {
       await apiUpdateUser(u.id, p)
       setU((prev) => (prev ? { ...prev, ...p } : prev))
       if (typeof window !== 'undefined') setAudit(appendAudit(u.id, auditEvent))
-      if (p.status === 'Suspended' && actingAs?.id?.toLowerCase() === u.id.toLowerCase()) {
-        // if we suspended the user being acted-as, stop act-as to avoid confusion
-        stopActAs()
-        setNotice('Stopped acting-as because this user was suspended.')
+      if (p.status === 'Suspended' && sessionUser?.id?.toLowerCase() === u.id.toLowerCase()) {
+        // if we suspended the currently logged-in user (including impersonated user), end the session appropriately
+        if (impersonator) {
+          const back = impersonationReturnTo || `/admin/users/${u.id}`
+          stopImpersonation()
+          nav(back)
+          setNotice('Stopped impersonation because this user was suspended.')
+        } else {
+          logout()
+          nav('/auth/login')
+        }
       }
     } catch (e) {
       setNotice(e instanceof Error ? e.message : 'Action failed')
@@ -180,7 +187,30 @@ export function AdminUserDetailPage() {
   const isPending = u.status === 'Pending'
   const canImpersonate = u.role !== 'EVZONE_ADMIN'
   const mfaLabel = u.mfaEnabled ? 'Enabled' : 'Disabled'
-  const isActingThisUser = actingAs?.id?.toLowerCase() === u.id.toLowerCase()
+  const isImpersonatingThisUser = impersonator ? sessionUser?.id?.toLowerCase() === u.id.toLowerCase() : false
+
+  function roleHome(r: UserRow['role']) {
+    switch (r) {
+      case 'EVZONE_ADMIN':
+        return '/admin'
+      case 'EVZONE_OPERATOR':
+        return '/operator'
+      case 'SITE_OWNER':
+        return '/site-owner'
+      case 'OWNER':
+        return '/owner/charge'
+      case 'STATION_ADMIN':
+        return '/station-admin'
+      case 'MANAGER':
+        return '/manager'
+      case 'ATTENDANT':
+        return '/attendant'
+      case 'TECHNICIAN_ORG':
+        return '/technician/org'
+      case 'TECHNICIAN_PUBLIC':
+        return '/technician/public'
+    }
+  }
 
   function genTempPassword() {
     // readable, demo-safe (mock)
@@ -266,24 +296,26 @@ export function AdminUserDetailPage() {
               <button
                 className="btn secondary"
                 onClick={() => {
-                  if (isActingThisUser) {
-                    stopActAs()
-                    setAudit(appendAudit(u.id, { when: 'now', event: 'Stop act-as', details: 'Stopped acting-as' }))
-                    setNotice('Stopped acting-as.')
+                  if (isImpersonatingThisUser) {
+                    const back = impersonationReturnTo || `/admin/users/${u.id}`
+                    stopImpersonation()
+                    setAudit(appendAudit(u.id, { when: 'now', event: 'Stop impersonation', details: 'Stopped impersonation' }))
+                    nav(back)
+                    setNotice('Stopped impersonation.')
                     return
                   }
-                  // Option A: enable act-as context but stay on /admin/users/:id
-                  startActAs(
+                  // Impersonate by swapping the session, but remember where to return for auditing.
+                  startImpersonation(
                     { id: u.id, name: u.name, role: u.role, ownerCapability: u.role === 'OWNER' ? 'CHARGE' : undefined },
                     window.location.pathname + window.location.search,
                   )
-                  setAudit(appendAudit(u.id, { when: 'now', event: 'Start act-as', details: 'Enabled acting-as context' }))
-                  setNotice(`Now acting as ${u.name}. You remain logged in as admin for auditing.`)
+                  setAudit(appendAudit(u.id, { when: 'now', event: 'Impersonate', details: 'Started impersonation' }))
+                  nav(roleHome(u.role))
                 }}
                 disabled={!canImpersonate || busy}
                 title={!canImpersonate ? 'Cannot impersonate an admin in this demo.' : undefined}
               >
-                {isActingThisUser ? 'Stop acting as' : 'Act as'}
+                {isImpersonatingThisUser ? 'Stop impersonation' : 'Impersonate'}
               </button>
             </>
           )}
