@@ -2,15 +2,17 @@ import { create } from 'zustand'
 import type { OwnerCapability, Role, UserProfile } from './types'
 
 const LS_KEY = 'evzone:session'
-const LS_IMP_KEY = 'evzone:impersonator'
+const LS_ACT_AS_KEY = 'evzone:actAs'
+const LS_ACT_AS_RETURN_KEY = 'evzone:actAs:returnTo'
 
 type AuthState = {
   user: UserProfile | null
-  impersonator: UserProfile | null
+  actingAs: { id: string; name: string; role: Role; ownerCapability?: OwnerCapability } | null
+  actAsReturnTo: string | null
   login: (opts: { role: Role; name?: string; ownerCapability?: OwnerCapability }) => void
   logout: () => void
-  startImpersonation: (target: { id: string; name: string; role: Role; ownerCapability?: OwnerCapability }) => void
-  stopImpersonation: () => void
+  startActAs: (target: { id: string; name: string; role: Role; ownerCapability?: OwnerCapability }, returnTo: string) => void
+  stopActAs: () => void
 }
 
 function load(): UserProfile | null {
@@ -23,11 +25,19 @@ function load(): UserProfile | null {
   }
 }
 
-function loadImpersonator(): UserProfile | null {
+function loadActAs(): AuthState['actingAs'] {
   try {
-    const raw = localStorage.getItem(LS_IMP_KEY)
+    const raw = localStorage.getItem(LS_ACT_AS_KEY)
     if (!raw) return null
-    return JSON.parse(raw) as UserProfile
+    return JSON.parse(raw) as AuthState['actingAs']
+  } catch {
+    return null
+  }
+}
+
+function loadReturnTo(): string | null {
+  try {
+    return localStorage.getItem(LS_ACT_AS_RETURN_KEY)
   } catch {
     return null
   }
@@ -38,14 +48,20 @@ function save(user: UserProfile | null) {
   else localStorage.setItem(LS_KEY, JSON.stringify(user))
 }
 
-function saveImpersonator(user: UserProfile | null) {
-  if (!user) localStorage.removeItem(LS_IMP_KEY)
-  else localStorage.setItem(LS_IMP_KEY, JSON.stringify(user))
+function saveActAs(value: AuthState['actingAs']) {
+  if (!value) localStorage.removeItem(LS_ACT_AS_KEY)
+  else localStorage.setItem(LS_ACT_AS_KEY, JSON.stringify(value))
+}
+
+function saveReturnTo(value: string | null) {
+  if (!value) localStorage.removeItem(LS_ACT_AS_RETURN_KEY)
+  else localStorage.setItem(LS_ACT_AS_RETURN_KEY, value)
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: load(),
-  impersonator: loadImpersonator(),
+  actingAs: loadActAs(),
+  actAsReturnTo: loadReturnTo(),
   login: ({ role, name, ownerCapability }) => {
     const user: UserProfile = {
       id: 'u_' + Math.random().toString(16).slice(2),
@@ -54,36 +70,31 @@ export const useAuthStore = create<AuthState>((set) => ({
       ownerCapability,
     }
     save(user)
-    saveImpersonator(null)
-    set({ user, impersonator: null })
+    saveActAs(null)
+    saveReturnTo(null)
+    set({ user, actingAs: null, actAsReturnTo: null })
   },
   logout: () => {
     save(null)
-    saveImpersonator(null)
-    set({ user: null, impersonator: null })
+    saveActAs(null)
+    saveReturnTo(null)
+    set({ user: null, actingAs: null, actAsReturnTo: null })
   },
-  startImpersonation: (target) => {
+  startActAs: (target, returnTo) => {
     const current = load()
     if (!current) return
-    // only allow admins to impersonate in this demo
+    // only allow admins to act-as in this demo
     if (current.role !== 'EVZONE_ADMIN') return
 
-    const next: UserProfile = {
-      id: target.id,
-      name: target.name,
-      role: target.role,
-      ownerCapability: target.ownerCapability,
-    }
-    saveImpersonator(current)
-    save(next)
-    set({ impersonator: current, user: next })
+    const next = { ...target }
+    saveActAs(next)
+    saveReturnTo(returnTo)
+    set({ actingAs: next, actAsReturnTo: returnTo })
   },
-  stopImpersonation: () => {
-    const imp = loadImpersonator()
-    if (!imp) return
-    saveImpersonator(null)
-    save(imp)
-    set({ impersonator: null, user: imp })
+  stopActAs: () => {
+    saveActAs(null)
+    saveReturnTo(null)
+    set({ actingAs: null, actAsReturnTo: null })
   },
 }))
 
