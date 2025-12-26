@@ -66,49 +66,6 @@ styles.css              Tailwind layers + component primitives (.btn, .card, .ta
 
 ---
 
-## Dashboard Layouts (Wireframes)
-
-These Mermaid diagrams describe **what each dashboard contains and how it is arranged** (high-level UI “shape”), not routing.
-
-### Admin Overview (`/admin`)
-```mermaid
-flowchart TB
-  subgraph A["Admin Overview"]
-    direction TB
-    K["KPI Row (4-up)<br/>Total stations | Incidents 24h | Revenue 30d | SLA"] --> M
-    M["Main Row (2 cols)<br/>Left: World metrics map (choropleth + metric switch)<br/>Right: Region distribution table"] --> W
-    W["Worldwide Alerts<br/>Incidents list | Dispatch queue | Compliance queue"] --> F
-    F["Bottom Row (2 cols)<br/>Left: Financial & settlement (payment exceptions + exports)<br/>Right: Governance & reliability (audit + health + comms)"]
-  end
-```
-
-### Admin Stations (`/admin/stations`)
-```mermaid
-flowchart TB
-  subgraph S["Admin Stations"]
-    direction TB
-    FLT["Filters Bar<br/>Search | Region | Org | Type | Status | Bulk actions"] --> SUM
-    SUM["Summary Chips<br/>Counts: total | online | degraded | offline | incidents | avg health"] --> TOP
-    TOP["Top Row (2 cols)<br/>Left: Station Map (heatmap + dots + tooltip)<br/>Right: Watchlist (degraded | repeat incidents | heartbeat gaps)"] --> TBL
-    TBL["Stations Table<br/>Select | Status pill | Health/Utilization | Row actions"] --> DRW
-    DRW["Station Drawer (right)<br/>Overview | Assets | Incidents | Config + quick actions"]
-  end
-```
-
-### Generic Role Dashboard Pattern (Operator / Owner / Manager / Attendant / Technician)
-```mermaid
-flowchart TB
-  subgraph R["Role Dashboard (Pattern)"]
-    direction TB
-    K2["KPI Row<br/>Role-specific KPIs"] --> G
-    G["Primary Grid<br/>Left: Performance/Activity<br/>Right: Queue/Alerts"] --> B
-    B["Secondary Grid<br/>Tables | Panels | Quick actions"] --> X
-    X["Detail Views<br/>Drawers/modals as needed"]
-  end
-```
-
----
-
 ## Auth & Data (Reference Diagrams)
 
 ### Auth & RBAC Flow
