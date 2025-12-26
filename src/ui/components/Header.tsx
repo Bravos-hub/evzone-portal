@@ -139,28 +139,99 @@ export function Header({ title }: { title?: string }) {
 
       <div className="inline-flex items-center gap-2 flex-shrink-0">
         <button
-          className="bg-panel border border-border-light text-text py-2 px-[10px] rounded-lg cursor-pointer text-xs font-semibold whitespace-nowrap hover:border-accent hover:text-text"
+          className="bg-panel border border-border-light text-text h-10 w-10 rounded-lg cursor-pointer inline-flex items-center justify-center hover:border-accent hover:text-text transition-colors"
           type="button"
+          aria-label="Notifications"
+          title="Notifications"
         >
-          Notifications
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M13.73 21a2 2 0 01-3.46 0"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         </button>
         <button
-          className="bg-panel border border-border-light text-text py-2 px-[10px] rounded-lg cursor-pointer text-xs font-semibold whitespace-nowrap hover:border-accent hover:text-text"
+          className="bg-panel border border-border-light text-text h-10 w-10 rounded-lg cursor-pointer inline-flex items-center justify-center hover:border-accent hover:text-text transition-colors"
           type="button"
+          aria-label="Help"
+          title="Help"
         >
-          Help
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M12 18h.01"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M9.09 9a3 3 0 115.82 1c0 2-3 2-3 4"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         </button>
-        <div className="w-[34px] h-[34px] rounded-full bg-accent text-white grid place-items-center font-bold tracking-[0.3px] flex-shrink-0">
-          {profileInitial}
-        </div>
+
         <button
-          className="bg-accent border border-accent text-white py-[10px] px-[18px] rounded-lg cursor-pointer text-[13px] font-semibold transition-all duration-200 shadow-[0_2px_4px_rgba(59,130,246,.2)] whitespace-nowrap hover:bg-accent-hover hover:border-accent-hover hover:shadow-[0_4px_8px_rgba(59,130,246,.3)] hover:-translate-y-[1px] active:translate-y-0"
+          className="h-10 w-10 rounded-full bg-accent text-white inline-flex items-center justify-center font-bold tracking-[0.3px] flex-shrink-0 shadow-[0_2px_6px_rgba(59,130,246,.35)] hover:bg-accent-hover transition-colors"
+          type="button"
+          aria-label="Profile"
+          title={user?.name ? `Profile: ${user.name}` : 'Profile'}
+        >
+          <span className="text-sm leading-none">{profileInitial}</span>
+        </button>
+        <button
+          className="bg-accent border border-accent text-white h-10 w-10 rounded-lg cursor-pointer inline-flex items-center justify-center transition-all duration-200 shadow-[0_2px_4px_rgba(59,130,246,.2)] hover:bg-accent-hover hover:border-accent-hover hover:shadow-[0_4px_8px_rgba(59,130,246,.3)] hover:-translate-y-[1px] active:translate-y-0"
           onClick={() => {
             logout()
             nav('/auth/login')
           }}
+          aria-label="Logout"
+          title="Logout"
         >
-          Logout
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M16 17l5-5-5-5"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M21 12H9"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         </button>
       </div>
     </header>
