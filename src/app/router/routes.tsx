@@ -24,6 +24,7 @@ import { AdminMQTTPage } from '@/features/admin/mqtt/AdminMQTTPage'
 import { AdminBroadcastsPage } from '@/features/admin/broadcasts/AdminBroadcastsPage'
 import { AdminStatusPage } from '@/features/admin/status/AdminStatusPage'
 import { AdminGlobalConfigPage } from '@/features/admin/settings/AdminGlobalConfigPage'
+import { AdminNotificationsCenterPage } from '@/features/admin/notifications/AdminNotificationsCenterPage'
 import { OperatorDashboard } from '@/features/operator/dashboard/OperatorDashboard'
 import { OperatorSessionsPage } from '@/features/operator/sessions/OperatorSessionsPage'
 import { OperatorStationsPage } from '@/features/operator/stations/OperatorStationsPage'
@@ -89,6 +90,7 @@ export function AppRoutes() {
       <Route path="/admin/broadcasts" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminBroadcastsPage /></RequireRole>} />
       <Route path="/admin/status" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminStatusPage /></RequireRole>} />
       <Route path="/admin/settings" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminGlobalConfigPage /></RequireRole>} />
+      <Route path="/admin/notifications" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminNotificationsCenterPage /></RequireRole>} />
       <Route path="/admin/:section" element={<RequireRole roles={['EVZONE_ADMIN']}><PlaceholderPage /></RequireRole>} />
 
       {/* Operator */}
