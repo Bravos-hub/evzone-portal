@@ -21,6 +21,8 @@ import { AdminOCPIPage } from '@/features/admin/ocpi/AdminOCPIPage'
 import { AdminOCPPQueuePage } from '@/features/admin/ocpp/AdminOCPPQueuePage'
 import { AdminWebhooksLogPage } from '@/features/admin/webhooks/AdminWebhooksLogPage'
 import { AdminMQTTPage } from '@/features/admin/mqtt/AdminMQTTPage'
+import { AdminBroadcastsPage } from '@/features/admin/broadcasts/AdminBroadcastsPage'
+import { AdminStatusPage } from '@/features/admin/status/AdminStatusPage'
 import { OperatorDashboard } from '@/features/operator/dashboard/OperatorDashboard'
 import { OperatorSessionsPage } from '@/features/operator/sessions/OperatorSessionsPage'
 import { OperatorStationsPage } from '@/features/operator/stations/OperatorStationsPage'
@@ -83,6 +85,8 @@ export function AppRoutes() {
       <Route path="/admin/ocpp" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminOCPPQueuePage /></RequireRole>} />
       <Route path="/admin/webhooks" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminWebhooksLogPage /></RequireRole>} />
       <Route path="/admin/mqtt" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminMQTTPage /></RequireRole>} />
+      <Route path="/admin/broadcasts" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminBroadcastsPage /></RequireRole>} />
+      <Route path="/admin/status" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminStatusPage /></RequireRole>} />
       <Route path="/admin/:section" element={<RequireRole roles={['EVZONE_ADMIN']}><PlaceholderPage /></RequireRole>} />
 
       {/* Operator */}
