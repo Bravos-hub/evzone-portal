@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { DashboardLayout } from '@/app/layouts/DashboardLayout'
 import { StatusPill, type ApprovalStatus } from '@/ui/components/StatusPill'
+import { useNavigate } from 'react-router-dom'
+import { upsertNotification } from '@/features/admin/notifications/mockNotifications'
 
 type Region = 'AFRICA' | 'EUROPE' | 'AMERICAS' | 'ASIA' | 'MIDDLE_EAST' | 'ALL'
 type TicketStatus = 'New' | 'Open' | 'WaitingOnCustomer' | 'WaitingOnVendor' | 'Resolved' | 'Closed'
@@ -25,6 +27,32 @@ type Ticket = {
   description: string
   tags: string[]
   slaMinutesRemaining: number
+}
+
+type TicketAttachment = {
+  id: string
+  name: string
+  type: 'Receipt' | 'Image' | 'Log' | 'CSV' | 'Other'
+  url: string
+  addedAt: string
+  addedBy: string
+}
+
+type TicketEvent = {
+  at: string
+  actor: string
+  action: string
+  details: string
+}
+
+type Macro = {
+  id: string
+  title: string
+  category: Category | 'Any'
+  appliesTo: Array<Category | 'Any'>
+  note: string
+  patch?: Partial<Pick<Ticket, 'status' | 'priority' | 'assignedTo'>>
+  tags?: string[]
 }
 
 const regions: Array<{ id: Region; label: string }> = [
@@ -131,6 +159,77 @@ async function apiUpdate(_id: string): Promise<{ ok: true }> {
   return { ok: true }
 }
 
+const TICKETS_KEY = 'mock.support.tickets.v1'
+const ATTACH_KEY_PREFIX = 'mock.support.attach.'
+const EVENTS_KEY_PREFIX = 'mock.support.events.'
+
+function loadTickets(): Ticket[] | null {
+  try {
+    const raw = localStorage.getItem(TICKETS_KEY)
+    if (!raw) return null
+    const data = JSON.parse(raw) as Ticket[]
+    return Array.isArray(data) ? data : null
+  } catch {
+    return null
+  }
+}
+
+function saveTickets(rows: Ticket[]) {
+  try {
+    localStorage.setItem(TICKETS_KEY, JSON.stringify(rows))
+  } catch {}
+}
+
+function attachKey(id: string) {
+  return `${ATTACH_KEY_PREFIX}${id}`
+}
+
+function loadAttachments(id: string): TicketAttachment[] {
+  try {
+    const raw = localStorage.getItem(attachKey(id))
+    if (raw) return JSON.parse(raw) as TicketAttachment[]
+  } catch {}
+  // sensible per-category defaults
+  if (id === 'TCK-10034') {
+    return [
+      { id: 'A-101', name: 'momo_tx_99123.jpg', type: 'Image', url: '#', addedAt: '2025-12-24 09:12', addedBy: 'Customer' },
+      { id: 'A-102', name: 'payment_ref.txt', type: 'Other', url: '#', addedAt: '2025-12-24 09:13', addedBy: 'Customer' },
+    ]
+  }
+  if (id === 'TCK-10021') {
+    return [{ id: 'A-201', name: 'ocpp_snapshot_ST-0001.csv', type: 'CSV', url: '#', addedAt: '2025-12-24 08:55', addedBy: 'Operator EA' }]
+  }
+  return []
+}
+
+function saveAttachments(id: string, items: TicketAttachment[]) {
+  try {
+    localStorage.setItem(attachKey(id), JSON.stringify(items))
+  } catch {}
+}
+
+function eventsKey(id: string) {
+  return `${EVENTS_KEY_PREFIX}${id}`
+}
+
+function loadEvents(id: string): TicketEvent[] {
+  try {
+    const raw = localStorage.getItem(eventsKey(id))
+    if (raw) return JSON.parse(raw) as TicketEvent[]
+  } catch {}
+  return []
+}
+
+function appendEvent(id: string, ev: TicketEvent) {
+  const list = loadEvents(id)
+  const next = [ev, ...list].slice(0, 40)
+  try {
+    localStorage.setItem(eventsKey(id), JSON.stringify(next))
+  } catch {}
+  window.dispatchEvent(new CustomEvent('evzone:mockSupport'))
+  return next
+}
+
 type DrawerTab = 'timeline' | 'details' | 'links' | 'sla'
 type ComposeModal = {
   open: boolean
@@ -144,6 +243,7 @@ type ComposeModal = {
 }
 
 export function AdminSupportDeskPage() {
+  const nav = useNavigate()
   const [rows, setRows] = useState<Ticket[]>([])
   const [q, setQ] = useState('')
   const [region, setRegion] = useState<Region>('ALL')
@@ -155,6 +255,9 @@ export function AdminSupportDeskPage() {
   const [tab, setTab] = useState<DrawerTab>('timeline')
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
+  const [toast, setToast] = useState('')
+  const [supportTick, setSupportTick] = useState(0)
+  const [macroRun, setMacroRun] = useState<{ open: boolean; macroId: string; ticketId: string }>({ open: false, macroId: '', ticketId: '' })
   const [compose, setCompose] = useState<ComposeModal>({
     open: false,
     subject: '',
@@ -167,8 +270,36 @@ export function AdminSupportDeskPage() {
   })
 
   useEffect(() => {
-    void (async () => setRows(await apiList()))()
+    const cached = typeof window !== 'undefined' ? loadTickets() : null
+    if (cached && cached.length) {
+      setRows(cached)
+      return
+    }
+    void (async () => {
+      const data = await apiList()
+      setRows(data)
+      if (typeof window !== 'undefined') saveTickets(data)
+    })()
   }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const on = () => setSupportTick((t) => t + 1)
+    window.addEventListener('evzone:mockSupport', on as EventListener)
+    return () => window.removeEventListener('evzone:mockSupport', on as EventListener)
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!rows.length) return
+    saveTickets(rows)
+  }, [rows])
+
+  useEffect(() => {
+    if (!toast) return
+    const t = window.setTimeout(() => setToast(''), 2400)
+    return () => window.clearTimeout(t)
+  }, [toast])
 
   const filtered = useMemo(() => {
     return rows.filter((t) => {
@@ -195,6 +326,59 @@ export function AdminSupportDeskPage() {
 
   const openRow = rows.find((t) => t.id === openId) ?? null
 
+  const macros: Macro[] = useMemo(
+    () => [
+      {
+        id: 'MAC-LOGS',
+        title: 'Request logs + diagnostics',
+        category: 'Any',
+        appliesTo: ['Charging', 'Swapping', 'Hardware', 'Any'],
+        note:
+          'Hi — please share the following:\n- Station ID + timestamp\n- Device model/app version\n- Screenshot/video of error\nWe will also pull OCPP/locker diagnostics on our side.\n\nThanks,\nEVzone Support',
+        patch: { status: 'WaitingOnCustomer' },
+        tags: ['request-info'],
+      },
+      {
+        id: 'MAC-PAYREF',
+        title: 'Request payment reference',
+        category: 'Payments',
+        appliesTo: ['Payments'],
+        note:
+          'Please share your payment reference (provider txn id), amount, and time of payment.\nIf possible, attach a screenshot of the provider confirmation message.\n\nThanks,\nEVzone Support',
+        patch: { status: 'WaitingOnCustomer' },
+        tags: ['payment', 'reference'],
+      },
+      {
+        id: 'MAC-ESC-OPS',
+        title: 'Escalate to operator (handoff)',
+        category: 'Any',
+        appliesTo: ['Any'],
+        note:
+          'Escalation requested: please investigate and share findings.\nInclude station/region context and any recent config changes.\n\n— Support Desk',
+        patch: { assignedTo: 'Operator EA', status: 'Open' },
+        tags: ['escalation'],
+      },
+      {
+        id: 'MAC-REBOOT',
+        title: 'Remote reboot request',
+        category: 'Charging',
+        appliesTo: ['Charging'],
+        note: 'We are initiating a remote reboot + config refresh. Expect brief downtime (~2–3 mins). We will update you shortly.',
+        patch: { status: 'Open' },
+        tags: ['reboot', 'ocpp'],
+      },
+    ],
+    [],
+  )
+
+  const queues = useMemo(() => {
+    const unassigned = rows.filter((t) => t.assignedTo === 'Unassigned' && (t.priority === 'P1' || t.priority === 'P2') && t.status !== 'Closed')
+    const waitingCustomer = rows.filter((t) => t.status === 'WaitingOnCustomer')
+    const waitingVendor = rows.filter((t) => t.status === 'WaitingOnVendor')
+    const breached = rows.filter((t) => t.slaMinutesRemaining <= 0 && (t.status === 'Open' || t.status === 'New'))
+    return { unassigned, waitingCustomer, waitingVendor, breached }
+  }, [rows])
+
   async function saveTicket(patch: Partial<Ticket>) {
     if (!openRow) return
     setBusy(true)
@@ -202,11 +386,52 @@ export function AdminSupportDeskPage() {
     try {
       await apiUpdate(openRow.id)
       setRows((list) => list.map((t) => (t.id === openRow.id ? { ...t, ...patch, updatedAt: nowStamp() } : t)))
+      appendEvent(openRow.id, { at: 'now', actor: 'Support Desk', action: 'Updated ticket', details: Object.keys(patch).join(', ') })
     } catch (e) {
       setNotice(e instanceof Error ? e.message : 'Save failed')
     } finally {
       setBusy(false)
     }
+  }
+
+  function applyMacro(m: Macro, ticketId: string) {
+    const t = rows.find((x) => x.id === ticketId)
+    if (!t) return
+    const patch: Partial<Ticket> = {
+      ...m.patch,
+      tags: Array.from(new Set([...(t.tags ?? []), ...(m.tags ?? [])])),
+      lastReply: 'Agent',
+      description: `${t.description}\n\n---\nMacro (${m.id}):\n${m.note}`,
+    }
+    setRows((list) => list.map((x) => (x.id === ticketId ? { ...x, ...patch, updatedAt: nowStamp() } : x)))
+    appendEvent(ticketId, { at: 'now', actor: 'Support Desk', action: 'Macro applied', details: `${m.id} • ${m.title}` })
+    setToast(`Applied macro: ${m.title}`)
+  }
+
+  function escalate(kind: 'incident' | 'dispatch' | 'notify', t: Ticket) {
+    const msg =
+      kind === 'incident'
+        ? `Escalated to incident management for ${t.category} (${t.priority}).`
+        : kind === 'dispatch'
+          ? `Dispatch requested for station ${t.stationId} (${t.category}).`
+          : `Operator notified for ${t.org} / ${t.stationId}.`
+    appendEvent(t.id, { at: 'now', actor: 'Support Desk', action: 'Escalation', details: msg })
+    upsertNotification({
+      id: `NTF-${Math.floor(10000 + Math.random() * 90000)}`,
+      when: 'now',
+      kind: kind === 'incident' ? 'Incident' : 'Ops',
+      severity: t.priority === 'P1' ? 'High' : 'Medium',
+      title: kind === 'incident' ? `Escalation: ${t.id} → Incident` : `Escalation: ${t.id}`,
+      body: `${t.subject} • ${msg}`,
+      status: 'Unread',
+      source: 'support-desk',
+      region: 'GLOBAL',
+      tags: ['support', 'escalation'],
+      link: kind === 'incident' ? '/admin/incidents' : kind === 'dispatch' ? '/admin/dispatches' : '/admin/health',
+    })
+    setToast(msg)
+    if (kind === 'incident') nav('/admin/incidents')
+    if (kind === 'dispatch') nav('/admin/dispatches')
   }
 
   function resetFilters() {
@@ -305,19 +530,68 @@ export function AdminSupportDeskPage() {
 
       <div className="row2">
         <div className="card">
-          <div className="card-title">Queues (placeholder)</div>
+          <div className="card-title">Queues</div>
           <div className="grid">
-            <div className="panel">Unassigned + P1/P2</div>
-            <div className="panel">Waiting on customer</div>
-            <div className="panel">Waiting on vendor</div>
+            <div className="panel flex items-center justify-between gap-3">
+              <div>
+                <div className="text-sm font-extrabold text-text">Unassigned (P1/P2)</div>
+                <div className="text-xs text-muted">{queues.unassigned.length} tickets • prioritize by SLA</div>
+              </div>
+              <button
+                className="btn secondary"
+                disabled={queues.unassigned.length === 0}
+                onClick={() => {
+                  const next = queues.unassigned[0]
+                  if (!next) return
+                  setOpenId(next.id)
+                  setTab('timeline')
+                }}
+              >
+                Open next
+              </button>
+            </div>
+            <div className="panel flex items-center justify-between gap-3">
+              <div>
+                <div className="text-sm font-extrabold text-text">Waiting on customer</div>
+                <div className="text-xs text-muted">{queues.waitingCustomer.length} tickets • pending info</div>
+              </div>
+              <span className={`pill ${queues.waitingCustomer.length ? 'pending' : 'approved'}`}>{queues.waitingCustomer.length ? 'Active' : 'Clear'}</span>
+            </div>
+            <div className="panel flex items-center justify-between gap-3">
+              <div>
+                <div className="text-sm font-extrabold text-text">Waiting on vendor</div>
+                <div className="text-xs text-muted">{queues.waitingVendor.length} tickets • firmware/provider</div>
+              </div>
+              <span className={`pill ${queues.waitingVendor.length ? 'sendback' : 'approved'}`}>{queues.waitingVendor.length ? 'Active' : 'Clear'}</span>
+            </div>
+            <div className="panel flex items-center justify-between gap-3">
+              <div>
+                <div className="text-sm font-extrabold text-text">SLA breached</div>
+                <div className="text-xs text-muted">{queues.breached.length} tickets • needs escalation</div>
+              </div>
+              <span className={`pill ${queues.breached.length ? 'rejected' : 'approved'}`}>{queues.breached.length ? 'Urgent' : 'OK'}</span>
+            </div>
           </div>
         </div>
         <div className="card">
-          <div className="card-title">Macros (placeholder)</div>
+          <div className="card-title">Macros</div>
           <div className="grid">
-            <div className="panel">Request logs / Request payment reference / Escalate to operator</div>
-            <div className="panel">Station reboot request / Charger diagnostics</div>
-            <div className="panel">Swap locker firmware escalation</div>
+            {macros.map((m) => (
+              <div key={m.id} className="panel flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-sm font-extrabold text-text">
+                    {m.title} <span className="text-xs text-muted font-semibold">• {m.id}</span>
+                  </div>
+                  <div className="text-xs text-muted">Applies to: {m.appliesTo.join(', ')}</div>
+                </div>
+                <button
+                  className="btn secondary"
+                  onClick={() => setMacroRun({ open: true, macroId: m.id, ticketId: openRow?.id ?? '' })}
+                >
+                  Apply
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -406,6 +680,68 @@ export function AdminSupportDeskPage() {
 
       {openRow ? <TicketDrawer row={openRow} tab={tab} setTab={setTab} busy={busy} onClose={() => setOpenId(null)} onSave={saveTicket} /> : null}
 
+      {toast ? (
+        <div className="fixed bottom-4 right-4 z-[90] w-[min(420px,92vw)]">
+          <div className="card" style={{ borderColor: 'rgba(122,162,255,.35)' }}>
+            <div className="text-sm font-extrabold text-text">Action</div>
+            <div className="small">{toast}</div>
+          </div>
+        </div>
+      ) : null}
+
+      {macroRun.open ? (
+        <div className="fixed inset-0 z-[90] grid place-items-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setMacroRun({ open: false, macroId: '', ticketId: '' })} />
+          <div className="relative w-[min(860px,94vw)] rounded-2xl border border-border-light bg-panel p-5 shadow-[0_20px_60px_rgba(0,0,0,.55)]">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div>
+                <div className="text-sm font-extrabold text-text">Apply macro</div>
+                <div className="text-xs text-muted">Choose a ticket to apply the macro to.</div>
+              </div>
+              <button className="btn secondary" onClick={() => setMacroRun({ open: false, macroId: '', ticketId: '' })}>
+                Close
+              </button>
+            </div>
+            <div className="h-3" />
+            <div className="grid gap-3">
+              <label>
+                <div className="small">Ticket</div>
+                <select className="select" value={macroRun.ticketId} onChange={(e) => setMacroRun((m) => ({ ...m, ticketId: e.target.value }))}>
+                  <option value="">Select ticket…</option>
+                  {filtered.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.id} • {t.subject}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="panel">
+                <div className="small">
+                  Macro: <strong>{macroRun.macroId}</strong>
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-2 flex-wrap">
+                <button className="btn secondary" onClick={() => setMacroRun({ open: false, macroId: '', ticketId: '' })}>
+                  Cancel
+                </button>
+                <button
+                  className="btn"
+                  disabled={!macroRun.ticketId}
+                  onClick={() => {
+                    const macro = macros.find((x) => x.id === macroRun.macroId)
+                    if (!macro) return
+                    applyMacro(macro, macroRun.ticketId)
+                    setMacroRun({ open: false, macroId: '', ticketId: '' })
+                  }}
+                >
+                  Apply macro
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {compose.open ? (
         <NewTicketModal
           model={compose}
@@ -493,6 +829,11 @@ function TicketDrawer({
       description: note ? row.description + '\n\n---\nAgent note: ' + note : row.description,
     })
   }
+
+  const attachments = useMemo(() => loadAttachments(row.id), [row.id])
+  const events = useMemo(() => loadEvents(row.id), [row.id, row.updatedAt])
+  const slaTarget = priority === 'P1' ? 60 : priority === 'P2' ? 240 : priority === 'P3' ? 720 : 1440
+  const slaState = row.slaMinutesRemaining <= 0 ? 'Breached' : row.slaMinutesRemaining <= 30 ? 'At risk' : 'On track'
 
   return (
     <>
@@ -608,7 +949,74 @@ function TicketDrawer({
                     ))}
                   </select>
                 </label>
-                <div className="panel">Escalation buttons: create incident, dispatch technician, notify operator (placeholders).</div>
+                <div className="panel">
+                  <div className="text-sm font-extrabold text-text mb-2">Escalations</div>
+                  <div className="grid gap-2">
+                    <button
+                      className="btn secondary"
+                      onClick={() => {
+                        appendEvent(row.id, { at: 'now', actor: assignedTo === 'Unassigned' ? 'Support Desk' : assignedTo, action: 'Escalation', details: 'Created incident (mock)' })
+                        upsertNotification({
+                          id: `NTF-${Math.floor(10000 + Math.random() * 90000)}`,
+                          when: 'now',
+                          kind: 'Incident',
+                          severity: priority === 'P1' ? 'High' : 'Medium',
+                          title: `Support escalation: ${row.id} → Incident`,
+                          body: `${row.subject} • ${row.category} • ${row.stationId}`,
+                          status: 'Unread',
+                          source: 'support-desk',
+                          region: 'GLOBAL',
+                          tags: ['support', 'incident'],
+                          link: '/admin/incidents',
+                        })
+                      }}
+                    >
+                      Create incident
+                    </button>
+                    <button
+                      className="btn secondary"
+                      onClick={() => {
+                        appendEvent(row.id, { at: 'now', actor: assignedTo === 'Unassigned' ? 'Support Desk' : assignedTo, action: 'Escalation', details: 'Dispatch requested (mock)' })
+                        upsertNotification({
+                          id: `NTF-${Math.floor(10000 + Math.random() * 90000)}`,
+                          when: 'now',
+                          kind: 'Ops',
+                          severity: priority === 'P1' ? 'High' : 'Medium',
+                          title: `Dispatch requested: ${row.id}`,
+                          body: `${row.subject} • Station ${row.stationId}`,
+                          status: 'Unread',
+                          source: 'support-desk',
+                          region: 'GLOBAL',
+                          tags: ['support', 'dispatch'],
+                          link: '/admin/dispatches',
+                        })
+                      }}
+                    >
+                      Dispatch technician
+                    </button>
+                    <button
+                      className="btn secondary"
+                      onClick={() => {
+                        appendEvent(row.id, { at: 'now', actor: assignedTo === 'Unassigned' ? 'Support Desk' : assignedTo, action: 'Escalation', details: 'Operator notified (mock)' })
+                        upsertNotification({
+                          id: `NTF-${Math.floor(10000 + Math.random() * 90000)}`,
+                          when: 'now',
+                          kind: 'Ops',
+                          severity: 'Medium',
+                          title: `Operator notified: ${row.id}`,
+                          body: `${row.org} • ${row.stationId} • ${row.category}`,
+                          status: 'Unread',
+                          source: 'support-desk',
+                          region: 'GLOBAL',
+                          tags: ['support', 'ops'],
+                          link: '/admin/notifications',
+                        })
+                      }}
+                    >
+                      Notify operator
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -639,28 +1047,149 @@ function TicketDrawer({
         ) : tab === 'links' ? (
           <div className="grid">
             <div className="card" style={{ background: 'rgba(255,255,255,.04)' }}>
-              <div className="card-title">Related entities (placeholders)</div>
+              <div className="card-title">Related entities</div>
               <div className="grid">
-                <div className="panel">Station detail deep link</div>
-                <div className="panel">User profile deep link</div>
-                <div className="panel">Payment transaction deep link</div>
+                <div className="panel flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-extrabold text-text">Station</div>
+                    <div className="text-xs text-muted">{row.stationId}</div>
+                  </div>
+                  <a className="btn secondary" href="/admin/stations">
+                    Open stations
+                  </a>
+                </div>
+                <div className="panel flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-extrabold text-text">User / requester</div>
+                    <div className="text-xs text-muted">{row.requesterEmail}</div>
+                  </div>
+                  <a className="btn secondary" href="/admin/users">
+                    Open users
+                  </a>
+                </div>
+                <div className="panel flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-extrabold text-text">Billing / transactions</div>
+                    <div className="text-xs text-muted">Search by email/org/tx reference</div>
+                  </div>
+                  <a className="btn secondary" href="/admin/billing">
+                    Open billing
+                  </a>
+                </div>
+                <div className="panel flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-extrabold text-text">Refunds & disputes</div>
+                    <div className="text-xs text-muted">Customer exceptions & chargebacks</div>
+                  </div>
+                  <a className="btn secondary" href="/admin/disputes">
+                    Open disputes
+                  </a>
+                </div>
               </div>
             </div>
             <div className="card" style={{ background: 'rgba(255,255,255,.04)' }}>
-              <div className="card-title">Attachments (placeholder)</div>
-              <div className="panel">Uploads: images, receipts, logs, CSV exports.</div>
+              <div className="card-title">Attachments</div>
+              {attachments.length === 0 ? (
+                <div className="panel">No attachments yet. Use macros to request receipts/logs or attach exports.</div>
+              ) : (
+                <div className="grid">
+                  {attachments.map((a) => (
+                    <div key={a.id} className="panel">
+                      <div style={{ fontWeight: 800 }}>{a.name}</div>
+                      <div className="small">
+                        {a.type} • {a.addedAt} • {a.addedBy}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div style={{ height: 10 }} />
+              <button
+                className="btn secondary"
+                onClick={() => {
+                  const next: TicketAttachment = {
+                    id: `A-${Math.floor(100 + Math.random() * 900)}`,
+                    name: `export_${row.id}.csv`,
+                    type: 'CSV',
+                    url: '#',
+                    addedAt: 'now',
+                    addedBy: 'Support Desk',
+                  }
+                  const list = loadAttachments(row.id)
+                  const merged = [next, ...list].slice(0, 12)
+                  saveAttachments(row.id, merged)
+                  appendEvent(row.id, { at: 'now', actor: 'Support Desk', action: 'Attachment added', details: next.name })
+                }}
+              >
+                Attach export (mock)
+              </button>
             </div>
           </div>
         ) : (
           <div className="grid">
             <div className="card" style={{ background: 'rgba(255,255,255,.04)' }}>
-              <div className="card-title">SLA & policy (placeholder)</div>
-              <div className="panel">Define response/resolve targets per priority, business hours, regional holidays.</div>
+              <div className="card-title">SLA & policy</div>
+              <div className="grid">
+                <div className="panel">
+                  Target (by priority): <strong>{slaTarget}m</strong> • Remaining: <strong>{row.slaMinutesRemaining}m</strong> • State:{' '}
+                  <strong>{slaState}</strong>
+                </div>
+                <div className="panel">
+                  Policy: P1 requires response within 15m and continuous updates; P2 within 60m; P3 within 4h; P4 next business day (mock).
+                </div>
+                <div className="panel">
+                  Suggested: {priority === 'P1' ? 'Escalate + create incident if systemic.' : priority === 'P2' ? 'Assign owner + request logs.' : 'Collect details + route to correct queue.'}
+                </div>
+                <div className="split">
+                  <button
+                    className="btn secondary"
+                    onClick={() =>
+                      onSave({
+                        status: 'WaitingOnCustomer',
+                        slaMinutesRemaining: Math.max(0, row.slaMinutesRemaining),
+                        lastReply: 'Agent',
+                        description: `${row.description}\n\n---\nSLA action: requested info; paused customer clock (mock).`,
+                      })
+                    }
+                  >
+                    Request info (SLA pause)
+                  </button>
+                  <button
+                    className="btn secondary"
+                    onClick={() =>
+                      onSave({
+                        slaMinutesRemaining: row.slaMinutesRemaining + 30,
+                        description: `${row.description}\n\n---\nSLA action: extended +30m (mock).`,
+                      })
+                    }
+                  >
+                    Extend +30m
+                  </button>
+                </div>
+              </div>
             </div>
             <div className="card" style={{ background: 'rgba(255,255,255,.04)' }}>
               <div className="card-title">Countdown</div>
               <div className="panel">
                 {row.slaMinutesRemaining <= 0 ? <span className="pill rejected">Breached</span> : <span className="pill pending">{row.slaMinutesRemaining} minutes remaining</span>}
+              </div>
+              <div style={{ height: 10 }} />
+              <div className="panel">
+                <div className="text-sm font-extrabold text-text mb-2">Recent activity</div>
+                {events.length === 0 ? (
+                  <div className="text-xs text-muted">No activity recorded yet.</div>
+                ) : (
+                  <div className="grid gap-1 text-xs text-muted">
+                    {events.slice(0, 6).map((e, idx) => (
+                      <div key={e.at + e.action + idx} className="flex items-center justify-between">
+                        <span>
+                          {e.action} — {e.details}
+                        </span>
+                        <span className="text-text-secondary">{e.at}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
