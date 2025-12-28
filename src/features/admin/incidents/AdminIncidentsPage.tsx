@@ -108,6 +108,25 @@ async function apiUpdate(_id: string): Promise<{ ok: true }> {
   return { ok: true }
 }
 
+function fmtPct(v: number) {
+  return `${Math.round(v * 100)}%`
+}
+
+function fmtInt(v: number | undefined) {
+  if (typeof v !== 'number' || Number.isNaN(v)) return '—'
+  return v.toLocaleString()
+}
+
+function pillForCommsStatus(s: CommsStatus) {
+  const cls = s === 'Sent' ? 'approved' : s === 'Scheduled' ? 'sendback' : 'pending'
+  return <span className={`pill ${cls}`}>{s}</span>
+}
+
+function pillForMode(m: PlaybookMode) {
+  const cls = m === 'Automated' ? 'approved' : 'pending'
+  return <span className={`pill ${cls}`}>{m}</span>
+}
+
 type DrawerTab = 'timeline' | 'scope' | 'actions' | 'comms'
 type CreateModal = {
   open: boolean
@@ -122,6 +141,36 @@ type CreateModal = {
   summary: string
 }
 
+type PlaybookMode = 'Automated' | 'Checklist'
+type Playbook = {
+  id: string
+  domain: Impact
+  title: string
+  summary: string
+  mode: PlaybookMode
+  owner: string
+  slaMins: number
+  lastRunAt: string
+  avgMins: number
+  successRate: number // 0..1
+  tags: string[]
+}
+
+type CommsStatus = 'Draft' | 'Scheduled' | 'Sent'
+type CommsChannel = 'Status page' | 'Email' | 'SMS' | 'Ops'
+type CommsItem = {
+  id: string
+  title: string
+  channel: CommsChannel
+  audience: string
+  status: CommsStatus
+  scheduledFor?: string
+  lastSentAt?: string
+  recipients?: number
+  openRate?: number // 0..1
+  owner: string
+}
+
 export function AdminIncidentsPage() {
   const [rows, setRows] = useState<Incident[]>([])
   const [q, setQ] = useState('')
@@ -134,6 +183,7 @@ export function AdminIncidentsPage() {
   const [tab, setTab] = useState<DrawerTab>('timeline')
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
+  const [toast, setToast] = useState<string>('')
   const [create, setCreate] = useState<CreateModal>({
     open: false,
     title: '',
@@ -150,6 +200,112 @@ export function AdminIncidentsPage() {
   useEffect(() => {
     void (async () => setRows(await apiList()))()
   }, [])
+
+  useEffect(() => {
+    if (!toast) return
+    const t = window.setTimeout(() => setToast(''), 2600)
+    return () => window.clearTimeout(t)
+  }, [toast])
+
+  const playbooks: Playbook[] = useMemo(
+    () => [
+      {
+        id: 'PB-PAY-001',
+        domain: 'Payments',
+        title: 'Webhook delay triage + replay',
+        summary: 'Detect queue backlog, replay failed webhooks, reconcile ledger deltas.',
+        mode: 'Automated',
+        owner: 'SRE Oncall',
+        slaMins: 15,
+        lastRunAt: 'Today 09:44',
+        avgMins: 7,
+        successRate: 0.92,
+        tags: ['replay', 'reconciliation', 'rate-limit'],
+      },
+      {
+        id: 'PB-CHG-014',
+        domain: 'Charging',
+        title: 'OCPP session “Starting” stuck fix',
+        summary: 'Pull charger logs, remote reset, rollout config override to fleet subset.',
+        mode: 'Checklist',
+        owner: 'Operator EA',
+        slaMins: 30,
+        lastRunAt: 'Yesterday 21:06',
+        avgMins: 18,
+        successRate: 0.84,
+        tags: ['ocpp', 'remote-reset', 'config'],
+      },
+      {
+        id: 'PB-SWP-007',
+        domain: 'Swapping',
+        title: 'Locker bay override + firmware rollback',
+        summary: 'Disable affected bay, apply rollback, manual override checklist for field tech.',
+        mode: 'Checklist',
+        owner: 'Support L2',
+        slaMins: 45,
+        lastRunAt: 'Today 07:12',
+        avgMins: 22,
+        successRate: 0.78,
+        tags: ['firmware', 'bay-disable', 'override'],
+      },
+      {
+        id: 'PB-AUTH-003',
+        domain: 'Auth',
+        title: 'Login spike investigation',
+        summary: 'Check IdP latency, throttle abusive IPs, validate OTP provider health.',
+        mode: 'Automated',
+        owner: 'SRE Oncall',
+        slaMins: 20,
+        lastRunAt: '2025-12-22 18:40',
+        avgMins: 9,
+        successRate: 0.89,
+        tags: ['idp', 'otp', 'rate-limit'],
+      },
+    ],
+    [],
+  )
+
+  const [comms, setComms] = useState<CommsItem[]>([
+    {
+      id: 'COM-001',
+      title: 'Public incident update — payments delays',
+      channel: 'Status page',
+      audience: 'All users',
+      status: 'Scheduled',
+      scheduledFor: 'Today 10:10',
+      owner: 'Delta (Admin)',
+    },
+    {
+      id: 'COM-002',
+      title: 'Ops channel notify — charging mitigation steps',
+      channel: 'Ops',
+      audience: '#ops-oncall',
+      status: 'Sent',
+      lastSentAt: 'Today 09:03',
+      owner: 'Operator EA',
+    },
+    {
+      id: 'COM-003',
+      title: 'Customer email — service advisory (EA)',
+      channel: 'Email',
+      audience: 'Region: AFRICA • Operators',
+      status: 'Draft',
+      recipients: 184,
+      openRate: 0.61,
+      owner: 'Support L2',
+    },
+    {
+      id: 'COM-004',
+      title: 'SMS advisory — swap bay interruptions',
+      channel: 'SMS',
+      audience: 'Station admins (AFRICA)',
+      status: 'Sent',
+      lastSentAt: 'Yesterday 20:14',
+      recipients: 96,
+      openRate: 0.88,
+      owner: 'Support L2',
+    },
+  ])
 
   const filtered = useMemo(() => {
     return rows.filter((i) => {
@@ -197,6 +353,27 @@ export function AdminIncidentsPage() {
     setSeverity('All')
     setImpact('All')
     setCommander('All')
+  }
+
+  function runPlaybook(pb: Playbook) {
+    const active = rows.find((x) => x.status !== 'Resolved') ?? null
+    setToast(`Queued: ${pb.title}${active ? ` • linked to ${active.id}` : ''}`)
+  }
+
+  function sendComms(id: string) {
+    setComms((list) =>
+      list.map((c) =>
+        c.id === id
+          ? {
+              ...c,
+              status: 'Sent',
+              lastSentAt: 'now',
+              scheduledFor: undefined,
+            }
+          : c,
+      ),
+    )
+    setToast('Comms sent (mock).')
   }
 
   return (
@@ -281,19 +458,96 @@ export function AdminIncidentsPage() {
 
       <div className="row2">
         <div className="card">
-          <div className="card-title">Playbooks (placeholder)</div>
+          <div className="card-title">Playbooks</div>
           <div className="grid">
-            <div className="panel">Payments: webhook delays, retry queues, reconciliation.</div>
-            <div className="panel">Charging: OCPP logs, remote reset, config rollout.</div>
-            <div className="panel">Swapping: locker firmware, bay disable, manual override.</div>
+            {playbooks.map((p) => (
+              <div key={p.id} className="panel">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-extrabold text-text">
+                      {p.title}{' '}
+                      <span className="text-xs text-muted font-semibold">
+                        • {p.domain} • {p.id}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted">{p.summary}</div>
+                    <div className="mt-2 flex flex-wrap gap-2 items-center">
+                      {pillForMode(p.mode)}
+                      <span className="pill pending">SLA {p.slaMins}m</span>
+                      <span className="pill approved">Success {fmtPct(p.successRate)}</span>
+                      <span className="pill pending">Avg {p.avgMins}m</span>
+                    </div>
+                    <div className="mt-2 text-xs text-muted">
+                      Owner: <span className="text-text font-semibold">{p.owner}</span> • Last run:{' '}
+                      <span className="text-text font-semibold">{p.lastRunAt}</span>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {p.tags.map((t) => (
+                        <span key={t} className="pill pending">
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap justify-end">
+                    <button className="btn secondary" onClick={() => setToast(`Opened runbook: ${p.id} (mock)`)}>
+                      Open
+                    </button>
+                    <button className="btn" onClick={() => runPlaybook(p)}>
+                      Run
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
         <div className="card">
-          <div className="card-title">Comms (placeholder)</div>
+          <div className="card-title">Comms</div>
           <div className="grid">
-            <div className="panel">Status page updates (public).</div>
-            <div className="panel">Internal ops channel notifications.</div>
-            <div className="panel">Customer-facing email templates.</div>
+            {comms.map((c) => (
+              <div key={c.id} className="panel">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-extrabold text-text">
+                      {c.title}{' '}
+                      <span className="text-xs text-muted font-semibold">
+                        • {c.channel} • {c.id}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2 items-center">
+                      {pillForCommsStatus(c.status)}
+                      <span className="pill pending">Audience: {c.audience}</span>
+                      {typeof c.recipients === 'number' ? <span className="pill pending">Recipients: {fmtInt(c.recipients)}</span> : null}
+                      {typeof c.openRate === 'number' ? <span className="pill approved">Open: {fmtPct(c.openRate)}</span> : null}
+                    </div>
+                    <div className="mt-2 text-xs text-muted">
+                      Owner: <span className="text-text font-semibold">{c.owner}</span>
+                      {c.status === 'Scheduled' && c.scheduledFor ? (
+                        <>
+                          {' '}
+                          • Scheduled: <span className="text-text font-semibold">{c.scheduledFor}</span>
+                        </>
+                      ) : null}
+                      {c.status === 'Sent' && c.lastSentAt ? (
+                        <>
+                          {' '}
+                          • Sent: <span className="text-text font-semibold">{c.lastSentAt}</span>
+                        </>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap justify-end">
+                    <button className="btn secondary" onClick={() => setToast(`Previewed: ${c.id} (mock)`)}>
+                      Preview
+                    </button>
+                    <button className="btn" disabled={c.status === 'Sent'} onClick={() => sendComms(c.id)}>
+                      {c.status === 'Sent' ? 'Sent' : c.status === 'Scheduled' ? 'Send now' : 'Send'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -370,6 +624,15 @@ export function AdminIncidentsPage() {
         <div className="card" style={{ marginTop: 12, borderColor: 'rgba(255,107,107,.25)' }}>
           <div style={{ color: 'var(--danger)', fontWeight: 900 }}>Error</div>
           <div className="small">{notice}</div>
+        </div>
+      ) : null}
+
+      {toast ? (
+        <div className="fixed bottom-4 right-4 z-[90] w-[min(420px,92vw)]">
+          <div className="card" style={{ borderColor: 'rgba(122,162,255,.35)' }}>
+            <div className="text-sm font-extrabold text-text">Action queued</div>
+            <div className="small">{toast}</div>
+          </div>
         </div>
       ) : null}
 
