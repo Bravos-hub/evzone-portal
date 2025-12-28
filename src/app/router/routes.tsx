@@ -27,6 +27,7 @@ import { AdminGlobalConfigPage } from '@/features/admin/settings/AdminGlobalConf
 import { AdminNotificationsCenterPage } from '@/features/admin/notifications/AdminNotificationsCenterPage'
 import { AdminDisputesRefundsPage } from '@/features/admin/disputes/AdminDisputesRefundsPage'
 import { AdminKycCompliancePage } from '@/features/admin/kyc/AdminKycCompliancePage'
+import { AdminIntegrationsPage } from '@/features/admin/integrations/AdminIntegrationsPage'
 import { OperatorDashboard } from '@/features/operator/dashboard/OperatorDashboard'
 import { OperatorSessionsPage } from '@/features/operator/sessions/OperatorSessionsPage'
 import { OperatorStationsPage } from '@/features/operator/stations/OperatorStationsPage'
@@ -95,6 +96,7 @@ export function AppRoutes() {
       <Route path="/admin/notifications" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminNotificationsCenterPage /></RequireRole>} />
       <Route path="/admin/disputes" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminDisputesRefundsPage /></RequireRole>} />
       <Route path="/admin/kyc" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminKycCompliancePage /></RequireRole>} />
+      <Route path="/admin/integrations" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminIntegrationsPage /></RequireRole>} />
       <Route path="/admin/:section" element={<RequireRole roles={['EVZONE_ADMIN']}><PlaceholderPage /></RequireRole>} />
 
       {/* Operator */}
