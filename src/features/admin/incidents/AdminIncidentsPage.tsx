@@ -184,6 +184,9 @@ export function AdminIncidentsPage() {
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
   const [toast, setToast] = useState<string>('')
+  const [playbookOpen, setPlaybookOpen] = useState<Playbook | null>(null)
+  const [commsPreview, setCommsPreview] = useState<CommsItem | null>(null)
+  const [incidentComms, setIncidentComms] = useState<Record<string, string[]>>({})
   const [create, setCreate] = useState<CreateModal>({
     open: false,
     title: '',
@@ -357,10 +360,28 @@ export function AdminIncidentsPage() {
 
   function runPlaybook(pb: Playbook) {
     const active = rows.find((x) => x.status !== 'Resolved') ?? null
+    if (active) {
+      const stamp = nowStamp()
+      setRows((list) =>
+        list.map((x) =>
+          x.id === active.id
+            ? {
+                ...x,
+                updatedAt: stamp,
+                nextUpdateAt: nextUpdateStamp(),
+                summary: `${x.summary}\n\n[${stamp}] Runbook queued: ${pb.title} (${pb.id}) • owner=${pb.owner}`,
+              }
+            : x,
+        ),
+      )
+      setOpenId(active.id)
+      setTab('actions')
+    }
     setToast(`Queued: ${pb.title}${active ? ` • linked to ${active.id}` : ''}`)
   }
 
   function sendComms(id: string) {
+    const active = rows.find((x) => x.status !== 'Resolved') ?? null
     setComms((list) =>
       list.map((c) =>
         c.id === id
@@ -373,6 +394,24 @@ export function AdminIncidentsPage() {
           : c,
       ),
     )
+    if (active) {
+      const stamp = nowStamp()
+      setRows((list) =>
+        list.map((x) =>
+          x.id === active.id
+            ? {
+                ...x,
+                updatedAt: stamp,
+                nextUpdateAt: nextUpdateStamp(),
+                summary: `${x.summary}\n\n[${stamp}] Comms sent: ${id} • channel update queued`,
+              }
+            : x,
+        ),
+      )
+      setIncidentComms((m) => ({ ...m, [active.id]: Array.from(new Set([...(m[active.id] ?? []), id])) }))
+      setOpenId(active.id)
+      setTab('comms')
+    }
     setToast('Comms sent (mock).')
   }
 
@@ -490,7 +529,7 @@ export function AdminIncidentsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap justify-end">
-                    <button className="btn secondary" onClick={() => setToast(`Opened runbook: ${p.id} (mock)`)}>
+                    <button className="btn secondary" onClick={() => setPlaybookOpen(p)}>
                       Open
                     </button>
                     <button className="btn" onClick={() => runPlaybook(p)}>
@@ -538,7 +577,7 @@ export function AdminIncidentsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap justify-end">
-                    <button className="btn secondary" onClick={() => setToast(`Previewed: ${c.id} (mock)`)}>
+                    <button className="btn secondary" onClick={() => setCommsPreview(c)}>
                       Preview
                     </button>
                     <button className="btn" disabled={c.status === 'Sent'} onClick={() => sendComms(c.id)}>
@@ -636,7 +675,61 @@ export function AdminIncidentsPage() {
         </div>
       ) : null}
 
-      {openRow ? <IncidentDrawer row={openRow} tab={tab} setTab={setTab} busy={busy} onClose={() => setOpenId(null)} onSave={saveIncident} /> : null}
+      {openRow ? (
+        <IncidentDrawer
+          row={openRow}
+          tab={tab}
+          setTab={setTab}
+          busy={busy}
+          onClose={() => setOpenId(null)}
+          onSave={saveIncident}
+          comms={comms}
+          linkedCommsIds={incidentComms[openRow.id] ?? []}
+          onPreviewComms={(id) => {
+            const found = comms.find((x) => x.id === id) ?? null
+            if (found) setCommsPreview(found)
+          }}
+          onSendComms={(id) => sendComms(id)}
+        />
+      ) : null}
+
+      {playbookOpen ? (
+        <PlaybookDrawer
+          pb={playbookOpen}
+          onClose={() => setPlaybookOpen(null)}
+          onRun={() => {
+            runPlaybook(playbookOpen)
+            setPlaybookOpen(null)
+          }}
+          onCopy={async (text) => {
+            try {
+              await navigator.clipboard.writeText(text)
+              setToast('Copied to clipboard.')
+            } catch {
+              setToast('Copy failed.')
+            }
+          }}
+        />
+      ) : null}
+
+      {commsPreview ? (
+        <CommsPreviewModal
+          item={commsPreview}
+          onClose={() => setCommsPreview(null)}
+          onSendNow={() => {
+            sendComms(commsPreview.id)
+            setCommsPreview(null)
+          }}
+          onCopy={async (text) => {
+            try {
+              await navigator.clipboard.writeText(text)
+              setToast('Copied to clipboard.')
+            } catch {
+              setToast('Copy failed.')
+            }
+          }}
+        />
+      ) : null}
 
       {create.open ? (
         <CreateIncidentModal
@@ -670,6 +763,180 @@ export function AdminIncidentsPage() {
   )
 }
 
+function PlaybookDrawer({
+  pb,
+  onClose,
+  onRun,
+  onCopy,
+}: {
+  pb: Playbook
+  onClose: () => void
+  onRun: () => void
+  onCopy: (text: string) => void | Promise<void>
+}) {
+  const steps = useMemo(() => {
+    const common = ['Confirm impact scope', 'Assign owner + start timer', 'Collect logs + metrics', 'Apply mitigation', 'Verify recovery', 'Post update']
+    if (pb.domain === 'Payments') return ['Check webhook backlog (queue depth)', 'Replay failed deliveries (bounded)', 'Reconcile ledger deltas', ...common]
+    if (pb.domain === 'Charging') return ['Pull OCPP errors (last 30m)', 'Remote reset affected chargers', 'Rollout config to subset', ...common]
+    if (pb.domain === 'Swapping') return ['Identify failing bays', 'Disable bay + manual override', 'Rollback firmware if needed', ...common]
+    if (pb.domain === 'Auth') return ['Check IdP latency', 'Validate OTP provider health', 'Rate-limit abusive IPs', ...common]
+    return common
+  }, [pb])
+
+  const checklist = `Playbook ${pb.id}: ${pb.title}\nOwner: ${pb.owner}\nSLA: ${pb.slaMins}m\n\nSteps:\n${steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n`
+
+  return (
+    <>
+      <div className="overlay" onClick={onClose} style={{ zIndex: 79 }} />
+      <div className="drawer" style={{ zIndex: 80 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <div>
+            <div style={{ fontWeight: 900 }}>{pb.title}</div>
+            <div className="small">
+              {pb.id} • {pb.domain} • owner: {pb.owner}
+            </div>
+          </div>
+          <button className="btn secondary" onClick={onClose}>
+            Close
+          </button>
+        </div>
+
+        <div style={{ height: 12 }} />
+
+        <div className="card" style={{ background: 'rgba(255,255,255,.04)' }}>
+          <div className="card-title">Overview</div>
+          <div className="panel">{pb.summary}</div>
+          <div style={{ height: 10 }} />
+          <div className="split">
+            <span className="chip">
+              Mode: <strong>{pb.mode}</strong>
+            </span>
+            <span className="chip">
+              SLA: <strong>{pb.slaMins}m</strong>
+            </span>
+            <span className="chip">
+              Avg: <strong>{pb.avgMins}m</strong>
+            </span>
+            <span className="chip">
+              Success: <strong>{fmtPct(pb.successRate)}</strong>
+            </span>
+          </div>
+        </div>
+
+        <div style={{ height: 12 }} />
+
+        <div className="card" style={{ background: 'rgba(255,255,255,.04)' }}>
+          <div className="card-title">Checklist</div>
+          <div className="panel">
+            <ol className="grid" style={{ paddingLeft: 18 }}>
+              {steps.map((s, idx) => (
+                <li key={s} className="small">
+                  <span style={{ fontWeight: 800 }}>{idx + 1}.</span> {s}
+                </li>
+              ))}
+            </ol>
+          </div>
+          <div style={{ height: 10 }} />
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, flexWrap: 'wrap' }}>
+            <button className="btn secondary" onClick={() => onCopy(checklist)}>
+              Copy checklist
+            </button>
+            <button className="btn" onClick={onRun}>
+              Run now
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+function CommsPreviewModal({
+  item,
+  onClose,
+  onSendNow,
+  onCopy,
+}: {
+  item: CommsItem
+  onClose: () => void
+  onSendNow: () => void
+  onCopy: (text: string) => void | Promise<void>
+}) {
+  const subject = `${item.channel}: ${item.title}`
+  const body = useMemo(() => {
+    const lines = [
+      `Audience: ${item.audience}`,
+      '',
+      'Summary: We are investigating an ongoing issue and applying mitigations.',
+      'Impact: Intermittent delays / degraded service for a subset of users.',
+      'Mitigation: Replay retries, staged rollouts, and targeted resets are in progress.',
+      'Next update: within 30–60 minutes.',
+      '',
+      '— EVzone Operations',
+    ]
+    return lines.join('\n')
+  }, [item.audience])
+
+  return (
+    <div className="modal" style={{ zIndex: 85 }}>
+      <div className="overlay" onClick={onClose} />
+      <div className="modal-card">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+          <div>
+            <div style={{ fontWeight: 900 }}>Preview comms</div>
+            <div className="small">
+              {item.id} • {item.channel} • {item.status}
+            </div>
+          </div>
+          <button className="btn secondary" onClick={onClose}>
+            Close
+          </button>
+        </div>
+
+        <div style={{ height: 10 }} />
+
+        <div className="grid">
+          <div className="card" style={{ background: 'rgba(255,255,255,.04)' }}>
+            <div className="card-title">Metadata</div>
+            <div className="panel">
+              <div className="small">
+                Audience: <strong>{item.audience}</strong>
+              </div>
+              <div className="small">
+                Owner: <strong>{item.owner}</strong>
+              </div>
+              <div className="small">
+                Status: <strong>{item.status}</strong>
+                {item.status === 'Scheduled' && item.scheduledFor ? <span className="text-muted"> • {item.scheduledFor}</span> : null}
+              </div>
+            </div>
+          </div>
+
+          <div className="card" style={{ background: 'rgba(255,255,255,.04)' }}>
+            <div className="card-title">Message</div>
+            <div className="panel" style={{ whiteSpace: 'pre-wrap' }}>
+              <div className="small" style={{ fontWeight: 900 }}>
+                {subject}
+              </div>
+              <div style={{ height: 8 }} />
+              <div className="small">{body}</div>
+            </div>
+            <div style={{ height: 10 }} />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, flexWrap: 'wrap' }}>
+              <button className="btn secondary" onClick={() => onCopy(`${subject}\n\n${body}`)}>
+                Copy message
+              </button>
+              <button className="btn" disabled={item.status === 'Sent'} onClick={onSendNow}>
+                {item.status === 'Sent' ? 'Sent' : 'Send now'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function splitCsv(x: string) {
   return x
     .split(',')
@@ -693,6 +960,10 @@ function IncidentDrawer({
   busy,
   onClose,
   onSave,
+  comms,
+  linkedCommsIds,
+  onPreviewComms,
+  onSendComms,
 }: {
   row: Incident
   tab: DrawerTab
@@ -700,6 +971,10 @@ function IncidentDrawer({
   busy: boolean
   onClose: () => void
   onSave: (patch: Partial<Incident>) => void
+  comms: CommsItem[]
+  linkedCommsIds: string[]
+  onPreviewComms: (id: string) => void
+  onSendComms: (id: string) => void
 }) {
   const [status, setStatus] = useState<IncidentStatus>(row.status)
   const [severity, setSeverity] = useState<Severity>(row.severity)
@@ -890,6 +1165,66 @@ function IncidentDrawer({
             <div className="card" style={{ background: 'rgba(255,255,255,.04)' }}>
               <div className="card-title">Ownership</div>
               <div className="panel">Commander coordinates operators/support; station owners informed where relevant.</div>
+            </div>
+          </div>
+        ) : tab === 'comms' ? (
+          <div className="grid">
+            <div className="card" style={{ background: 'rgba(255,255,255,.04)' }}>
+              <div className="card-title">Linked comms</div>
+              {linkedCommsIds.length === 0 ? (
+                <div className="panel">No comms linked yet. Use “Send now” from the Comms panel to attach updates to this incident.</div>
+              ) : (
+                <div className="table-wrap rounded-none border-0 shadow-none">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Channel</th>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th className="text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {linkedCommsIds
+                        .map((id) => comms.find((c) => c.id === id) ?? null)
+                        .filter(Boolean)
+                        .map((c) => (
+                          <tr key={(c as CommsItem).id}>
+                            <td style={{ fontWeight: 900 }}>{(c as CommsItem).id}</td>
+                            <td className="small">{(c as CommsItem).channel}</td>
+                            <td>
+                              <div style={{ fontWeight: 800 }}>{(c as CommsItem).title}</div>
+                              <div className="small">{(c as CommsItem).audience}</div>
+                            </td>
+                            <td>{pillForCommsStatus((c as CommsItem).status)}</td>
+                            <td className="text-right">
+                              <div style={{ display: 'inline-flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                                <button className="btn secondary" onClick={() => onPreviewComms((c as CommsItem).id)}>
+                                  Preview
+                                </button>
+                                <button className="btn" disabled={(c as CommsItem).status === 'Sent'} onClick={() => onSendComms((c as CommsItem).id)}>
+                                  {(c as CommsItem).status === 'Sent' ? 'Sent' : 'Send now'}
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+            <div className="card" style={{ background: 'rgba(255,255,255,.04)' }}>
+              <div className="card-title">Quick status update</div>
+              <div className="panel">Use the Timeline “Post update” box for the incident narrative; use Comms for outbound messages.</div>
+              <div style={{ height: 10 }} />
+              <div className="grid">
+                <button className="btn secondary" onClick={() => setTab('timeline')}>
+                  Go to timeline update
+                </button>
+                <div className="panel">On send: we would publish to Status Page + Ops channel + email templates (mocked in this UI).</div>
+              </div>
             </div>
           </div>
         ) : (
