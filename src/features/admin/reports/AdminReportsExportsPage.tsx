@@ -26,6 +26,17 @@ type ExportJob = {
   expiresAt?: string
 }
 
+type QuickReport = {
+  id: string
+  title: string
+  subtitle: string
+  templateId: string
+  hint: string
+  kpi: { label: string; value: string; delta?: string }
+  series: number[]
+  tags: string[]
+}
+
 type ReportTemplate = {
   id: string
   name: string
@@ -117,6 +128,19 @@ export function AdminReportsExportsPage() {
   const [exports, setExports] = useState<ExportJob[]>([])
   const [schedules, setSchedules] = useState<ScheduledReport[]>([])
   const [toast, setToast] = useState('')
+  const [guard, setGuard] = useState({
+    watermark: true,
+    expiryHours: 24,
+    requireTicketForSensitive: true,
+    requireReauth: true,
+  })
+  const [policy, setPolicy] = useState({
+    role: 'EVZONE_ADMIN' as 'EVZONE_ADMIN' | 'EVZONE_OPERATOR',
+    templateId: 'TPL-AUD',
+    includePII: true,
+    region: 'EUROPE' as Region,
+    org: 'VOLT_MOBILITY',
+  })
   const [modal, setModal] = useState<CreateExportModel>({
     open: false,
     templateId: 'TPL-REV',
@@ -149,6 +173,26 @@ export function AdminReportsExportsPage() {
       setSchedules(x.schedules)
     })()
   }, [])
+
+  function openQuick(templateId: string) {
+    const t = templates.find((x) => x.id === templateId)
+    setModal((m) => ({
+      ...m,
+      open: true,
+      templateId,
+      format: t?.defaultFormat ?? m.format,
+      range: t?.defaultRange ?? m.range,
+      includePII: t?.containsPII ?? false,
+      reason: '',
+      region,
+      org: '',
+      station: '',
+    }))
+  }
+
+  function hasTicketId(reason: string) {
+    return /TCK-\d{4,}/i.test(reason)
+  }
 
   const filteredExports = useMemo(() => {
     return exports.filter((e) => {
@@ -192,12 +236,17 @@ export function AdminReportsExportsPage() {
 
   function createExport() {
     const tpl = templates.find((t) => t.id === modal.templateId)
+    const isSensitive = (tpl?.containsPII ?? false) || modal.includePII
+    if (isSensitive && guard.requireTicketForSensitive && !hasTicketId(modal.reason)) {
+      toastMsg('Ticket id required for sensitive export (e.g., TCK-10021).')
+      return
+    }
     const id = 'EXP-' + Math.floor(20000 + Math.random() * 999)
     const job: ExportJob = {
       id,
       requestedAt: nowStamp(),
-      requestedBy: 'Admin (Helpdesk)',
-      role: 'EVZONE_ADMIN',
+      requestedBy: policy.role === 'EVZONE_OPERATOR' ? 'Operator EU' : 'Admin (Helpdesk)',
+      role: policy.role,
       region: modal.region,
       org: modal.org || undefined,
       station: modal.station || undefined,
@@ -205,13 +254,14 @@ export function AdminReportsExportsPage() {
       format: modal.format,
       range: modal.range,
       status: 'QUEUED',
-      sensitive: (tpl?.containsPII ?? false) || modal.includePII,
+      sensitive: isSensitive,
       reason: modal.reason || undefined,
-      expiresAt: plusDays(2),
+      expiresAt: guard.expiryHours <= 24 ? plusDays(1) : plusDays(2),
     }
     setExports((list) => [job, ...list])
     setModal((m) => ({ ...m, open: false, org: '', station: '', reason: '' }))
-    toastMsg('Export queued (demo).')
+    toastMsg(`Export queued (demo). ${isSensitive && guard.watermark ? 'Watermark enabled.' : ''} ${guard.requireReauth ? 'Re-auth required.' : ''}`)
+    setTab('exports')
   }
 
   function createSchedule() {
@@ -277,24 +327,12 @@ export function AdminReportsExportsPage() {
       {tab === 'overview' ? (
         <div className="row2">
           <div className="card">
-            <div className="card-title">Quick reports (placeholders)</div>
-            <div className="grid">
-              <div className="panel">Daily revenue by region (connect to Billing ledger).</div>
-              <div className="panel">Session utilization (charger uptime, swap bay cycles).</div>
-              <div className="panel">Incidents & MTTR (connect to Incidents).</div>
-              <div className="panel">Onboarding funnel (connect to Users & Roles).</div>
-            </div>
-            <div style={{ height: 10 }} />
-            <div className="panel">Backend: these can become downloadable PDFs or dashboard charts.</div>
+            <div className="card-title">Quick reports</div>
+            <QuickReports region={region} templates={templates} exportsCount={exports.length} onGenerate={openQuick} />
           </div>
           <div className="card">
             <div className="card-title">Compliance guardrails</div>
-            <div className="grid">
-              <div className="panel"><strong>Export RBAC</strong>: restrict by role/region/org; require elevated permission for PII.</div>
-              <div className="panel"><strong>Reason required</strong>: for sensitive exports; attach ticket id.</div>
-              <div className="panel"><strong>Watermark</strong>: include exporter + timestamp in file header/footer.</div>
-              <div className="panel"><strong>Short expiry</strong>: auto-expire links; re-download requires re-auth.</div>
-            </div>
+            <Guardrails guard={guard} setGuard={setGuard} policy={policy} setPolicy={setPolicy} templates={templates} regions={regions} />
           </div>
         </div>
       ) : null}
@@ -544,6 +582,256 @@ function Kpi({ label, value, hint, tone }: { label: string; value: string; hint:
   )
 }
 
+function Sparkline({ values }: { values: number[] }) {
+  const w = 120
+  const h = 28
+  const pad = 2
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  const norm = (v: number) => (max === min ? 0.5 : (v - min) / (max - min))
+  const pts = values.map((v, i) => {
+    const x = pad + (i * (w - pad * 2)) / Math.max(1, values.length - 1)
+    const y = pad + (1 - norm(v)) * (h - pad * 2)
+    return `${x.toFixed(1)},${y.toFixed(1)}`
+  })
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true">
+      <polyline points={pts.join(' ')} fill="none" stroke="rgba(122,162,255,.9)" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function QuickReports({
+  region,
+  templates,
+  exportsCount,
+  onGenerate,
+}: {
+  region: Region
+  templates: ReportTemplate[]
+  exportsCount: number
+  onGenerate: (templateId: string) => void
+}) {
+  const byId = useMemo(() => Object.fromEntries(templates.map((t) => [t.id, t])), [templates])
+  const reports: QuickReport[] = useMemo(() => {
+    const revenue = {
+      id: 'QR-REV',
+      title: 'Daily revenue by region',
+      subtitle: region === 'ALL' ? 'Global ledger rollup (mock)' : `${region} ledger rollup (mock)`,
+      templateId: 'TPL-REV',
+      hint: 'Transactions grouped by org/station, fees, net',
+      kpi: { label: 'Net revenue', value: region === 'EUROPE' ? '$128,440' : '$92,180', delta: '+6.2% WoW' },
+      series: [42, 44, 41, 48, 55, 53, 57],
+      tags: ['billing', 'ledger', 'finance'],
+    }
+
+    const utilization = {
+      id: 'QR-UTIL',
+      title: 'Session utilization',
+      subtitle: 'Uptime + cycles (mock telemetry)',
+      templateId: 'TPL-SESS',
+      hint: 'Charger uptime, swap bay cycles, peak utilization',
+      kpi: { label: 'Utilization', value: '71%', delta: '+3% vs last week' },
+      series: [63, 64, 66, 68, 71, 70, 71],
+      tags: ['sessions', 'uptime', 'capacity'],
+    }
+
+    const incidents = {
+      id: 'QR-OPS',
+      title: 'Incidents & MTTR',
+      subtitle: 'Reliability summary (mock)',
+      templateId: 'TPL-OPS',
+      hint: 'Active incidents, MTTR by severity, dispatch correlation',
+      kpi: { label: 'MTTR', value: '1h 42m', delta: '-11m (30d)' },
+      series: [128, 120, 118, 110, 108, 104, 102],
+      tags: ['incidents', 'mttr', 'reliability'],
+    }
+
+    const onboarding = {
+      id: 'QR-AUD',
+      title: 'Onboarding funnel',
+      subtitle: 'Approvals + drop-off (mock)',
+      templateId: 'TPL-AUD',
+      hint: 'Pending → approved → activated; audit for escalations',
+      kpi: { label: 'Pending', value: '23', delta: '-4 today' },
+      series: [31, 30, 28, 27, 25, 24, 23],
+      tags: ['users', 'approvals', 'audit'],
+    }
+
+    return [revenue, utilization, incidents, onboarding]
+  }, [region])
+
+  return (
+    <div className="grid gap-3">
+      {reports.map((r) => (
+        <div key={r.id} className="panel">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <div className="text-sm font-extrabold text-text">
+                {r.title}{' '}
+                <span className="text-xs text-muted font-semibold">
+                  • template {byId[r.templateId]?.name ?? r.templateId}
+                </span>
+              </div>
+              <div className="text-xs text-muted">{r.subtitle}</div>
+              <div className="mt-2 flex flex-wrap gap-2 items-center">
+                <span className="pill pending">
+                  {r.kpi.label}: {r.kpi.value}
+                </span>
+                {r.kpi.delta ? <span className="pill approved">{r.kpi.delta}</span> : null}
+                <span className="pill pending">Exports generated: {exportsCount}</span>
+              </div>
+              <div className="mt-2 text-xs text-muted">{r.hint}</div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {r.tags.map((t) => (
+                  <span key={t} className="pill pending">
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Sparkline values={r.series} />
+              <button className="btn" onClick={() => onGenerate(r.templateId)}>
+                Generate export
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+      <div className="panel">Backend: these can become downloadable PDFs or dashboard charts; exports stay auditable with signed URLs.</div>
+    </div>
+  )
+}
+
+function Guardrails({
+  guard,
+  setGuard,
+  policy,
+  setPolicy,
+  templates,
+  regions,
+}: {
+  guard: { watermark: boolean; expiryHours: number; requireTicketForSensitive: boolean; requireReauth: boolean }
+  setGuard: (v: { watermark: boolean; expiryHours: number; requireTicketForSensitive: boolean; requireReauth: boolean }) => void
+  policy: { role: 'EVZONE_ADMIN' | 'EVZONE_OPERATOR'; templateId: string; includePII: boolean; region: Region; org: string }
+  setPolicy: (v: { role: 'EVZONE_ADMIN' | 'EVZONE_OPERATOR'; templateId: string; includePII: boolean; region: Region; org: string }) => void
+  templates: ReportTemplate[]
+  regions: Array<{ id: Region; label: string }>
+}) {
+  const tpl = templates.find((t) => t.id === policy.templateId)
+  const sensitive = (tpl?.containsPII ?? false) || policy.includePII
+  const roleOkForPII = policy.role === 'EVZONE_ADMIN'
+  const allowed = !sensitive || roleOkForPII
+  const expiryLabel = guard.expiryHours <= 24 ? '24h' : '48h'
+
+  return (
+    <div className="grid gap-3">
+      <div className="panel">
+        <div className="text-sm font-extrabold text-text">Policy simulator</div>
+        <div className="text-xs text-muted">This is mocked but mirrors real RBAC + scope + compliance checks.</div>
+        <div style={{ height: 10 }} />
+        <div className="split">
+          <label style={{ flex: 1 }}>
+            <div className="small">Role</div>
+            <select className="select" value={policy.role} onChange={(e) => setPolicy({ ...policy, role: e.target.value as any })}>
+              <option value="EVZONE_ADMIN">EVZONE_ADMIN</option>
+              <option value="EVZONE_OPERATOR">EVZONE_OPERATOR</option>
+            </select>
+          </label>
+          <label style={{ flex: 1 }}>
+            <div className="small">Template</div>
+            <select className="select" value={policy.templateId} onChange={(e) => setPolicy({ ...policy, templateId: e.target.value })}>
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div style={{ height: 10 }} />
+        <div className="split">
+          <label style={{ flex: 1 }}>
+            <div className="small">Region</div>
+            <select className="select" value={policy.region} onChange={(e) => setPolicy({ ...policy, region: e.target.value as any })}>
+              {regions.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label style={{ flex: 1 }}>
+            <div className="small">Org (optional)</div>
+            <input className="input" value={policy.org} onChange={(e) => setPolicy({ ...policy, org: e.target.value })} placeholder="e.g., VOLT_MOBILITY" />
+          </label>
+        </div>
+        <div style={{ height: 10 }} />
+        <label className="panel" style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '8px 10px' }}>
+          <input type="checkbox" checked={policy.includePII} onChange={(e) => setPolicy({ ...policy, includePII: e.target.checked })} />
+          <span className="small">
+            <strong>Include PII</strong> (sensitive export)
+          </span>
+        </label>
+        <div style={{ height: 10 }} />
+        <div className="panel">
+          <div className="text-xs text-muted">Evaluation</div>
+          <div style={{ height: 6 }} />
+          <div className="flex items-center justify-between">
+            <span className="small">Allowed</span>
+            <span className={`pill ${allowed ? 'approved' : 'rejected'}`}>{allowed ? 'ALLOW' : 'BLOCK'}</span>
+          </div>
+          <div style={{ height: 6 }} />
+          <div className="small">
+            - RBAC: {sensitive ? (roleOkForPII ? 'PII allowed for admin' : 'PII blocked for operator') : 'Non-sensitive export'}<br />
+            - Reason: {sensitive && guard.requireTicketForSensitive ? 'Ticket id required' : 'Not required'}<br />
+            - Watermark: {guard.watermark && sensitive ? 'Enabled' : 'Off'}<br />
+            - Expiry: {expiryLabel} • {guard.requireReauth ? 'Re-auth on download' : 'No re-auth'}
+          </div>
+        </div>
+      </div>
+
+      <div className="panel">
+        <div className="text-sm font-extrabold text-text">Guardrails</div>
+        <div className="grid gap-2">
+          <label className="panel" style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '8px 10px' }}>
+            <input type="checkbox" checked={guard.watermark} onChange={(e) => setGuard({ ...guard, watermark: e.target.checked })} />
+            <span className="small">
+              <strong>Watermark</strong>: include exporter + timestamp in header/footer
+            </span>
+          </label>
+          <label className="panel" style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '8px 10px' }}>
+            <input type="checkbox" checked={guard.requireTicketForSensitive} onChange={(e) => setGuard({ ...guard, requireTicketForSensitive: e.target.checked })} />
+            <span className="small">
+              <strong>Reason required</strong>: attach ticket id for sensitive exports
+            </span>
+          </label>
+          <label className="panel" style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '8px 10px' }}>
+            <input type="checkbox" checked={guard.requireReauth} onChange={(e) => setGuard({ ...guard, requireReauth: e.target.checked })} />
+            <span className="small">
+              <strong>Re-auth</strong>: re-download requires re-auth
+            </span>
+          </label>
+          <div className="panel">
+            <div className="small" style={{ fontWeight: 900 }}>Short expiry</div>
+            <div className="small">Signed URLs expire automatically. Shorter expiry for sensitive exports.</div>
+            <div style={{ height: 8 }} />
+            <div className="split">
+              <button className={`btn secondary ${guard.expiryHours === 24 ? 'ring-2 ring-accent/30' : ''}`} onClick={() => setGuard({ ...guard, expiryHours: 24 })}>
+                24h
+              </button>
+              <button className={`btn secondary ${guard.expiryHours === 48 ? 'ring-2 ring-accent/30' : ''}`} onClick={() => setGuard({ ...guard, expiryHours: 48 })}>
+                48h
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function CreateExportModal({
   model,
   setModel,
@@ -646,6 +934,10 @@ function CreateExportModal({
               const isSensitive = (tpl?.containsPII ?? false) || model.includePII
               if (isSensitive && !model.reason.trim()) {
                 alert('Reason is required for sensitive exports (demo).')
+                return
+              }
+              if (isSensitive && !/TCK-\d{4,}/i.test(model.reason)) {
+                alert('Include a ticket id for sensitive exports (e.g., TCK-10021).')
                 return
               }
               onSubmit()
