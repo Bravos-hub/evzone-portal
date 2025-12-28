@@ -7,6 +7,7 @@ import {
   loadCommsStore,
   simulateSend,
   upsertMessage,
+  upsertTemplate,
   type AudienceSegment,
   type CommsChannel,
   type CommsMessage,
@@ -46,6 +47,7 @@ export function AdminBroadcastsPage() {
   } | null>(null)
 
   const [preview, setPreview] = useState<CommsMessage | null>(null)
+  const [tplEdit, setTplEdit] = useState<CommsTemplate | null>(null)
 
   useEffect(() => {
     const on = () => setStore(loadCommsStore())
@@ -117,6 +119,30 @@ export function AdminBroadcastsPage() {
     }
     upsertMessage(next)
     setToast('Duplicated to draft.')
+  }
+
+  function newTemplate() {
+    setTplEdit({
+      id: genId('TPL'),
+      name: 'New template',
+      channel: 'In-app',
+      subject: '',
+      body: '',
+      tags: ['draft'],
+      updatedAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
+      owner: 'Delta (Admin)',
+    })
+  }
+
+  function saveTemplate(t: CommsTemplate) {
+    const next: CommsTemplate = {
+      ...t,
+      subject: t.channel === 'Email' ? (t.subject ?? '') : undefined,
+      updatedAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
+      owner: 'Delta (Admin)',
+    }
+    upsertTemplate(next)
+    setToast('Template saved.')
   }
 
   return (
@@ -240,7 +266,11 @@ export function AdminBroadcastsPage() {
           </div>
         </Card>
       ) : tab === 'templates' ? (
-        <TemplatesPanel templates={templates} />
+        <TemplatesPanel
+          templates={templates}
+          onNew={newTemplate}
+          onEdit={(t) => setTplEdit(t)}
+        />
       ) : (
         <AudiencesPanel audiences={audiences} />
       )}
@@ -276,42 +306,80 @@ export function AdminBroadcastsPage() {
       ) : null}
 
       {preview ? <PreviewModal msg={preview} onClose={() => setPreview(null)} /> : null}
+
+      {tplEdit ? (
+        <TemplateEditModal
+          tpl={tplEdit}
+          onClose={() => setTplEdit(null)}
+          onSave={(t) => {
+            saveTemplate(t)
+            setTplEdit(null)
+          }}
+        />
+      ) : null}
     </DashboardLayout>
   )
 }
 
-function TemplatesPanel({ templates }: { templates: CommsTemplate[] }) {
+function TemplatesPanel({
+  templates,
+  onNew,
+  onEdit,
+}: {
+  templates: CommsTemplate[]
+  onNew: () => void
+  onEdit: (t: CommsTemplate) => void
+}) {
   return (
-    <div className="grid grid-cols-2 gap-4 xl:grid-cols-1">
-      {templates.map((t) => (
-        <div key={t.id} className="card">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="text-sm font-extrabold text-text">
-                {t.name} <span className="text-xs text-muted font-semibold">• {t.id}</span>
+    <div className="grid gap-4">
+      <div className="card">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <div className="text-sm font-extrabold text-text">Templates</div>
+            <div className="text-xs text-muted">Editable message templates used by “Compose” (mock)</div>
+          </div>
+          <button className="btn" onClick={onNew}>
+            New template
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-1">
+        {templates.map((t) => (
+          <div key={t.id} className="card">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-sm font-extrabold text-text">
+                  {t.name} <span className="text-xs text-muted font-semibold">• {t.id}</span>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2 items-center">
+                  {pillForChannel(t.channel)}
+                  <span className="pill pending">Owner: {t.owner}</span>
+                  <span className="pill pending">Updated: {t.updatedAt}</span>
+                </div>
+                {t.channel === 'Email' && t.subject ? <div className="mt-2 text-xs text-muted">Subject: {t.subject}</div> : null}
               </div>
-              <div className="mt-2 flex flex-wrap gap-2 items-center">
-                {pillForChannel(t.channel)}
-                <span className="pill pending">Owner: {t.owner}</span>
-                <span className="pill pending">Updated: {t.updatedAt}</span>
+              <div className="flex items-center gap-2">
+                <button className="btn secondary" onClick={() => onEdit(t)}>
+                  Edit
+                </button>
               </div>
-              {t.subject ? <div className="mt-2 text-xs text-muted">Subject: {t.subject}</div> : null}
+            </div>
+            <div className="h-3" />
+            <div className="panel" style={{ whiteSpace: 'pre-wrap' }}>
+              {t.body || '—'}
+            </div>
+            <div className="h-3" />
+            <div className="flex flex-wrap gap-2">
+              {t.tags.map((x) => (
+                <span key={x} className="pill pending">
+                  {x}
+                </span>
+              ))}
             </div>
           </div>
-          <div className="h-3" />
-          <div className="panel" style={{ whiteSpace: 'pre-wrap' }}>
-            {t.body}
-          </div>
-          <div className="h-3" />
-          <div className="flex flex-wrap gap-2">
-            {t.tags.map((x) => (
-              <span key={x} className="pill pending">
-                {x}
-              </span>
-            ))}
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   )
 }
@@ -521,6 +589,91 @@ function PreviewModal({ msg, onClose }: { msg: CommsMessage; onClose: () => void
           <div className="panel" style={{ whiteSpace: 'pre-wrap' }}>
             {msg.body || '—'}
           </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TemplateEditModal({
+  tpl,
+  onClose,
+  onSave,
+}: {
+  tpl: CommsTemplate
+  onClose: () => void
+  onSave: (t: CommsTemplate) => void
+}) {
+  const [t, setT] = useState<CommsTemplate>(tpl)
+  const [tags, setTags] = useState((tpl.tags ?? []).join(', '))
+  const canSave = t.name.trim() && t.body.trim()
+
+  return (
+    <div className="fixed inset-0 z-[90] grid place-items-center">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative w-[min(860px,94vw)] max-h-[88vh] overflow-auto rounded-2xl border border-border-light bg-panel p-5 shadow-[0_20px_60px_rgba(0,0,0,.55)]">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <div className="text-sm font-extrabold text-text">Edit template</div>
+            <div className="text-xs text-muted">{t.id}</div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="btn secondary" onClick={onClose}>
+              Close
+            </button>
+            <button
+              className="btn"
+              disabled={!canSave}
+              onClick={() =>
+                onSave({
+                  ...t,
+                  tags: tags
+                    .split(',')
+                    .map((x) => x.trim())
+                    .filter(Boolean),
+                })
+              }
+            >
+              Save
+            </button>
+          </div>
+        </div>
+
+        <div className="h-4" />
+
+        <div className="grid grid-cols-2 gap-4 xl:grid-cols-1">
+          <label>
+            <div className="small">Name</div>
+            <input className="input" value={t.name} onChange={(e) => setT((p) => ({ ...p, name: e.target.value }))} />
+          </label>
+
+          <label>
+            <div className="small">Channel</div>
+            <select className="select" value={t.channel} onChange={(e) => setT((p) => ({ ...p, channel: e.target.value as any }))}>
+              {(['Status page', 'Ops', 'In-app', 'Email', 'SMS'] as CommsChannel[]).map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {t.channel === 'Email' ? (
+            <label className="col-span-2 xl:col-span-1">
+              <div className="small">Subject</div>
+              <input className="input" value={t.subject ?? ''} onChange={(e) => setT((p) => ({ ...p, subject: e.target.value }))} />
+            </label>
+          ) : null}
+
+          <label className="col-span-2 xl:col-span-1">
+            <div className="small">Body</div>
+            <textarea className="input" style={{ minHeight: 220, whiteSpace: 'pre-wrap' }} value={t.body} onChange={(e) => setT((p) => ({ ...p, body: e.target.value }))} />
+          </label>
+
+          <label className="col-span-2 xl:col-span-1">
+            <div className="small">Tags (comma separated)</div>
+            <input className="input" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="e.g. incident, public, status" />
+          </label>
         </div>
       </div>
     </div>
