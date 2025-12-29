@@ -58,8 +58,8 @@ export function SiteOwnerSites() {
                 <th>Address</th>
                 <th>Status</th>
                 <th>Slots</th>
-                <th className="text-right">Expected payout</th>
-                <th className="text-right">Actions</th>
+                <th className="!text-right">Expected payout</th>
+                <th className="!text-right">Actions</th>
               </tr>
             </thead>
             <tbody>

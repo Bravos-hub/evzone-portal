@@ -77,12 +77,12 @@ export function Settlement() {
                 <th>Region</th>
                 <th>Org</th>
                 <th>Type</th>
-                <th className="text-right">Amount</th>
+                <th className="!text-right">Amount</th>
                 <th>Status</th>
                 <th>Started</th>
                 <th>Finished</th>
                 <th>Note</th>
-                <th className="text-right">Actions</th>
+                <th className="!text-right">Actions</th>
               </tr>
             </thead>
             <tbody>

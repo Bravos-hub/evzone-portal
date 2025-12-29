@@ -193,34 +193,34 @@ export function Dispatches() {
         <table className="table">
           <thead>
             <tr>
-              <th>Dispatch</th>
-              <th>Priority</th>
-              <th>Station</th>
-              <th>Assignee</th>
-              <th>Status</th>
-              <th>Due</th>
-              <th className="text-right">Actions</th>
+              <th className="w-32">Dispatch</th>
+              <th className="w-24">Priority</th>
+              <th className="w-32">Station</th>
+              <th className="w-24">Assignee</th>
+              <th className="w-24">Status</th>
+              <th className="w-24">Due</th>
+              <th className="w-24 !text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map((r) => (
               <tr key={r.id}>
-                <td>
+                <td className="truncate max-w-[128px]">
                   <div className="font-semibold text-text">{r.id}</div>
-                  <div className="text-xs text-muted">{r.title}</div>
+                  <div className="text-xs text-muted truncate" title={r.title}>{r.title}</div>
                 </td>
-                <td>
+                <td className="whitespace-nowrap">
                   <span className={`pill ${priorityColor(r.priority)}`}>{r.priority}</span>
                 </td>
-                <td>
-                  <div>{r.stationName}</div>
-                  <div className="text-xs text-muted">{r.stationId}</div>
+                <td className="truncate max-w-[128px]">
+                  <div className="truncate" title={r.stationName}>{r.stationName}</div>
+                  <div className="text-xs text-muted truncate">{r.stationId}</div>
                 </td>
-                <td>{r.assignee}</td>
-                <td>
+                <td className="truncate max-w-[96px]" title={r.assignee}>{r.assignee}</td>
+                <td className="whitespace-nowrap">
                   <span className={`pill ${statusColor(r.status)}`}>{r.status}</span>
                 </td>
-                <td className="text-sm">{r.dueAt}</td>
+                <td className="text-sm whitespace-nowrap">{r.dueAt}</td>
                 <td className="text-right">
                   <div className="inline-flex items-center gap-2">
                     <button className="btn secondary" onClick={() => alert(`View ${r.id} (demo)`)}>

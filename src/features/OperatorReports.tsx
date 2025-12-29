@@ -128,47 +128,47 @@ export function OperatorReports() {
             <table className="min-w-full text-sm">
               <thead className="bg-muted text-subtle">
                 <tr>
-                  <th className="px-4 py-2 text-left font-medium">Date</th>
-                  <th className="px-4 py-2 text-left font-medium">Site</th>
-                  <th className="px-4 py-2 text-left font-medium">Device</th>
-                  <th className="px-4 py-2 text-left font-medium">Target</th>
-                  <th className="px-4 py-2 text-left font-medium">Actual</th>
-                  <th className="px-4 py-2 text-left font-medium">Gap</th>
+                <th className="px-4 py-2 text-left font-medium">Date</th>
+                <th className="px-4 py-2 text-left font-medium">Site</th>
+                <th className="px-4 py-2 text-left font-medium">Device</th>
+                <th className="px-4 py-2 text-left font-medium">Target</th>
+                <th className="px-4 py-2 text-left font-medium">Actual</th>
+                <th className="px-4 py-2 text-left font-medium">Gap</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {[
+                { date: '2025-10-28', site: 'Central Hub', device: 'CP-A1', target: '99.5%', actual: '98.2%', gap: '-1.3%' },
+                { date: '2025-10-25', site: 'Airport East', device: 'CP-B4', target: '99.5%', actual: '99.1%', gap: '-0.4%' },
+              ].map((b, i) => (
+                <tr key={i} className="hover:bg-muted/50">
+                  <td className="px-4 py-2">{b.date}</td>
+                  <td className="px-4 py-2">{b.site}</td>
+                  <td className="px-4 py-2">{b.device}</td>
+                  <td className="px-4 py-2">{b.target}</td>
+                  <td className="px-4 py-2">{b.actual}</td>
+                  <td className="px-4 py-2 text-rose-600">{b.gap}</td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {[
-                  { date: '2025-10-28', site: 'Central Hub', device: 'CP-A1', target: '99.5%', actual: '98.2%', gap: '-1.3%' },
-                  { date: '2025-10-25', site: 'Airport East', device: 'CP-B4', target: '99.5%', actual: '99.1%', gap: '-0.4%' },
-                ].map((b, i) => (
-                  <tr key={i} className="hover:bg-muted/50">
-                    <td className="px-4 py-2">{b.date}</td>
-                    <td className="px-4 py-2">{b.site}</td>
-                    <td className="px-4 py-2">{b.device}</td>
-                    <td className="px-4 py-2">{b.target}</td>
-                    <td className="px-4 py-2">{b.actual}</td>
-                    <td className="px-4 py-2 text-rose-600">{b.gap}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-        {/* Site Breakdown */}
-        <section className="rounded-xl bg-surface border border-border p-5 shadow-sm">
-          <h3 className="font-semibold mb-4">Site Breakdown</h3>
-          <div className="overflow-x-auto rounded-lg border border-border">
-            <table className="min-w-full text-sm">
-              <thead className="bg-muted text-subtle">
-                <tr>
-                  <th className="px-4 py-2 text-left font-medium">Site</th>
-                  <th className="px-4 py-2 text-right font-medium">Sessions</th>
-                  <th className="px-4 py-2 text-right font-medium">Swaps</th>
-                  <th className="px-4 py-2 text-right font-medium">kWh</th>
-                  <th className="px-4 py-2 text-right font-medium">Uptime</th>
-                  <th className="px-4 py-2 text-right font-medium">SLA</th>
-                </tr>
+      {/* Site Breakdown */}
+      <section className="rounded-xl bg-surface border border-border p-5 shadow-sm">
+        <h3 className="font-semibold mb-4">Site Breakdown</h3>
+        <div className="overflow-x-auto rounded-lg border border-border">
+          <table className="min-w-full text-sm">
+            <thead className="bg-muted text-subtle">
+              <tr>
+                <th className="px-4 py-2 text-left font-medium">Site</th>
+                <th className="px-4 py-2 !text-right font-medium">Sessions</th>
+                <th className="px-4 py-2 !text-right font-medium">Swaps</th>
+                <th className="px-4 py-2 !text-right font-medium">kWh</th>
+                <th className="px-4 py-2 !text-right font-medium">Uptime</th>
+                <th className="px-4 py-2 !text-right font-medium">SLA</th>
+              </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {[

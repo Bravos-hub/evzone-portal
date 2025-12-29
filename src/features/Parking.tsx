@@ -119,18 +119,18 @@ export function Parking() {
         <section className="overflow-x-auto rounded-xl border border-border bg-surface">
           <table className="min-w-full text-sm">
             <thead className="bg-muted text-subtle">
-              <tr>
-                <th className="px-4 py-3 text-left font-medium">ID</th>
-                <th className="px-4 py-3 text-left font-medium">Site</th>
-                <th className="px-4 py-3 text-left font-medium">Bay</th>
-                <th className="px-4 py-3 text-left font-medium">Type</th>
-                <th className="px-4 py-3 text-left font-medium">Charger</th>
-                <th className="px-4 py-3 text-right font-medium">Rate/hr</th>
-                <th className="px-4 py-3 text-right font-medium">Occupancy</th>
-                <th className="px-4 py-3 text-left font-medium">Last Used</th>
-                <th className="px-4 py-3 text-left font-medium">Status</th>
-                {canEdit && <th className="px-4 py-3 text-right font-medium">Actions</th>}
-              </tr>
+            <tr>
+              <th>ID</th>
+              <th>Site</th>
+              <th>Bay</th>
+              <th>Type</th>
+              <th>Charger</th>
+              <th className="px-4 py-3 !text-right font-medium">Rate/hr</th>
+              <th className="px-4 py-3 !text-right font-medium">Occupancy</th>
+              <th>Last Used</th>
+              <th>Status</th>
+              {canEdit && <th className="px-4 py-3 !text-right font-medium">Actions</th>}
+            </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {filtered.map(r => (

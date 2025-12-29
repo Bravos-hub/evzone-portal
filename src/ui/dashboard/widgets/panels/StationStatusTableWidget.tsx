@@ -48,7 +48,7 @@ export function StationStatusTableWidget({ config }: WidgetProps<StationStatusTa
                             <th className="text-left py-2 px-4 text-xs font-semibold text-muted">Station</th>
                             <th className="text-left py-2 px-4 text-xs font-semibold text-muted">Status</th>
                             <th className="text-left py-2 px-4 text-xs font-semibold text-muted">Occupancy</th>
-                            <th className="text-left py-2 px-4 text-xs font-semibold text-muted text-right">Sessions</th>
+                            <th className="py-2 px-4 text-xs font-semibold text-muted !text-right">Sessions</th>
                         </tr>
                     </thead>
                     <tbody>

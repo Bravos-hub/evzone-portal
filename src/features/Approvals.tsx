@@ -209,27 +209,27 @@ export function Approvals() {
         <table className="table">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Role</th>
-              <th>Organization</th>
-              <th>Contact</th>
-              <th>Submitted</th>
-              <th>Status</th>
-              <th>Docs</th>
-              <th className="text-right">Actions</th>
+              <th className="w-24">ID</th>
+              <th className="w-24">Role</th>
+              <th className="w-32">Organization</th>
+              <th className="w-48">Contact</th>
+              <th className="w-24">Submitted</th>
+              <th className="w-24">Status</th>
+              <th className="w-16">Docs</th>
+              <th className="!text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map((r) => (
               <tr key={r.id}>
-                <td className="font-semibold">{r.id}</td>
-                <td>{ROLE_LABELS[r.role]}</td>
-                <td>{r.org}</td>
-                <td>
-                  <div>{r.contact}</div>
-                  <div className="text-xs text-muted">{r.email}</div>
+                <td className="font-semibold whitespace-nowrap">{r.id}</td>
+                <td className="whitespace-nowrap">{ROLE_LABELS[r.role]}</td>
+                <td className="truncate max-w-[128px]" title={r.org}>{r.org}</td>
+                <td className="truncate max-w-[192px]">
+                  <div className="truncate" title={r.contact}>{r.contact}</div>
+                  <div className="text-xs text-muted truncate" title={r.email}>{r.email}</div>
                 </td>
-                <td className="text-sm">{r.submittedAt}</td>
+                <td className="text-sm whitespace-nowrap">{r.submittedAt}</td>
                 <td>
                   <span className={`pill ${statusColor(r.status)}`}>{r.status}</span>
                 </td>

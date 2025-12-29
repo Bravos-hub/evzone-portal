@@ -123,18 +123,18 @@ export function Payments() {
         <section className="overflow-x-auto rounded-xl border border-border bg-surface">
           <table className="min-w-full text-sm">
             <thead className="bg-muted text-subtle">
-              <tr>
-                <th className="px-4 py-3 text-left font-medium">Ref</th>
-                <th className="px-4 py-3 text-left font-medium">Type</th>
-                <th className="px-4 py-3 text-left font-medium">Site / Station</th>
-                <th className="px-4 py-3 text-left font-medium">Method</th>
-                <th className="px-4 py-3 text-right font-medium">Amount</th>
-                <th className="px-4 py-3 text-right font-medium">Fee</th>
-                <th className="px-4 py-3 text-right font-medium">Net</th>
-                <th className="px-4 py-3 text-left font-medium">Date</th>
-                <th className="px-4 py-3 text-left font-medium">Status</th>
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
-              </tr>
+            <tr>
+              <th>Ref</th>
+              <th>Type</th>
+              <th>Site / Station</th>
+              <th>Method</th>
+              <th className="px-4 py-3 !text-right font-medium">Amount</th>
+              <th className="px-4 py-3 !text-right font-medium">Fee</th>
+              <th className="px-4 py-3 !text-right font-medium">Net</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th className="px-4 py-3 !text-right font-medium">Actions</th>
+            </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {filtered.map(r => (

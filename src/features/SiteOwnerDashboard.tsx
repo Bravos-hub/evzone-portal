@@ -110,9 +110,9 @@ export function SiteOwnerDashboard() {
                   <th className="px-4 py-2 text-left font-medium">Status</th>
                   <th className="px-4 py-2 text-left font-medium">Bays</th>
                   <th className="px-4 py-2 text-left font-medium">Capacity</th>
-                  <th className="px-4 py-2 text-left font-medium">Updated</th>
-                  <th className="px-4 py-2 text-right font-medium">Actions</th>
-                </tr>
+                <th className="px-4 py-2 text-left font-medium">Updated</th>
+                <th className="px-4 py-2 !text-right font-medium">Actions</th>
+              </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {MOCK_SITES.map(r => (

@@ -243,37 +243,37 @@ export function Incidents() {
         <table className="table">
           <thead>
             <tr>
-              <th>Incident</th>
-              <th>Severity</th>
-              <th>Status</th>
-              <th>Impact</th>
-              {perms.viewAll && <th>Region</th>}
-              <th>Commander</th>
-              <th>Stations</th>
-              <th>ETA</th>
-              <th className="text-right">Actions</th>
+              <th className="w-24">Incident</th>
+              <th className="w-24">Severity</th>
+              <th className="w-24">Status</th>
+              <th className="w-24">Impact</th>
+              {perms.viewAll && <th className="w-24">Region</th>}
+              <th className="w-32">Commander</th>
+              <th className="w-20">Stations</th>
+              <th className="w-20">ETA</th>
+              <th className="w-24 !text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map((r) => (
               <tr key={r.id}>
-                <td>
+                <td className="truncate max-w-[128px]">
                   <button className="font-semibold text-text hover:underline text-left" onClick={() => setOpenId(r.id)}>
                     {r.id}
                   </button>
-                  <div className="text-xs text-muted truncate max-w-[200px]">{r.title}</div>
+                  <div className="text-xs text-muted truncate" title={r.title}>{r.title}</div>
                 </td>
-                <td>
+                <td className="whitespace-nowrap">
                   <span className={`pill ${sevColor(r.severity)}`}>{r.severity}</span>
                 </td>
-                <td>
+                <td className="whitespace-nowrap">
                   <span className={`pill ${statusColor(r.status)}`}>{r.status}</span>
                 </td>
-                <td>{r.impact}</td>
-                {perms.viewAll && <td>{r.region}</td>}
-                <td>{r.commander}</td>
-                <td>{r.affectedStationsCount > 0 ? r.affectedStationsCount : '—'}</td>
-                <td>{r.eta}</td>
+                <td className="whitespace-nowrap">{r.impact}</td>
+                {perms.viewAll && <td className="whitespace-nowrap">{r.region}</td>}
+                <td className="truncate max-w-[96px]" title={r.commander}>{r.commander}</td>
+                <td className="text-center">{r.affectedStationsCount > 0 ? r.affectedStationsCount : '—'}</td>
+                <td className="whitespace-nowrap">{r.eta}</td>
                 <td className="text-right">
                   <div className="inline-flex items-center gap-2">
                     <button className="btn secondary" onClick={() => setOpenId(r.id)}>

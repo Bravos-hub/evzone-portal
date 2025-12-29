@@ -123,26 +123,26 @@ export function Alerts() {
           <table className="min-w-full text-sm">
             <thead className="bg-muted text-subtle">
               <tr>
-                <th className="px-4 py-3 text-left font-medium">ID</th>
-                <th className="px-4 py-3 text-left font-medium">Severity</th>
-                <th className="px-4 py-3 text-left font-medium">Source</th>
-                <th className="px-4 py-3 text-left font-medium">Area</th>
-                <th className="px-4 py-3 text-left font-medium">Message</th>
-                <th className="px-4 py-3 text-left font-medium">Time</th>
-                <th className="px-4 py-3 text-left font-medium">Status</th>
-                {canManage && <th className="px-4 py-3 text-right font-medium">Actions</th>}
+                <th className="w-24 px-4 py-3 text-left font-medium">ID</th>
+                <th className="w-24 px-4 py-3 text-left font-medium">Severity</th>
+                <th className="w-24 px-4 py-3 text-left font-medium">Source</th>
+                <th className="w-24 px-4 py-3 text-left font-medium">Area</th>
+                <th className="w-64 px-4 py-3 text-left font-medium">Message</th>
+                <th className="w-32 px-4 py-3 text-left font-medium">Time</th>
+                <th className="w-24 px-4 py-3 text-left font-medium">Status</th>
+                {canManage && <th className="w-24 px-4 py-3 !text-right font-medium">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {filtered.map(a => (
-                <tr key={a.id} className="hover:bg-muted/50">
-                  <td className="px-4 py-3 font-medium">{a.id}</td>
-                  <td className="px-4 py-3"><SeverityPill sev={a.sev} /></td>
-                  <td className="px-4 py-3">{a.src}</td>
-                  <td className="px-4 py-3">{a.area}</td>
-                  <td className="px-4 py-3 text-subtle max-w-xs truncate" title={a.msg}>{a.msg}</td>
-                  <td className="px-4 py-3 text-subtle">{a.ts}</td>
-                  <td className="px-4 py-3"><StatusPill status={a.status} /></td>
+                <tr key={a.id} className="hover:bg-muted/50 text-xs">
+                  <td className="px-4 py-3 font-medium truncate max-w-[80px]" title={a.id}>{a.id}</td>
+                  <td className="px-4 py-3 whitespace-nowrap"><SeverityPill sev={a.sev} /></td>
+                  <td className="px-4 py-3 whitespace-nowrap">{a.src}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">{a.area}</td>
+                  <td className="px-4 py-3 text-subtle truncate max-w-[200px]" title={a.msg}>{a.msg}</td>
+                  <td className="px-4 py-3 text-subtle whitespace-nowrap">{a.ts}</td>
+                  <td className="px-4 py-3 whitespace-nowrap"><StatusPill status={a.status} /></td>
                   {canManage && (
                     <td className="px-4 py-3 text-right">
                       <div className="inline-flex items-center gap-2">

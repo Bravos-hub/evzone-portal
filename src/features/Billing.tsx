@@ -214,36 +214,36 @@ export function Billing() {
         <table className="table">
           <thead>
             <tr>
-              <th>Invoice</th>
-              <th>Type</th>
-              {perms.viewAll && <th>Organization</th>}
-              <th>Description</th>
-              <th className="text-right">Amount</th>
-              <th>Status</th>
-              <th>Issued</th>
-              <th>Due</th>
-              <th className="text-right">Actions</th>
+              <th className="w-24">Invoice</th>
+              <th className="w-24">Type</th>
+              {perms.viewAll && <th className="w-32">Organization</th>}
+              <th className="w-48">Description</th>
+              <th className="w-20 !text-right">Amount</th>
+              <th className="w-20">Status</th>
+              <th className="w-24">Issued</th>
+              <th className="w-24">Due</th>
+              <th className="w-24 !text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map((r) => (
               <tr key={r.id}>
-                <td className="font-semibold text-text">{r.id}</td>
+                <td className="font-semibold truncate max-w-[96px]" title={r.id}>{r.id}</td>
                 <td>
-                  <span className="chip">{r.type}</span>
+                  <span className="chip text-xs">{r.type}</span>
                 </td>
-                {perms.viewAll && <td>{r.org}</td>}
-                <td className="text-sm text-muted max-w-[200px] truncate">{r.description}</td>
-                <td className="text-right font-semibold">
+                {perms.viewAll && <td className="truncate max-w-[128px]" title={r.org}>{r.org}</td>}
+                <td className="text-sm text-muted max-w-[192px] truncate" title={r.description}>{r.description}</td>
+                <td className="text-right font-semibold whitespace-nowrap">
                   <span className={r.amount < 0 ? 'text-danger' : ''}>
                     {r.amount < 0 ? '-' : ''}${Math.abs(r.amount).toLocaleString()}
                   </span>
                 </td>
                 <td>
-                  <span className={`pill ${statusColor(r.status)}`}>{r.status}</span>
+                  <span className={`pill whitespace-nowrap ${statusColor(r.status)}`}>{r.status}</span>
                 </td>
-                <td className="text-sm">{r.issuedAt}</td>
-                <td className="text-sm">{r.dueAt}</td>
+                <td className="text-sm whitespace-nowrap">{r.issuedAt}</td>
+                <td className="text-sm whitespace-nowrap">{r.dueAt}</td>
                 <td className="text-right">
                   <div className="inline-flex items-center gap-2">
                     <button className="btn secondary" onClick={() => alert(`View ${r.id} (demo)`)}>

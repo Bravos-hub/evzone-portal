@@ -109,30 +109,30 @@ export function Tenants() {
         <section className="overflow-x-auto rounded-xl border border-border bg-surface">
           <table className="min-w-full text-sm">
             <thead className="bg-muted text-subtle">
-              <tr>
-                <th className="px-4 py-3 text-left font-medium">ID</th>
-                <th className="px-4 py-3 text-left font-medium">Tenant</th>
-                <th className="px-4 py-3 text-left font-medium">Type</th>
-                <th className="px-4 py-3 text-left font-medium">Site</th>
-                <th className="px-4 py-3 text-left font-medium">Model</th>
-                <th className="px-4 py-3 text-left font-medium">Terms</th>
-                <th className="px-4 py-3 text-left font-medium">Start Date</th>
-                <th className="px-4 py-3 text-right font-medium">Earnings</th>
-                <th className="px-4 py-3 text-left font-medium">Status</th>
-                {canEdit && <th className="px-4 py-3 text-right font-medium">Actions</th>}
-              </tr>
+            <tr>
+              <th className="w-24">ID</th>
+              <th className="w-32">Tenant</th>
+              <th className="w-24">Type</th>
+              <th className="w-32">Site</th>
+              <th className="w-32">Model</th>
+              <th className="w-24">Terms</th>
+              <th className="w-24">Start Date</th>
+              <th className="w-20 px-4 py-3 !text-right font-medium">Earnings</th>
+              <th className="w-24">Status</th>
+              {canEdit && <th className="w-24 px-4 py-3 !text-right font-medium">Actions</th>}
+            </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {filtered.map(r => (
-                <tr key={r.id} className="hover:bg-muted/50">
-                  <td className="px-4 py-3 font-medium">{r.id}</td>
-                  <td className="px-4 py-3">{r.name}</td>
-                  <td className="px-4 py-3"><TypePill type={r.type} /></td>
-                  <td className="px-4 py-3">{r.site}</td>
-                  <td className="px-4 py-3">{r.model}</td>
-                  <td className="px-4 py-3 text-subtle">{r.terms}</td>
-                  <td className="px-4 py-3 text-subtle">{r.startDate}</td>
-                  <td className="px-4 py-3 text-right font-medium">${r.earnings.toLocaleString()}</td>
+                <tr key={r.id}>
+                  <td className="px-4 py-3 font-medium truncate max-w-[80px]" title={r.id}>{r.id}</td>
+                  <td className="px-4 py-3 truncate max-w-[128px]" title={r.name}>{r.name}</td>
+                  <td className="px-4 py-3 text-xs"><TypePill type={r.type} /></td>
+                  <td className="px-4 py-3 truncate max-w-[128px]" title={r.site}>{r.site}</td>
+                  <td className="px-4 py-3 truncate max-w-[128px]" title={r.model}>{r.model}</td>
+                  <td className="px-4 py-3 text-subtle text-xs whitespace-nowrap">{r.terms}</td>
+                  <td className="px-4 py-3 text-subtle text-xs whitespace-nowrap">{r.startDate}</td>
+                  <td className="px-4 py-3 text-right font-medium text-xs whitespace-nowrap">${r.earnings.toLocaleString()}</td>
                   <td className="px-4 py-3"><StatusPill status={r.status} /></td>
                   {canEdit && (
                     <td className="px-4 py-3 text-right">

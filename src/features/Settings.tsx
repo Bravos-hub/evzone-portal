@@ -237,10 +237,10 @@ export function Settings() {
                   <tr>
                     <th className="px-4 py-3 text-left font-medium">Name</th>
                     <th className="px-4 py-3 text-left font-medium">Key</th>
-                    <th className="px-4 py-3 text-left font-medium">Created</th>
-                    <th className="px-4 py-3 text-left font-medium">Last Used</th>
-                    <th className="px-4 py-3 text-right font-medium">Actions</th>
-                  </tr>
+                  <th className="px-4 py-3 text-left font-medium">Created</th>
+                  <th className="px-4 py-3 text-left font-medium">Last Used</th>
+                  <th className="px-4 py-3 !text-right font-medium">Actions</th>
+                </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {apiKeys.map(k => (

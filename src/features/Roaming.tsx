@@ -176,31 +176,31 @@ export function Roaming() {
           <table className="min-w-full text-sm">
             <thead className="bg-muted text-subtle">
               <tr>
-                <th className="px-4 py-3 text-left font-medium">Session</th>
-                <th className="px-4 py-3 text-left font-medium">Role</th>
-                <th className="px-4 py-3 text-left font-medium">Partner</th>
-                <th className="px-4 py-3 text-left font-medium">Site</th>
-                <th className="px-4 py-3 text-left font-medium">Charger</th>
-                <th className="px-4 py-3 text-left font-medium">Start</th>
-                <th className="px-4 py-3 text-left font-medium">End</th>
-                <th className="px-4 py-3 text-right font-medium">kWh</th>
-                <th className="px-4 py-3 text-right font-medium">Amount</th>
-                <th className="px-4 py-3 text-left font-medium">Status</th>
-                {canManage && <th className="px-4 py-3 text-right font-medium">Actions</th>}
+                <th className="w-20 px-4 py-3 text-left font-medium">Session</th>
+                <th className="w-12 px-4 py-3 text-left font-medium">Role</th>
+                <th className="w-24 px-4 py-3 text-left font-medium">Partner</th>
+                <th className="w-28 px-4 py-3 text-left font-medium">Site</th>
+                <th className="w-20 px-4 py-3 text-left font-medium">Charger</th>
+                <th className="w-28 px-4 py-3 text-left font-medium">Start</th>
+                <th className="w-28 px-4 py-3 text-left font-medium">End</th>
+                <th className="w-12 px-4 py-3 !text-right font-medium">kWh</th>
+                <th className="w-20 px-4 py-3 !text-right font-medium">Amount</th>
+                <th className="w-20 px-4 py-3 text-left font-medium">Status</th>
+                {canManage && <th className="w-24 px-4 py-3 !text-right font-medium">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {sessions.map(r => (
                 <tr key={r.id} className="hover:bg-muted/50">
-                  <td className="px-4 py-3 font-medium">{r.id}</td>
-                  <td className="px-4 py-3">{r.role}</td>
-                  <td className="px-4 py-3">{r.partner}</td>
-                  <td className="px-4 py-3">{r.site}</td>
-                  <td className="px-4 py-3 text-subtle">{r.cp}</td>
-                  <td className="px-4 py-3 text-subtle">{r.start}</td>
-                  <td className="px-4 py-3 text-subtle">{r.end}</td>
-                  <td className="px-4 py-3 text-right">{r.kwh}</td>
-                  <td className="px-4 py-3 text-right">{amtStr(r.cur, r.amt)}</td>
+                  <td className="px-4 py-3 font-medium truncate max-w-[80px]" title={r.id}>{r.id}</td>
+                  <td className="px-4 py-3 text-xs">{r.role}</td>
+                  <td className="px-4 py-3 truncate max-w-[96px]" title={r.partner}>{r.partner}</td>
+                  <td className="px-4 py-3 truncate max-w-[112px]" title={r.site}>{r.site}</td>
+                  <td className="px-4 py-3 text-subtle text-xs">{r.cp}</td>
+                  <td className="px-4 py-3 text-subtle text-xs whitespace-nowrap">{r.start}</td>
+                  <td className="px-4 py-3 text-subtle text-xs whitespace-nowrap">{r.end}</td>
+                  <td className="px-4 py-3 text-right text-xs">{r.kwh}</td>
+                  <td className="px-4 py-3 text-right text-xs whitespace-nowrap">{amtStr(r.cur, r.amt)}</td>
                   <td className="px-4 py-3"><SessionStatusPill status={r.status} /></td>
                   {canManage && (
                     <td className="px-4 py-3 text-right">
@@ -224,31 +224,31 @@ export function Roaming() {
           <table className="min-w-full text-sm">
             <thead className="bg-muted text-subtle">
               <tr>
-                <th className="px-4 py-3 text-left font-medium">CDR</th>
-                <th className="px-4 py-3 text-left font-medium">Session</th>
-                <th className="px-4 py-3 text-left font-medium">Role</th>
-                <th className="px-4 py-3 text-left font-medium">Partner</th>
-                <th className="px-4 py-3 text-left font-medium">Site</th>
-                <th className="px-4 py-3 text-right font-medium">kWh</th>
-                <th className="px-4 py-3 text-right font-medium">Amount</th>
-                <th className="px-4 py-3 text-right font-medium">Fee</th>
-                <th className="px-4 py-3 text-right font-medium">Net</th>
-                <th className="px-4 py-3 text-left font-medium">Status</th>
-                {canManage && <th className="px-4 py-3 text-right font-medium">Actions</th>}
+                <th className="w-20 px-4 py-3 text-left font-medium">CDR</th>
+                <th className="w-20 px-4 py-3 text-left font-medium">Session</th>
+                <th className="w-12 px-4 py-3 text-left font-medium">Role</th>
+                <th className="w-24 px-4 py-3 text-left font-medium">Partner</th>
+                <th className="w-28 px-4 py-3 text-left font-medium">Site</th>
+                <th className="w-12 px-4 py-3 !text-right font-medium">kWh</th>
+                <th className="w-20 px-4 py-3 !text-right font-medium">Amount</th>
+                <th className="w-16 px-4 py-3 !text-right font-medium">Fee</th>
+                <th className="w-20 px-4 py-3 !text-right font-medium">Net</th>
+                <th className="w-20 px-4 py-3 text-left font-medium">Status</th>
+                {canManage && <th className="w-24 px-4 py-3 !text-right font-medium">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {cdrs.map(r => (
                 <tr key={r.cdr} className="hover:bg-muted/50">
-                  <td className="px-4 py-3 font-medium">{r.cdr}</td>
-                  <td className="px-4 py-3 text-subtle">{r.session}</td>
-                  <td className="px-4 py-3">{r.role}</td>
-                  <td className="px-4 py-3">{r.partner}</td>
-                  <td className="px-4 py-3">{r.site}</td>
-                  <td className="px-4 py-3 text-right">{r.kwh}</td>
-                  <td className="px-4 py-3 text-right">{amtStr(r.cur, r.amt)}</td>
-                  <td className="px-4 py-3 text-right">{amtStr(r.cur, r.fee)}</td>
-                  <td className="px-4 py-3 text-right">{amtStr(r.cur, r.net)}</td>
+                  <td className="px-4 py-3 font-medium truncate max-w-[80px]" title={r.cdr}>{r.cdr}</td>
+                  <td className="px-4 py-3 text-subtle text-xs truncate max-w-[80px]" title={r.session}>{r.session}</td>
+                  <td className="px-4 py-3 text-xs">{r.role}</td>
+                  <td className="px-4 py-3 truncate max-w-[96px]" title={r.partner}>{r.partner}</td>
+                  <td className="px-4 py-3 truncate max-w-[112px]" title={r.site}>{r.site}</td>
+                  <td className="px-4 py-3 text-right text-xs">{r.kwh}</td>
+                  <td className="px-4 py-3 text-right text-xs whitespace-nowrap">{amtStr(r.cur, r.amt)}</td>
+                  <td className="px-4 py-3 text-right text-xs whitespace-nowrap">{amtStr(r.cur, r.fee)}</td>
+                  <td className="px-4 py-3 text-right text-xs whitespace-nowrap font-medium">{amtStr(r.cur, r.net)}</td>
                   <td className="px-4 py-3"><CDRStatusPill status={r.status} /></td>
                   {canManage && (
                     <td className="px-4 py-3 text-right">

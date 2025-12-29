@@ -156,15 +156,15 @@ export function TechnicianSettlements() {
         <table className="min-w-full text-sm">
           <thead className="bg-muted text-subtle">
             <tr>
-              <th className="px-4 py-3 text-left font-medium">Job</th>
-              <th className="px-4 py-3 text-left font-medium">Date</th>
-              <th className="px-4 py-3 text-left font-medium">Site</th>
-              <th className="px-4 py-3 text-right font-medium">Gross</th>
-              <th className="px-4 py-3 text-right font-medium">Deductions</th>
-              <th className="px-4 py-3 text-right font-medium">Net</th>
-              <th className="px-4 py-3 text-left font-medium">Method</th>
-              <th className="px-4 py-3 text-left font-medium">Status</th>
-              <th className="px-4 py-3 text-right font-medium">Actions</th>
+              <th className="w-20">Job</th>
+              <th className="w-24">Date</th>
+              <th className="w-28">Site</th>
+              <th className="w-16 px-4 py-3 !text-right font-medium">Gross</th>
+              <th className="w-20 px-4 py-3 !text-right font-medium">Deductions</th>
+              <th className="w-16 px-4 py-3 !text-right font-medium">Net</th>
+              <th className="w-24">Method</th>
+              <th className="w-20">Status</th>
+              <th className="w-24 px-4 py-3 !text-right font-medium">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -173,18 +173,18 @@ export function TechnicianSettlements() {
               const deductions = r.platformFee + r.withholding
               const net = gross - deductions
               return (
-                <tr key={r.id} className="hover:bg-muted/50">
-                  <td className="px-4 py-3 font-medium">
-                    <button onClick={() => setSelectedLine(r)} className="text-accent hover:underline">
+                <tr key={r.id} className="hover:bg-muted/50 text-xs">
+                  <td className="px-4 py-3 font-medium truncate max-w-[80px]">
+                    <button onClick={() => setSelectedLine(r)} className="text-accent hover:underline" title={r.id}>
                       {r.id}
                     </button>
                   </td>
-                  <td className="px-4 py-3 text-subtle">{new Date(r.date).toLocaleDateString()}</td>
-                  <td className="px-4 py-3">{r.site}</td>
-                  <td className="px-4 py-3 text-right">${gross.toFixed(2)}</td>
-                  <td className="px-4 py-3 text-right text-subtle">-${deductions.toFixed(2)}</td>
-                  <td className="px-4 py-3 text-right font-medium">${net.toFixed(2)}</td>
-                  <td className="px-4 py-3">{r.method}</td>
+                  <td className="px-4 py-3 text-subtle whitespace-nowrap">{new Date(r.date).toLocaleDateString()}</td>
+                  <td className="px-4 py-3 truncate max-w-[112px]" title={r.site}>{r.site}</td>
+                  <td className="px-4 py-3 text-right whitespace-nowrap">${gross.toFixed(2)}</td>
+                  <td className="px-4 py-3 text-right text-subtle whitespace-nowrap">-${deductions.toFixed(2)}</td>
+                  <td className="px-4 py-3 text-right font-medium whitespace-nowrap">${net.toFixed(2)}</td>
+                  <td className="px-4 py-3 truncate max-w-[96px]">{r.method}</td>
                   <td className="px-4 py-3"><StatusPill status={r.status} /></td>
                   <td className="px-4 py-3 text-right">
                     <button onClick={() => setSelectedLine(r)} className="px-2 py-1 rounded border border-border hover:bg-muted text-xs">

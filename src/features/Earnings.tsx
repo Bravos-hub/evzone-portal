@@ -70,7 +70,7 @@ export function Earnings() {
                 <tr>
                   <th>Payout</th>
                   <th>Date</th>
-                  <th className="text-right">Amount</th>
+                  <th className="!text-right">Amount</th>
                   <th>Status</th>
                 </tr>
               </thead>

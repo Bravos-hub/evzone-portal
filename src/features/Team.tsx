@@ -162,28 +162,28 @@ export function Team() {
         <table className="table">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th>Stations</th>
-              <th>Last Active</th>
-              <th className="text-right">Actions</th>
+              <th className="w-32">Name</th>
+              <th className="w-48">Email</th>
+              <th className="w-24">Role</th>
+              <th className="w-24">Status</th>
+              <th className="w-20">Stations</th>
+              <th className="w-24">Last Active</th>
+              <th className="!text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map((r) => (
               <tr key={r.id}>
-                <td className="font-semibold text-text">{r.name}</td>
-                <td className="text-muted">{r.email}</td>
-                <td>
+                <td className="font-semibold truncate max-w-[128px]" title={r.name}>{r.name}</td>
+                <td className="text-muted truncate max-w-[192px]" title={r.email}>{r.email}</td>
+                <td className="whitespace-nowrap">
                   <RolePill role={r.role} />
                 </td>
-                <td>
+                <td className="whitespace-nowrap">
                   <span className={`pill ${statusColor(r.status)}`}>{r.status}</span>
                 </td>
-                <td>{r.stationsAssigned}</td>
-                <td className="text-sm text-muted">{r.lastActive}</td>
+                <td className="text-center">{r.stationsAssigned}</td>
+                <td className="text-sm text-muted whitespace-nowrap">{r.lastActive}</td>
                 <td className="text-right">
                   <div className="inline-flex items-center gap-2">
                     <button className="btn secondary" onClick={() => alert(`View ${r.name} (demo)`)}>

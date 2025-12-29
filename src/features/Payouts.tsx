@@ -118,35 +118,35 @@ export function Payouts() {
         <section className="overflow-x-auto rounded-xl border border-border bg-surface">
           <table className="min-w-full text-sm">
             <thead className="bg-muted text-subtle">
-              <tr>
-                <th className="px-4 py-3 text-left font-medium">Payout</th>
-                <th className="px-4 py-3 text-left font-medium">Job</th>
-                <th className="px-4 py-3 text-left font-medium">Site</th>
-                <th className="px-4 py-3 text-left font-medium">Date</th>
-                <th className="px-4 py-3 text-right font-medium">Gross</th>
-                <th className="px-4 py-3 text-right font-medium">Deductions</th>
-                <th className="px-4 py-3 text-right font-medium">Net</th>
-                <th className="px-4 py-3 text-left font-medium">Method</th>
-                <th className="px-4 py-3 text-left font-medium">Status</th>
-                {canApprove && <th className="px-4 py-3 text-right font-medium">Actions</th>}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {filtered.map(p => {
-                const gross = p.hours * p.rate + p.travel + p.parts
-                const deductions = p.platformFee + p.withholding
-                const net = gross - deductions
-                return (
-                  <tr key={p.id} className="hover:bg-muted/50">
-                    <td className="px-4 py-3 font-medium">{p.id}</td>
-                    <td className="px-4 py-3 text-accent hover:underline cursor-pointer">{p.jobId}</td>
-                    <td className="px-4 py-3">{p.site}</td>
-                    <td className="px-4 py-3 text-subtle">{p.date}</td>
-                    <td className="px-4 py-3 text-right">${gross.toFixed(2)}</td>
-                    <td className="px-4 py-3 text-right text-subtle">-${deductions.toFixed(2)}</td>
-                    <td className="px-4 py-3 text-right font-medium">${net.toFixed(2)}</td>
-                    <td className="px-4 py-3">{p.method}</td>
-                    <td className="px-4 py-3"><StatusPill status={p.status} /></td>
+            <tr>
+              <th className="w-20">Payout</th>
+              <th className="w-20">Job</th>
+              <th className="w-28">Site</th>
+              <th className="w-24">Date</th>
+              <th className="w-16 px-4 py-3 !text-right font-medium">Gross</th>
+              <th className="w-20 px-4 py-3 !text-right font-medium">Deductions</th>
+              <th className="w-16 px-4 py-3 !text-right font-medium">Net</th>
+              <th className="w-24">Method</th>
+              <th className="w-20">Status</th>
+              {canApprove && <th className="w-24 px-4 py-3 !text-right font-medium">Actions</th>}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {filtered.map(p => {
+              const gross = p.hours * p.rate + p.travel + p.parts
+              const deductions = p.platformFee + p.withholding
+              const net = gross - deductions
+              return (
+                <tr key={p.id} className="hover:bg-muted/50 text-xs">
+                  <td className="px-4 py-3 font-medium truncate max-w-[80px]" title={p.id}>{p.id}</td>
+                  <td className="px-4 py-3 text-accent hover:underline cursor-pointer truncate max-w-[80px]" title={p.jobId}>{p.jobId}</td>
+                  <td className="px-4 py-3 truncate max-w-[112px]" title={p.site}>{p.site}</td>
+                  <td className="px-4 py-3 text-subtle whitespace-nowrap">{p.date}</td>
+                  <td className="px-4 py-3 text-right whitespace-nowrap">${gross.toFixed(2)}</td>
+                  <td className="px-4 py-3 text-right text-subtle whitespace-nowrap">-${deductions.toFixed(2)}</td>
+                  <td className="px-4 py-3 text-right font-medium whitespace-nowrap">${net.toFixed(2)}</td>
+                  <td className="px-4 py-3 truncate max-w-[96px]">{p.method}</td>
+                  <td className="px-4 py-3"><StatusPill status={p.status} /></td>
                     {canApprove && (
                       <td className="px-4 py-3 text-right">
                         <div className="inline-flex items-center gap-2">

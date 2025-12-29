@@ -170,22 +170,22 @@ export function Sessions() {
           <thead>
             <tr>
               {perms.refund && (
-                <th className="w-8">
+                <th className="w-10">
                   <input type="checkbox" className="h-4 w-4" checked={allSel} onChange={toggleAll} />
                 </th>
               )}
-              <th>Session</th>
-              <th>Site</th>
-              <th>Charger/Conn</th>
-              <th>Start</th>
-              <th>End</th>
-              <th>Duration</th>
-              <th className="text-right">kWh</th>
-              <th>Tariff</th>
-              <th className="text-right">Amount</th>
-              <th>Payment</th>
-              <th>Status</th>
-              <th className="text-right">Actions</th>
+              <th className="w-20">Session</th>
+              <th className="w-28">Site</th>
+              <th className="w-28">Charger/Conn</th>
+              <th className="w-28">Start</th>
+              <th className="w-28">End</th>
+              <th className="w-20">Duration</th>
+              <th className="w-12 !text-right">kWh</th>
+              <th className="w-20">Tariff</th>
+              <th className="w-16 !text-right">Amount</th>
+              <th className="w-20">Payment</th>
+              <th className="w-20">Status</th>
+              <th className="w-20 !text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -196,29 +196,29 @@ export function Sessions() {
                     <input type="checkbox" className="h-4 w-4" checked={!!sel[r.id]} onChange={() => toggle(r.id)} />
                   </td>
                 )}
-                <td className="font-semibold">
+                <td className="font-semibold truncate max-w-[80px]">
                   <a href={`/sessions/${r.id}`} className="text-accent hover:underline">
                     {r.id}
                   </a>
                 </td>
-                <td>{r.site}</td>
-                <td>
+                <td className="truncate max-w-[112px]" title={r.site}>{r.site}</td>
+                <td className="truncate max-w-[112px]" title={`${r.chargePointId}/${r.connectorId}`}>
                   {r.chargePointId}/{r.connectorId}
                 </td>
-                <td>{r.start.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
-                <td>
+                <td className="whitespace-nowrap text-xs">{r.start.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                <td className="whitespace-nowrap text-xs">
                   {r.end
                     ? r.end.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
                     : '—'}
                 </td>
-                <td>{duration(r.start, r.end)}</td>
-                <td className="text-right">{r.energyKwh?.toFixed(1) || '—'}</td>
-                <td>{r.tariffName}</td>
-                <td className="text-right">${r.amount.toFixed(2)}</td>
-                <td>{r.paymentMethod}</td>
+                <td className="whitespace-nowrap text-xs">{duration(r.start, r.end)}</td>
+                <td className="text-right whitespace-nowrap text-xs">{r.energyKwh?.toFixed(1) || '—'}</td>
+                <td className="truncate max-w-[80px] text-xs" title={r.tariffName}>{r.tariffName}</td>
+                <td className="text-right whitespace-nowrap text-xs">${r.amount.toFixed(2)}</td>
+                <td className="truncate max-w-[80px] text-xs">{r.paymentMethod}</td>
                 <td>
                   <span
-                    className={`pill ${
+                    className={`pill whitespace-nowrap ${
                       r.status === 'Completed'
                         ? 'approved'
                         : r.status === 'Failed'
@@ -233,16 +233,16 @@ export function Sessions() {
                 </td>
                 <td className="text-right">
                   <div className="inline-flex items-center gap-2">
-                    <a href={`/sessions/${r.id}`} className="btn secondary">
+                    <a href={`/sessions/${r.id}`} className="px-2 py-1 text-xs rounded border border-border hover:bg-muted transition-colors">
                       View
                     </a>
                     {perms.refund && r.status === 'Completed' && (
-                      <button className="btn secondary" onClick={() => alert(`Refund ${r.id} (demo)`)}>
+                      <button className="px-2 py-1 text-xs rounded border border-border hover:bg-muted transition-colors" onClick={() => alert(`Refund ${r.id} (demo)`)}>
                         Refund
                       </button>
                     )}
                     {perms.stopSession && r.status === 'Pending' && (
-                      <button className="btn danger" onClick={() => alert(`Stop ${r.id} (demo)`)}>
+                      <button className="px-2 py-1 text-xs rounded border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors" onClick={() => alert(`Stop ${r.id} (demo)`)}>
                         Stop
                       </button>
                     )}
