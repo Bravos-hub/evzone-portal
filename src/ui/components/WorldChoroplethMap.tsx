@@ -115,7 +115,7 @@ export function WorldChoroplethMap({
   const [metric, setMetric] = useState<MetricId>(defaultMetric)
 
   const low = lowColor ?? '#152033'
-  const high = highColor ?? t.colors.accent.DEFAULT
+  const high = highColor ?? t.theme.colors.accent.DEFAULT
 
   const byId = useMemo(() => {
     const m = new Map<ChoroplethRegionId, ChoroplethDatum>()

@@ -1,179 +1,329 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { RequireAuth, RequireRole } from './guards'
+import { RequireAuth } from './guards'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { UnauthorizedPage } from '@/pages/errors/UnauthorizedPage'
 import { HomeRouter } from '@/pages/landing/HomeRouter'
-
-import { AdminDashboard } from '@/features/admin/dashboard/AdminDashboard'
-import { AdminApprovalsPage } from '@/features/admin/approvals/AdminApprovalsPage'
-import { AdminStationsPage } from '@/features/admin/stations/AdminStationsPage'
-import { AdminUsersRolesPage } from '@/features/admin/users/AdminUsersRolesPage'
-import { AdminUserDetailPage } from '@/features/admin/users/AdminUserDetailPage'
-import { AdminSupportDeskPage } from '@/features/admin/support/AdminSupportDeskPage'
-import { AdminIncidentsPage } from '@/features/admin/incidents/AdminIncidentsPage'
-import { AdminDispatchesPage } from '@/features/admin/dispatch/AdminDispatchesPage'
-import { AdminSystemHealthPage } from '@/features/admin/health/AdminSystemHealthPage'
-import { AdminAuditLogsPage } from '@/features/admin/audit/AdminAuditLogsPage'
-import { AdminBillingPage } from '@/features/admin/billing/AdminBillingPage'
-import { AdminReportsExportsPage } from '@/features/admin/reports/AdminReportsExportsPage'
-import { AdminCrmPage } from '@/features/admin/crm/AdminCrmPage'
-import { AdminOCPIPage } from '@/features/admin/ocpi/AdminOCPIPage'
-import { AdminOCPPQueuePage } from '@/features/admin/ocpp/AdminOCPPQueuePage'
-import { AdminWebhooksLogPage } from '@/features/admin/webhooks/AdminWebhooksLogPage'
-import { AdminMQTTPage } from '@/features/admin/mqtt/AdminMQTTPage'
-import { AdminBroadcastsPage } from '@/features/admin/broadcasts/AdminBroadcastsPage'
-import { AdminStatusPage } from '@/features/admin/status/AdminStatusPage'
-import { AdminGlobalConfigPage } from '@/features/admin/settings/AdminGlobalConfigPage'
-import { AdminNotificationsCenterPage } from '@/features/admin/notifications/AdminNotificationsCenterPage'
-import { AdminDisputesRefundsPage } from '@/features/admin/disputes/AdminDisputesRefundsPage'
-import { AdminKycCompliancePage } from '@/features/admin/kyc/AdminKycCompliancePage'
-import { AdminIntegrationsPage } from '@/features/admin/integrations/AdminIntegrationsPage'
-import { AdminPrivacyRequestsPage } from '@/features/admin/privacy/AdminPrivacyRequestsPage'
-import { OperatorDashboard } from '@/features/operator/dashboard/OperatorDashboard'
-import { OperatorSessionsPage } from '@/features/operator/sessions/OperatorSessionsPage'
-import { OperatorStationsPage } from '@/features/operator/stations/OperatorStationsPage'
-import { OperatorTeamPage } from '@/features/operator/team/OperatorTeamPage'
-import { SiteOwnerDashboard } from '@/features/siteOwner/dashboard/SiteOwnerDashboard'
-import { SiteOwnerSitesPage } from '@/features/siteOwner/sites/SiteOwnerSitesPage'
-import { SettingsWebhooksPage } from '@/features/settings/SettingsWebhooksPage'
-import { TechnicianJobsPage } from '@/features/technician/jobs/TechnicianJobsPage'
-import { OwnerChargeDashboard } from '@/features/owner/dashboards/OwnerChargeDashboard'
-import { OwnerSwapDashboard } from '@/features/owner/dashboards/OwnerSwapDashboard'
-import { OwnerBothDashboard } from '@/features/owner/dashboards/OwnerBothDashboard'
-import { OwnerSessionsPage } from '@/features/owner/sessions/OwnerSessionsPage'
-import { OwnerSwapBookingsPage } from '@/features/owner/bookings/OwnerSwapBookingsPage'
-import { OwnerTariffsPage } from '@/features/owner/tariffs/OwnerTariffsPage'
-import { OwnerTeamPage } from '@/features/owner/team/OwnerTeamPage'
-import { OwnerChargePointsPage } from '@/features/owner/chargePoints/OwnerChargePointsPage'
-import { OwnerSwapStationsPage } from '@/features/owner/swapStations/OwnerSwapStationsPage'
-import { OwnerEarningsPage } from '@/features/owner/earnings/OwnerEarningsPage'
-import { OwnerReportsPage } from '@/features/owner/reports/OwnerReportsPage'
-import { OwnerSmartChargingPage } from '@/features/owner/smart/OwnerSmartChargingPage'
-import { OwnerLoadPage } from '@/features/owner/load/OwnerLoadPage'
-import { StationAdminDashboard } from '@/features/stationAdmin/dashboard/StationAdminDashboard'
-import { ManagerDashboard } from '@/features/manager/dashboard/ManagerDashboard'
-import { AttendantDashboard } from '@/features/attendant/dashboard/AttendantDashboard'
-import { TechnicianOrgDashboard } from '@/features/technician/org/TechnicianOrgDashboard'
-import { TechnicianPublicDashboard } from '@/features/technician/public/TechnicianPublicDashboard'
-
 import { PlaceholderPage } from '@/pages/errors/PlaceholderPage'
+import { PATHS } from './paths'
 
+// Generic Dashboard (RBAC-controlled widget system)
+import { GenericDashboard } from '@/ui/dashboard'
+
+// Unified Feature Pages (role-agnostic, RBAC handled internally)
+import {
+    // Core Features
+    Stations,
+    Sessions,
+    Incidents,
+    Dispatches,
+    Billing,
+    Reports,
+    Team,
+    Notifications,
+    // Admin Features
+    Users,
+    UserDetail,
+    Approvals,
+    AuditLogs,
+    SystemHealth,
+    GlobalConfig,
+    Integrations,
+    KycCompliance,
+    Disputes,
+    Broadcasts,
+    Protocols,
+    Webhooks,
+    SupportDesk,
+    PrivacyRequests,
+    CRM,
+    StatusPage,
+    RolesMatrix,
+    Organizations,
+    Settlement,
+    Plans,
+    FeatureFlags,
+    WebhooksLog,
+    AdminHome,
+    // Owner Features
+    Tariffs,
+    ChargePoints,
+    SwapStations,
+    SmartCharging,
+    Earnings,
+    Bookings,
+    // Site Owner Features
+    Sites,
+    // Technician Features
+    Jobs,
+    // New Ported Features
+    Content,
+    OpenADR,
+    Roaming,
+    Regulatory,
+    Utility,
+    Partners,
+    Onboarding,
+    Settings,
+    Wallet,
+    TechRequests,
+    AddCharger,
+    TechnicianJobs,
+    // Marketplace & Explore
+    Marketplace,
+    Explore,
+    // Help & Legal
+    Help,
+    LegalTerms,
+    LegalPrivacy,
+    LegalCookies,
+    // Error Pages
+    NotFound,
+    ServerError,
+    Offline,
+    BrowserUnsupported,
+    // Auth Pages
+    Login,
+    Register,
+    ForgotPassword,
+    VerifyEmail,
+    // Role-specific Ops
+    OwnerOps,
+    OperatorOps,
+    TechnicianAvailability,
+    SiteOwnerSites,
+    // Additional Ported Features
+    Alerts,
+    Payments,
+    Payouts,
+    Parking,
+    Tenants,
+    OperatorDashboard,
+    SiteOwnerDashboard,
+    Discounts,
+    StationMap,
+    OwnerAlerts,
+    Operators,
+    OwnerPlans,
+    OwnerSettlement,
+    OperatorJobs,
+    OperatorReports,
+    TechnicianSettlements,
+    TechnicianDocs,
+    BookingLedger,
+    PricingRecipes,
+    LoadPolicy,
+    KioskScan,
+    OperatorSwapStationDetail,
+    OperatorTeamDetail,
+    OwnerOperatorsReport,
+    ManualReserve,
+    OperatorAssignments,
+    OperatorAvailability,
+} from '@/features'
+
+/**
+ * Application Routes - Unified flat structure
+ * 
+ * All routes use RequireAuth (must be logged in).
+ * Role-based access control is handled INSIDE each feature component.
+ * The sidebar dynamically shows/hides menu items based on role.
+ */
 export function AppRoutes() {
-  return (
-    <Routes>
-      <Route path="/" element={<HomeRouter />} />
+    return (
+        <Routes>
+            {/* Public routes */}
+            <Route path={PATHS.HOME} element={<HomeRouter />} />
+            <Route path={PATHS.AUTH.LOGIN} element={<LoginPage />} />
+            <Route path={PATHS.ERRORS.UNAUTHORIZED} element={<UnauthorizedPage />} />
 
-      <Route path="/auth/login" element={<LoginPage />} />
-      <Route path="/unauthorized" element={<UnauthorizedPage />} />
+            {/* ═══════════════════════════════════════════════════════════════════════
+          DASHBOARD - Single route, content determined by user's role
+          ═══════════════════════════════════════════════════════════════════════ */}
+            <Route path={PATHS.DASHBOARD} element={<RequireAuth><GenericDashboard /></RequireAuth>} />
 
-      {/* Admin */}
-      <Route
-        path="/admin"
-        element={
-          <RequireRole roles={['EVZONE_ADMIN']}>
-            <AdminDashboard />
-          </RequireRole>
-        }
-      />
-      <Route path="/admin/approvals" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminApprovalsPage /></RequireRole>} />
-      <Route path="/admin/stations" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminStationsPage /></RequireRole>} />
-      <Route path="/admin/users" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminUsersRolesPage /></RequireRole>} />
-      <Route path="/admin/users/:id" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminUserDetailPage /></RequireRole>} />
-      <Route path="/admin/support" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminSupportDeskPage /></RequireRole>} />
-      <Route path="/admin/health" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminSystemHealthPage /></RequireRole>} />
-      <Route path="/admin/audit" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminAuditLogsPage /></RequireRole>} />
-      <Route path="/admin/billing" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminBillingPage /></RequireRole>} />
-      <Route path="/admin/reports" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminReportsExportsPage /></RequireRole>} />
-      <Route path="/admin/crm" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminCrmPage /></RequireRole>} />
-      <Route path="/admin/incidents" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminIncidentsPage /></RequireRole>} />
-      <Route path="/admin/dispatches" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminDispatchesPage /></RequireRole>} />
-      <Route path="/admin/ocpi" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminOCPIPage /></RequireRole>} />
-      <Route path="/admin/ocpp" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminOCPPQueuePage /></RequireRole>} />
-      <Route path="/admin/webhooks" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminWebhooksLogPage /></RequireRole>} />
-      <Route path="/admin/mqtt" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminMQTTPage /></RequireRole>} />
-      <Route path="/admin/broadcasts" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminBroadcastsPage /></RequireRole>} />
-      <Route path="/admin/status" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminStatusPage /></RequireRole>} />
-      <Route path="/admin/settings" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminGlobalConfigPage /></RequireRole>} />
-      <Route path="/admin/notifications" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminNotificationsCenterPage /></RequireRole>} />
-      <Route path="/admin/disputes" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminDisputesRefundsPage /></RequireRole>} />
-      <Route path="/admin/kyc" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminKycCompliancePage /></RequireRole>} />
-      <Route path="/admin/integrations" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminIntegrationsPage /></RequireRole>} />
-      <Route path="/admin/privacy" element={<RequireRole roles={['EVZONE_ADMIN']}><AdminPrivacyRequestsPage /></RequireRole>} />
-      <Route path="/admin/:section" element={<RequireRole roles={['EVZONE_ADMIN']}><PlaceholderPage /></RequireRole>} />
+            {/* ═══════════════════════════════════════════════════════════════════════
+          CORE FEATURES - Available to multiple roles (RBAC inside component)
+          ═══════════════════════════════════════════════════════════════════════ */}
+            <Route path={PATHS.STATIONS.ROOT} element={<RequireAuth><Stations /></RequireAuth>} />
+            <Route path={PATHS.STATIONS.CHARGE_POINTS} element={<RequireAuth><Stations /></RequireAuth>} />
+            <Route path={PATHS.STATIONS.SWAP_STATIONS} element={<RequireAuth><Stations /></RequireAuth>} />
+            <Route path={PATHS.STATIONS.SMART_CHARGING} element={<RequireAuth><Stations /></RequireAuth>} />
+            <Route path={PATHS.STATIONS.BOOKINGS} element={<RequireAuth><Stations /></RequireAuth>} />
 
-      {/* Operator */}
-      <Route
-        path="/operator"
-        element={
-          <RequireRole roles={['EVZONE_OPERATOR']}>
-            <OperatorDashboard />
-          </RequireRole>
-        }
-      />
-      <Route path="/operator/sessions" element={<RequireRole roles={['EVZONE_OPERATOR']}><OperatorSessionsPage /></RequireRole>} />
-      <Route path="/operator/stations" element={<RequireRole roles={['EVZONE_OPERATOR']}><OperatorStationsPage /></RequireRole>} />
-      <Route path="/operator/team" element={<RequireRole roles={['EVZONE_OPERATOR']}><OperatorTeamPage /></RequireRole>} />
-      <Route path="/operator/:section" element={<RequireRole roles={['EVZONE_OPERATOR']}><PlaceholderPage /></RequireRole>} />
+            {/* Redirect old routes to stations sub-routes */}
+            <Route path="/charge-points" element={<Navigate to={PATHS.STATIONS.CHARGE_POINTS} replace />} />
+            <Route path="/swap-stations" element={<Navigate to={PATHS.STATIONS.SWAP_STATIONS} replace />} />
+            <Route path="/smart-charging" element={<Navigate to={PATHS.STATIONS.SMART_CHARGING} replace />} />
+            <Route path="/bookings" element={<Navigate to={PATHS.STATIONS.BOOKINGS} replace />} />
 
-      {/* Site owner */}
-      <Route path="/site-owner" element={<RequireRole roles={['SITE_OWNER']}><SiteOwnerDashboard /></RequireRole>} />
-      <Route path="/site-owner/sites" element={<RequireRole roles={['SITE_OWNER']}><SiteOwnerSitesPage /></RequireRole>} />
-      <Route path="/site-owner/:section" element={<RequireRole roles={['SITE_OWNER']}><PlaceholderPage /></RequireRole>} />
+            <Route path={PATHS.SESSIONS} element={<RequireAuth><Sessions /></RequireAuth>} />
+            <Route path={PATHS.INCIDENTS} element={<RequireAuth><Incidents /></RequireAuth>} />
+            <Route path={PATHS.DISPATCHES} element={<RequireAuth><Dispatches /></RequireAuth>} />
+            <Route path={PATHS.BILLING} element={<RequireAuth><Billing /></RequireAuth>} />
+            <Route path={PATHS.REPORTS} element={<RequireAuth><Reports /></RequireAuth>} />
+            <Route path={PATHS.TEAM} element={<RequireAuth><Team /></RequireAuth>} />
+            <Route path={PATHS.NOTIFICATIONS} element={<RequireAuth><Notifications /></RequireAuth>} />
 
-      {/* Settings (all roles) */}
-      <Route path="/settings/webhooks" element={<RequireAuth><SettingsWebhooksPage /></RequireAuth>} />
+            {/* ═══════════════════════════════════════════════════════════════════════
+          ADMIN FEATURES - RBAC checked inside each component
+          ═══════════════════════════════════════════════════════════════════════ */}
+            <Route path={PATHS.ADMIN.USERS} element={<RequireAuth><Users /></RequireAuth>} />
+            <Route path={PATHS.ADMIN.USER_DETAIL(':userId')} element={<RequireAuth><UserDetail /></RequireAuth>} />
+            <Route path={PATHS.ADMIN.APPROVALS} element={<RequireAuth><Approvals /></RequireAuth>} />
+            <Route path={PATHS.ADMIN.AUDIT_LOGS} element={<RequireAuth><AuditLogs /></RequireAuth>} />
+            <Route path={PATHS.ADMIN.SYSTEM_HEALTH} element={<RequireAuth><SystemHealth /></RequireAuth>} />
+            <Route path={PATHS.ADMIN.GLOBAL_CONFIG} element={<RequireAuth><GlobalConfig /></RequireAuth>} />
+            <Route path={PATHS.ADMIN.INTEGRATIONS} element={<RequireAuth><Integrations /></RequireAuth>} />
+            <Route path={PATHS.ADMIN.KYC} element={<RequireAuth><KycCompliance /></RequireAuth>} />
+            <Route path={PATHS.ADMIN.DISPUTES} element={<RequireAuth><Disputes /></RequireAuth>} />
+            <Route path={PATHS.ADMIN.BROADCASTS} element={<RequireAuth><Broadcasts /></RequireAuth>} />
+            <Route path={PATHS.ADMIN.PROTOCOLS} element={<RequireAuth><Protocols /></RequireAuth>} />
+            <Route path={PATHS.ADMIN.SETTLEMENT} element={<RequireAuth><Settlement /></RequireAuth>} />
+            <Route path={PATHS.ADMIN.PLANS} element={<RequireAuth><Plans /></RequireAuth>} />
+            <Route path={PATHS.ADMIN.FEATURE_FLAGS} element={<RequireAuth><FeatureFlags /></RequireAuth>} />
+            <Route path={PATHS.ADMIN.WEBHOOKS_LOG} element={<RequireAuth><WebhooksLog /></RequireAuth>} />
+            <Route path={PATHS.ADMIN.WEBHOOKS} element={<RequireAuth><Webhooks /></RequireAuth>} />
+            <Route path={PATHS.ADMIN.SUPPORT} element={<RequireAuth><SupportDesk /></RequireAuth>} />
+            <Route path={PATHS.ADMIN.PRIVACY} element={<RequireAuth><PrivacyRequests /></RequireAuth>} />
+            <Route path={PATHS.ADMIN.CRM} element={<RequireAuth><CRM /></RequireAuth>} />
+            <Route path={PATHS.ADMIN.STATUS} element={<RequireAuth><StatusPage /></RequireAuth>} />
+            <Route path={PATHS.ADMIN.ROLES} element={<RequireAuth><RolesMatrix /></RequireAuth>} />
+            <Route path={PATHS.ADMIN.ORGS} element={<RequireAuth><Organizations /></RequireAuth>} />
+            <Route path={PATHS.ADMIN.HOME} element={<RequireAuth><AdminHome /></RequireAuth>} />
 
-      {/* Station owner variants */}
-      <Route path="/owner/charge" element={<RequireRole roles={['OWNER']}><OwnerChargeDashboard /></RequireRole>} />
-      <Route path="/owner/charge/sessions" element={<RequireRole roles={['OWNER']}><OwnerSessionsPage /></RequireRole>} />
-      <Route path="/owner/charge/connectors" element={<RequireRole roles={['OWNER']}><OwnerChargePointsPage /></RequireRole>} />
-      <Route path="/owner/charge/pricing" element={<RequireRole roles={['OWNER']}><OwnerTariffsPage /></RequireRole>} />
-      <Route path="/owner/charge/smart" element={<RequireRole roles={['OWNER']}><OwnerSmartChargingPage /></RequireRole>} />
-      <Route path="/owner/charge/team" element={<RequireRole roles={['OWNER']}><OwnerTeamPage /></RequireRole>} />
-      <Route path="/owner/charge/billing" element={<RequireRole roles={['OWNER']}><OwnerEarningsPage /></RequireRole>} />
-      <Route path="/owner/charge/reports" element={<RequireRole roles={['OWNER']}><OwnerReportsPage /></RequireRole>} />
-      <Route path="/owner/charge/:section" element={<RequireRole roles={['OWNER']}><PlaceholderPage /></RequireRole>} />
-      <Route path="/owner/swap" element={<RequireRole roles={['OWNER']}><OwnerSwapDashboard /></RequireRole>} />
-      <Route path="/owner/swap/stations" element={<RequireRole roles={['OWNER']}><OwnerSwapStationsPage /></RequireRole>} />
-      <Route path="/owner/swap/bookings" element={<RequireRole roles={['OWNER']}><OwnerSwapBookingsPage /></RequireRole>} />
-      <Route path="/owner/swap/pricing" element={<RequireRole roles={['OWNER']}><OwnerTariffsPage /></RequireRole>} />
-      <Route path="/owner/swap/team" element={<RequireRole roles={['OWNER']}><OwnerTeamPage /></RequireRole>} />
-      <Route path="/owner/swap/billing" element={<RequireRole roles={['OWNER']}><OwnerEarningsPage /></RequireRole>} />
-      <Route path="/owner/swap/reports" element={<RequireRole roles={['OWNER']}><OwnerReportsPage /></RequireRole>} />
-      <Route path="/owner/swap/:section" element={<RequireRole roles={['OWNER']}><PlaceholderPage /></RequireRole>} />
-      <Route path="/owner/both" element={<RequireRole roles={['OWNER']}><OwnerBothDashboard /></RequireRole>} />
-      <Route path="/owner/both/sessions" element={<RequireRole roles={['OWNER']}><OwnerSessionsPage /></RequireRole>} />
-      <Route path="/owner/both/stations" element={<RequireRole roles={['OWNER']}><OwnerSwapStationsPage /></RequireRole>} />
-      <Route path="/owner/both/connectors" element={<RequireRole roles={['OWNER']}><OwnerChargePointsPage /></RequireRole>} />
-      <Route path="/owner/both/bookings" element={<RequireRole roles={['OWNER']}><OwnerSwapBookingsPage /></RequireRole>} />
-      <Route path="/owner/both/pricing" element={<RequireRole roles={['OWNER']}><OwnerTariffsPage /></RequireRole>} />
-      <Route path="/owner/both/team" element={<RequireRole roles={['OWNER']}><OwnerTeamPage /></RequireRole>} />
-      <Route path="/owner/both/billing" element={<RequireRole roles={['OWNER']}><OwnerEarningsPage /></RequireRole>} />
-      <Route path="/owner/both/reports" element={<RequireRole roles={['OWNER']}><OwnerReportsPage /></RequireRole>} />
-      <Route path="/owner/both/:section" element={<RequireRole roles={['OWNER']}><PlaceholderPage /></RequireRole>} />
+            <Route path={PATHS.MARKETPLACE} element={<RequireAuth><Marketplace /></RequireAuth>} />
+            <Route path={PATHS.EXPLORE} element={<RequireAuth><Explore /></RequireAuth>} />
+            <Route path={PATHS.HELP} element={<RequireAuth><Help /></RequireAuth>} />
+            <Route path={PATHS.LEGAL.TERMS} element={<RequireAuth><LegalTerms /></RequireAuth>} />
+            <Route path={PATHS.LEGAL.PRIVACY} element={<RequireAuth><LegalPrivacy /></RequireAuth>} />
+            <Route path={PATHS.LEGAL.COOKIES} element={<RequireAuth><LegalCookies /></RequireAuth>} />
 
-      {/* Station admin */}
-      <Route path="/station-admin" element={<RequireRole roles={['STATION_ADMIN']}><StationAdminDashboard /></RequireRole>} />
-      <Route path="/station-admin/:section" element={<RequireRole roles={['STATION_ADMIN']}><PlaceholderPage /></RequireRole>} />
+            {/* Legacy dashboard routes - redirect to unified dashboard */}
+            <Route path="/owner/dashboard/*" element={<Navigate to={PATHS.DASHBOARD} replace />} />
+            <Route path="/manager/dashboard" element={<Navigate to={PATHS.DASHBOARD} replace />} />
+            <Route path="/attendant/dashboard" element={<Navigate to={PATHS.DASHBOARD} replace />} />
+            <Route path="/technician/dashboard/*" element={<Navigate to={PATHS.DASHBOARD} replace />} />
 
-      {/* Manager */}
-      <Route path="/manager" element={<RequireRole roles={['MANAGER']}><ManagerDashboard /></RequireRole>} />
-      <Route path="/manager/:section" element={<RequireRole roles={['MANAGER']}><PlaceholderPage /></RequireRole>} />
+            {/* ═══════════════════════════════════════════════════════════════════════
+          OWNER FEATURES - RBAC checked inside each component
+          ═══════════════════════════════════════════════════════════════════════ */}
+            <Route path={PATHS.OWNER.TARIFFS} element={<RequireAuth><Tariffs /></RequireAuth>} />
+            <Route path={PATHS.OWNER.EARNINGS} element={<RequireAuth><Earnings /></RequireAuth>} />
+            <Route path={PATHS.OWNER.BOOKING_LEDGER} element={<RequireAuth><BookingLedger /></RequireAuth>} />
+            <Route path={PATHS.OWNER.PRICING_RECIPES} element={<RequireAuth><PricingRecipes /></RequireAuth>} />
+            <Route path={PATHS.OWNER.LOAD_POLICY} element={<RequireAuth><LoadPolicy /></RequireAuth>} />
 
-      {/* Attendant */}
-      <Route path="/attendant" element={<RequireRole roles={['ATTENDANT']}><AttendantDashboard /></RequireRole>} />
-      <Route path="/attendant/:section" element={<RequireRole roles={['ATTENDANT']}><PlaceholderPage /></RequireRole>} />
+            {/* ═══════════════════════════════════════════════════════════════════════
+          SITE OWNER FEATURES
+          ═══════════════════════════════════════════════════════════════════════ */}
+            <Route path={PATHS.SITE_OWNER.SITES} element={<RequireAuth><Sites /></RequireAuth>} />
 
-      {/* Technician */}
-      <Route path="/technician/org" element={<RequireRole roles={['TECHNICIAN_ORG']}><TechnicianOrgDashboard /></RequireRole>} />
-      <Route path="/technician/org/jobs" element={<RequireRole roles={['TECHNICIAN_ORG']}><TechnicianJobsPage /></RequireRole>} />
-      <Route path="/technician/org/:section" element={<RequireRole roles={['TECHNICIAN_ORG']}><PlaceholderPage /></RequireRole>} />
-      <Route path="/technician/public" element={<RequireRole roles={['TECHNICIAN_PUBLIC']}><TechnicianPublicDashboard /></RequireRole>} />
-      <Route path="/technician/public/jobs" element={<RequireRole roles={['TECHNICIAN_PUBLIC']}><TechnicianJobsPage /></RequireRole>} />
-      <Route path="/technician/public/:section" element={<RequireRole roles={['TECHNICIAN_PUBLIC']}><PlaceholderPage /></RequireRole>} />
+            {/* ═══════════════════════════════════════════════════════════════════════
+          TECHNICIAN FEATURES
+          ═══════════════════════════════════════════════════════════════════════ */}
+            <Route path={PATHS.TECH.JOBS} element={<RequireAuth><Jobs /></RequireAuth>} />
+            <Route path={PATHS.TECH.TECH_JOBS} element={<RequireAuth><TechnicianJobs /></RequireAuth>} />
+            <Route path={PATHS.TECH.AVAILABILITY} element={<RequireAuth><TechnicianAvailability /></RequireAuth>} />
 
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  )
+            {/* ═══════════════════════════════════════════════════════════════════════
+          NEW PORTED FEATURES
+          ═══════════════════════════════════════════════════════════════════════ */}
+            {/* Admin Advanced */}
+            <Route path={PATHS.ADMIN.WEBHOOKS} element={<RequireAuth><Webhooks /></RequireAuth>} />
+            {/* Note: some paths might overlap or be duplicated in routes.tsx, I'll follow the existing structure */}
+            <Route path="/content" element={<RequireAuth><Content /></RequireAuth>} />
+            <Route path="/openadr" element={<RequireAuth><OpenADR /></RequireAuth>} />
+            <Route path="/roaming" element={<RequireAuth><Roaming /></RequireAuth>} />
+            <Route path="/regulatory" element={<RequireAuth><Regulatory /></RequireAuth>} />
+            <Route path="/utility" element={<RequireAuth><Utility /></RequireAuth>} />
+            <Route path={PATHS.OWNER.OPS} element={<RequireAuth><OwnerOps /></RequireAuth>} />
+
+            {/* Settings & Wallet */}
+            <Route path={PATHS.SETTING} element={<RequireAuth><Settings /></RequireAuth>} />
+            <Route path={PATHS.WALLET} element={<RequireAuth><Wallet /></RequireAuth>} />
+
+            {/* Owner Tools */}
+            <Route path={PATHS.OWNER.TECH_REQUESTS} element={<RequireAuth><TechRequests /></RequireAuth>} />
+            <Route path={PATHS.OWNER.ADD_CHARGER} element={<RequireAuth><AddCharger /></RequireAuth>} />
+            <Route path={PATHS.OWNER.OPS} element={<RequireAuth><OwnerOps /></RequireAuth>} />
+
+            {/* Operator Tools */}
+            <Route path={PATHS.OPERATOR.OPS} element={<RequireAuth><OperatorOps /></RequireAuth>} />
+            <Route path={PATHS.OPERATOR.KIOSK} element={<RequireAuth><KioskScan /></RequireAuth>} />
+            <Route path={PATHS.OPERATOR.RESERVE} element={<RequireAuth><ManualReserve /></RequireAuth>} />
+            <Route path={PATHS.OPERATOR.ASSIGNMENTS} element={<RequireAuth><OperatorAssignments /></RequireAuth>} />
+            <Route path={PATHS.OPERATOR.AVAILABILITY} element={<RequireAuth><OperatorAvailability /></RequireAuth>} />
+            <Route path={PATHS.OPERATOR.SWAP_DETAIL(':id')} element={<RequireAuth><OperatorSwapStationDetail /></RequireAuth>} />
+            <Route path={PATHS.OPERATOR.TEAM_DETAIL(':id')} element={<RequireAuth><OperatorTeamDetail /></RequireAuth>} />
+
+            {/* Site Owner Tools */}
+            <Route path={PATHS.SITE_OWNER.MY_SITES} element={<RequireAuth><SiteOwnerSites /></RequireAuth>} />
+            <Route path={PATHS.SITE_OWNER.DASHBOARD} element={<RequireAuth><SiteOwnerDashboard /></RequireAuth>} />
+            <Route path={PATHS.SITE_OWNER.PARKING} element={<RequireAuth><Parking /></RequireAuth>} />
+            <Route path={PATHS.SITE_OWNER.TENANTS} element={<RequireAuth><Tenants /></RequireAuth>} />
+
+            {/* Operator Tools */}
+            <Route path={PATHS.OPERATOR.DASHBOARD} element={<RequireAuth><OperatorDashboard /></RequireAuth>} />
+
+            {/* Financial Tools */}
+            <Route path={PATHS.SESSIONS} element={<RequireAuth><Sessions /></RequireAuth>} />
+            {/* Note: routes.tsx has some repetitive entries, I'll keep them to maintain existing behavior but use constants */}
+            <Route path="/payments" element={<RequireAuth><Payments /></RequireAuth>} />
+            <Route path="/payouts" element={<RequireAuth><Payouts /></RequireAuth>} />
+
+            {/* Platform Monitoring */}
+            <Route path="/alerts" element={<RequireAuth><Alerts /></RequireAuth>} />
+
+            {/* Owner Features */}
+            <Route path={PATHS.OWNER.DISCOUNTS} element={<RequireAuth><Discounts /></RequireAuth>} />
+            <Route path={PATHS.OWNER.STATION_MAP} element={<RequireAuth><StationMap /></RequireAuth>} />
+            <Route path={PATHS.OWNER.ALERTS} element={<RequireAuth><OwnerAlerts /></RequireAuth>} />
+            <Route path={PATHS.OWNER.OPERATORS} element={<RequireAuth><Operators /></RequireAuth>} />
+            <Route path={PATHS.OWNER.OPERATOR_REPORT(':id')} element={<RequireAuth><OwnerOperatorsReport /></RequireAuth>} />
+            <Route path={PATHS.OWNER.PLANS} element={<RequireAuth><OwnerPlans /></RequireAuth>} />
+            <Route path={PATHS.OWNER.SETTLEMENT} element={<RequireAuth><OwnerSettlement /></RequireAuth>} />
+
+            {/* Operator Features */}
+            <Route path={PATHS.OPERATOR.JOBS} element={<RequireAuth><OperatorJobs /></RequireAuth>} />
+            <Route path={PATHS.OPERATOR.REPORTS} element={<RequireAuth><OperatorReports /></RequireAuth>} />
+
+            {/* Technician Features */}
+            <Route path={PATHS.TECH.SETTLEMENTS} element={<RequireAuth><TechnicianSettlements /></RequireAuth>} />
+            <Route path={PATHS.TECH.DOCS} element={<RequireAuth><TechnicianDocs /></RequireAuth>} />
+
+            {/* ═══════════════════════════════════════════════════════════════════════
+          PUBLIC ROUTES (No auth required)
+          ═══════════════════════════════════════════════════════════════════════ */}
+            <Route path={PATHS.ONBOARDING} element={<Onboarding />} />
+            <Route path={PATHS.AUTH.LOGIN} element={<Login />} />
+            <Route path={PATHS.AUTH.REGISTER} element={<Register />} />
+            <Route path={PATHS.AUTH.FORGOT_PASSWORD} element={<ForgotPassword />} />
+            <Route path={PATHS.AUTH.VERIFY_EMAIL} element={<VerifyEmail />} />
+
+            {/* ═══════════════════════════════════════════════════════════════════════
+          ERROR PAGES
+          ═══════════════════════════════════════════════════════════════════════ */}
+            <Route path={PATHS.ERRORS.NOT_FOUND} element={<NotFound />} />
+            <Route path={PATHS.ERRORS.SERVER_ERROR} element={<ServerError />} />
+            <Route path={PATHS.ERRORS.OFFLINE} element={<Offline />} />
+            <Route path={PATHS.ERRORS.BROWSER} element={<BrowserUnsupported />} />
+
+            {/* ═══════════════════════════════════════════════════════════════════════
+          LEGACY ROUTES - Redirect to new structure
+          ═══════════════════════════════════════════════════════════════════════ */}
+            <Route path="/admin" element={<Navigate to={PATHS.DASHBOARD} replace />} />
+            <Route path="/admin/*" element={<Navigate to={PATHS.DASHBOARD} replace />} />
+            <Route path="/operator" element={<Navigate to={PATHS.DASHBOARD} replace />} />
+            <Route path="/operator/*" element={<Navigate to={PATHS.DASHBOARD} replace />} />
+            <Route path="/owner/*" element={<Navigate to={PATHS.DASHBOARD} replace />} />
+            <Route path="/site-owner/*" element={<Navigate to={PATHS.DASHBOARD} replace />} />
+            <Route path="/station-admin/*" element={<Navigate to={PATHS.DASHBOARD} replace />} />
+            <Route path="/manager/*" element={<Navigate to={PATHS.DASHBOARD} replace />} />
+            <Route path="/attendant/*" element={<Navigate to={PATHS.DASHBOARD} replace />} />
+            <Route path="/technician/*" element={<Navigate to={PATHS.DASHBOARD} replace />} />
+
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to={PATHS.HOME} replace />} />
+        </Routes>
+    )
 }
-

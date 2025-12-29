@@ -33,7 +33,7 @@ function statusColor(status: StationMapPoint['status']) {
     : status === 'Degraded'
       ? '#f59e0b'
       : status === 'Maintenance'
-        ? '#3b82f6'
+        ? '#f77f00'
         : '#ef4444'
 }
 

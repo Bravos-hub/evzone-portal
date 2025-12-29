@@ -5,35 +5,36 @@ export default {
     './index.html',
     './src/**/*.{js,ts,jsx,tsx}',
   ],
+  darkMode: 'class', // Enables dark mode based on class
   theme: {
     extend: {
       colors: {
         bg: {
-          DEFAULT: '#0c1118',
-          secondary: '#111827',
-          subtle: '#161e2d',
+          DEFAULT: 'var(--app-bg)',
+          secondary: 'var(--app-bg-secondary)',
+          subtle: 'var(--app-bg-subtle)',
         },
         panel: {
-          DEFAULT: '#111827',
-          '2': '#0f1724',
+          DEFAULT: 'var(--app-panel)',
+          '2': 'var(--app-panel-2)',
         },
         text: {
-          DEFAULT: '#e6ebf5',
-          secondary: '#c8d0df',
+          DEFAULT: 'var(--app-text)',
+          secondary: 'var(--app-text-secondary)',
         },
-        muted: '#9ba7bd',
+        muted: 'var(--app-muted)',
         border: {
-          DEFAULT: 'rgba(255,255,255,.09)',
-          light: 'rgba(255,255,255,.05)',
+          DEFAULT: 'var(--app-border)',
+          light: 'var(--app-border-light)',
         },
         accent: {
-          DEFAULT: '#3b82f6',
-          hover: '#2563eb',
-          light: 'rgba(59,130,246,.15)',
+          DEFAULT: 'var(--app-accent)',
+          hover: 'var(--app-accent-hover)',
+          light: 'var(--app-accent-light)',
         },
-        danger: '#ef4444',
-        ok: '#10b981',
-        warn: '#f59e0b',
+        danger: 'var(--app-danger)',
+        ok: 'var(--app-ok)',
+        warn: 'var(--app-warn)',
       },
       screens: {
         'sm': '680px',
@@ -46,11 +47,11 @@ export default {
         sans: ['Inter', 'Segoe UI', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
-        DEFAULT: '0 8px 24px rgba(0,0,0,.16)',
-        lg: '0 14px 38px rgba(0,0,0,.22)',
-        soft: '0 6px 18px rgba(0,0,0,.16)',
-        card: '0 10px 30px rgba(0,0,0,.14)',
-        accent: '0 6px 14px rgba(59,130,246,.25)',
+        DEFAULT: '0 4px 12px var(--app-shadow)',
+        lg: '0 12px 32px var(--app-shadow)',
+        soft: '0 2px 10px var(--app-shadow)',
+        card: '0 8px 30px var(--app-shadow)',
+        accent: '0 4px 14px var(--app-shadow-accent)',
       },
       borderRadius: {
         xl: '14px',
@@ -60,4 +61,3 @@ export default {
   },
   plugins: [],
 } satisfies Config
-

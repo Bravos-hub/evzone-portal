@@ -1,41 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/core/auth/authStore'
-import { useScopeStore } from '@/core/scope/scopeStore'
-import type { RegionId } from '@/core/auth/types'
-
-const regions: Array<{ id: RegionId | 'ALL'; label: string }> = [
-  { id: 'ALL', label: 'All Regions' },
-  { id: 'AFRICA', label: 'Africa' },
-  { id: 'EUROPE', label: 'Europe' },
-  { id: 'AMERICAS', label: 'Americas' },
-  { id: 'ASIA', label: 'Asia' },
-  { id: 'MIDDLE_EAST', label: 'Middle East' },
-]
-
-const dateRanges = [
-  { id: 'TODAY', label: 'Today' },
-  { id: '7D', label: 'Last 7d' },
-  { id: '30D', label: 'Last 30d' },
-  { id: 'CUSTOM', label: 'Custom' },
-]
-
-const orgs = ['ALL', 'ORG_DEMO', 'ORG_ALPHA', 'ORG_BETA']
-const stations = ['ALL', 'STATION_001', 'STATION_002', 'STATION_003']
-const sites = ['ALL', 'SITE_001', 'SITE_002', 'SITE_003']
+import { InviteUserModal } from '@/modals/InviteUserModal'
+import { ROLE_LABELS } from '@/constants/roles'
+import { PATHS } from '@/app/router/paths'
+import { useTheme } from '@/ui/theme'
 
 export function Header({ title }: { title?: string }) {
   const nav = useNavigate()
   const { user, impersonator, impersonationReturnTo, logout, stopImpersonation } = useAuthStore()
-  const { scope, setScope } = useScopeStore()
+  const { mode, setMode, effectiveTheme } = useTheme()
   const [createOpen, setCreateOpen] = useState(false)
+  const [inviteModalOpen, setInviteModalOpen] = useState(false)
   const createRef = useRef<HTMLDivElement | null>(null)
   const createBtnRef = useRef<HTMLButtonElement | null>(null)
   const createMenuRef = useRef<HTMLDivElement | null>(null)
-
-  const showOrg = useMemo(() => user?.role === 'EVZONE_ADMIN' || user?.role === 'EVZONE_OPERATOR' || user?.role === 'OWNER', [user?.role])
-  const showStation = useMemo(() => user?.role !== 'SITE_OWNER', [user?.role])
-  const showSite = useMemo(() => user?.role === 'SITE_OWNER', [user?.role])
 
   useEffect(() => {
     function onDown(e: MouseEvent) {
@@ -57,164 +36,130 @@ export function Header({ title }: { title?: string }) {
   }, [createOpen])
 
   const createItems = useMemo(() => {
-    const fallback = '/admin/stations'
-    const addChargePoint = user?.role === 'OWNER' ? '/owner/charge/connectors' : fallback
-    const addSwapStation = user?.role === 'OWNER' ? '/owner/swap/stations' : fallback
-    const inviteOperator = '/admin/users'
+    const fallback = '/stations'
+    const addStation = '/add-charger'
+    const addChargePoint = '/add-charger'
+    const addSwapStation = '/add-charger'
     const requestTechnician =
       user?.role === 'EVZONE_ADMIN'
-        ? '/admin/dispatches'
+        ? '/dispatches'
         : user?.role === 'EVZONE_OPERATOR'
-          ? '/operator/stations'
-          : '/admin/dispatches'
-    const listParkingSite = user?.role === 'SITE_OWNER' ? '/site-owner/sites' : fallback
+          ? '/operator-jobs'
+          : '/dispatches'
+    const listParkingSite = user?.role === 'SITE_OWNER' ? '/sites' : fallback
 
     return [
-      { label: 'Add Charge Point', to: addChargePoint },
-      { label: 'Add Swap Station', to: addSwapStation },
-      { label: 'Invite Operator', to: inviteOperator },
-      { label: 'Request Technician', to: requestTechnician },
-      { label: 'List Parking Site', to: listParkingSite },
+      { label: 'Add Station', to: addStation, action: 'navigate' },
+      { label: 'Add Charge Point', to: addChargePoint, action: 'navigate' },
+      { label: 'Add Swap Station', to: addSwapStation, action: 'navigate' },
+      { label: 'Invite User', to: '', action: 'modal' },
+      { label: 'Request Technician', to: requestTechnician, action: 'navigate' },
+      { label: 'List Parking Site', to: listParkingSite, action: 'navigate' },
     ]
   }, [user?.role])
 
   const profileInitial = user?.name?.[0]?.toUpperCase?.() ?? 'U'
 
   return (
-    <header className="sticky top-0 z-[90] flex items-center gap-3 px-6 border-b border-border-light bg-bg-secondary shadow-[0_1px_3px_rgba(0,0,0,.2)] min-h-[72px] flex-nowrap">
-      <div className="flex items-center gap-3 flex-nowrap min-w-0 flex-1 overflow-x-auto scrollbar-hide">
-        <input
-          className="bg-panel border border-border-light text-text rounded-lg py-[9px] px-[14px] text-[13px] transition-all duration-200 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,130,246,.15)] placeholder:text-muted w-[320px] max-w-[60vw] min-w-[200px] flex-shrink"
-          placeholder="Search (station/user/ticket/job)…"
-        />
-
-        <select
-          className="bg-panel border border-border-light text-text rounded-lg py-[9px] pr-8 pl-[14px] text-[13px] transition-all duration-200 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,130,246,.15)] cursor-pointer select-arrow whitespace-nowrap flex-shrink-0"
-          value={scope.region}
-          onChange={(e) => setScope({ region: e.target.value as any })}
-        >
-          {regions.map((r) => (
-            <option key={r.id} value={r.id}>{r.label}</option>
-          ))}
-        </select>
-
-        {showOrg ? (
-          <select
-            className="bg-panel border border-border-light text-text rounded-lg py-[9px] pr-8 pl-[14px] text-[13px] transition-all duration-200 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,130,246,.15)] cursor-pointer select-arrow whitespace-nowrap flex-shrink-0"
-            value={scope.orgId}
-            onChange={(e) => setScope({ orgId: e.target.value })}
-          >
-            {orgs.map((o) => (
-              <option key={o} value={o}>{o === 'ALL' ? 'All Orgs' : o}</option>
-            ))}
-          </select>
-        ) : null}
-
-        {showSite ? (
-          <select
-            className="bg-panel border border-border-light text-text rounded-lg py-[9px] pr-8 pl-[14px] text-[13px] transition-all duration-200 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,130,246,.15)] cursor-pointer select-arrow whitespace-nowrap flex-shrink-0"
-            value={scope.siteId}
-            onChange={(e) => setScope({ siteId: e.target.value })}
-          >
-            {sites.map((s) => (
-              <option key={s} value={s}>{s === 'ALL' ? 'All Sites' : s}</option>
-            ))}
-          </select>
-        ) : null}
-
-        {showStation ? (
-          <select
-            className="bg-panel border border-border-light text-text rounded-lg py-[9px] pr-8 pl-[14px] text-[13px] transition-all duration-200 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,130,246,.15)] cursor-pointer select-arrow whitespace-nowrap flex-shrink-0"
-            value={scope.stationId}
-            onChange={(e) => setScope({ stationId: e.target.value })}
-          >
-            {stations.map((s) => (
-              <option key={s} value={s}>{s === 'ALL' ? 'All Stations' : s}</option>
-            ))}
-          </select>
-        ) : null}
-
-        <select
-          className="bg-panel border border-border-light text-text rounded-lg py-[9px] pr-8 pl-[14px] text-[13px] transition-all duration-200 focus:outline-none focus:border-accent focus:shadow-[0_0_0_3px_rgba(59,130,246,.15)] cursor-pointer select-arrow whitespace-nowrap flex-shrink-0"
-          value={scope.dateRange}
-          onChange={(e) => setScope({ dateRange: e.target.value as any })}
-        >
-          {dateRanges.map((d) => (
-            <option key={d.id} value={d.id}>{d.label}</option>
-          ))}
-        </select>
+    <header className="sticky top-0 z-[90] flex items-center justify-between gap-6 px-8 border-b border-white/5 bg-bg-secondary min-h-[72px] flex-nowrap shadow-soft">
+      {/* Left side: Search */}
+      <div className="flex items-center gap-3 flex-nowrap min-w-0 flex-1">
+        <div className="relative w-[400px] max-w-[60vw]">
+          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </div>
+          <input
+            className="w-full bg-panel/30 border border-border-light text-text rounded-xl py-2.5 pl-11 pr-14 text-[14px] transition-all duration-200 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light placeholder:text-muted"
+            placeholder="Search (station/user/ticket/job)…"
+          />
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 px-1.5 py-1 rounded border border-white/10 bg-bg-secondary/80 text-[10px] font-bold text-muted/80 tracking-tighter">
+            <span className="text-[12px]">⌘</span>
+            <span>K</span>
+          </div>
+        </div>
       </div>
 
-      <div className="inline-flex items-center gap-2 flex-shrink-0">
+      {/* Right side: Actions */}
+      <div className="inline-flex items-center gap-3 flex-shrink-0">
         {impersonator ? (
-          <div className="inline-flex items-center gap-2 rounded-xl border border-[rgba(59,130,246,.25)] bg-[rgba(59,130,246,.12)] px-3 py-2">
-            <span className="text-xs font-semibold text-[#93c5fd]">Impersonating</span>
-            <span className="text-xs text-text">{user?.name}</span>
+          <div className="inline-flex items-center gap-2 rounded-xl border border-accent/30 bg-accent/10 px-3 py-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-accent/80">Impersonating</span>
+            <span className="text-xs font-semibold text-white">{user?.name}</span>
             <button
-              className="bg-panel border border-border-light text-text h-8 w-8 rounded-lg cursor-pointer inline-flex items-center justify-center hover:border-accent hover:text-text transition-colors"
+              className="ml-1 p-1 hover:bg-white/10 rounded transition-colors"
               type="button"
-              aria-label="Stop impersonation"
-              title="Stop impersonation"
               onClick={() => {
-                const back = impersonationReturnTo || '/admin/users'
+                const back = impersonationReturnTo || PATHS.ADMIN.USERS
                 stopImpersonation()
                 nav(back)
               }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 6L6 18M6 6l12 12" />
               </svg>
             </button>
           </div>
         ) : null}
 
+        <button
+          className="text-muted h-10 w-10 rounded-xl cursor-pointer inline-flex items-center justify-center hover:bg-white/5 hover:text-accent transition-all duration-200"
+          type="button"
+          onClick={() => {
+            const next = mode === 'dark' ? 'light' : mode === 'light' ? 'system' : 'dark'
+            setMode(next)
+          }}
+          title={`Theme: ${mode} (Effective: ${effectiveTheme})`}
+        >
+          {effectiveTheme === 'dark' ? (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="5" /><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+            </svg>
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+          )}
+        </button>
+
         <div className="relative flex-shrink-0" ref={createRef}>
           <button
             ref={createBtnRef}
-            className="bg-panel border border-border text-text py-2 px-3 rounded-lg cursor-pointer text-[13px] font-semibold transition-all duration-200 whitespace-nowrap hover:bg-panel-2 hover:border-border hover:shadow-[0_2px_4px_rgba(0,0,0,.2)] inline-flex items-center gap-2"
+            className="bg-accent border border-accent text-white py-2 px-4 rounded-xl cursor-pointer text-[13px] font-bold transition-all duration-200 whitespace-nowrap hover:bg-accent-hover hover:border-accent-hover hover:shadow-lg inline-flex items-center gap-2"
             type="button"
             aria-haspopup="menu"
             aria-expanded={createOpen}
             onClick={() => setCreateOpen((v) => !v)}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') setCreateOpen(false)
-              if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                setCreateOpen(true)
-              }
-            }}
           >
             <span>Create</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true" className={createOpen ? 'rotate-180 transition-transform' : 'transition-transform'}>
-              <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
 
           {createOpen ? (
             <div
               ref={createMenuRef}
-              className="absolute right-0 mt-2 w-[240px] rounded-xl border border-border-light bg-bg-secondary shadow-[0_16px_50px_rgba(0,0,0,.55)] p-2 z-[120]"
+              className="absolute right-0 mt-2 w-[240px] rounded-2xl border border-white/5 bg-bg-secondary shadow-lg p-2 z-[120]"
               role="menu"
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') {
-                  e.preventDefault()
-                  setCreateOpen(false)
-                  requestAnimationFrame(() => createBtnRef.current?.focus())
-                }
-              }}
             >
               {createItems.map((it) => (
                 <button
                   key={it.label}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 transition-colors flex items-center gap-3 text-sm text-text"
+                  className="w-full text-left px-4 py-2.5 rounded-xl hover:bg-white/5 transition-colors flex items-center gap-3 text-sm text-text-secondary hover:text-text font-medium"
                   type="button"
                   role="menuitem"
                   onClick={() => {
                     setCreateOpen(false)
-                    nav(it.to)
+                    if (it.action === 'modal') {
+                      setInviteModalOpen(true)
+                    } else {
+                      nav(it.to)
+                    }
                   }}
                 >
-                  <span className="h-2 w-2 rounded-full bg-emerald-400 flex-shrink-0" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent flex-shrink-0" />
                   <span className="truncate">{it.label}</span>
                 </button>
               ))}
@@ -223,102 +168,63 @@ export function Header({ title }: { title?: string }) {
         </div>
 
         <button
-          className="bg-panel border border-border-light text-text h-10 w-10 rounded-lg cursor-pointer inline-flex items-center justify-center hover:border-accent hover:text-text transition-colors"
+          className="text-muted h-10 w-10 rounded-xl cursor-pointer inline-flex items-center justify-center hover:bg-white/5 hover:text-accent transition-all duration-200"
           type="button"
           aria-label="Notifications"
           title="Notifications"
+          onClick={() => nav(PATHS.NOTIFICATIONS)}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M13.73 21a2 2 0 01-3.46 0"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
-        <button
-          className="bg-panel border border-border-light text-text h-10 w-10 rounded-lg cursor-pointer inline-flex items-center justify-center hover:border-accent hover:text-text transition-colors"
-          type="button"
-          aria-label="Help"
-          title="Help"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M12 18h.01"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M9.09 9a3 3 0 115.82 1c0 2-3 2-3 4"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7" /><path d="M13.73 21a2 2 0 01-3.46 0" />
           </svg>
         </button>
 
         <button
-          className="h-10 w-10 rounded-full bg-accent text-white inline-flex items-center justify-center font-bold tracking-[0.3px] flex-shrink-0 shadow-[0_2px_6px_rgba(59,130,246,.35)] hover:bg-accent-hover transition-colors"
+          className="text-muted h-10 w-10 rounded-xl cursor-pointer inline-flex items-center justify-center hover:bg-white/5 hover:text-accent transition-all duration-200"
+          type="button"
+          aria-label="Help"
+          title="Help"
+          onClick={() => nav(PATHS.HELP)}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" />
+          </svg>
+        </button>
+
+        <div className="w-px h-6 bg-white/10 mx-1" />
+
+        <button
+          className="h-10 w-10 rounded-full bg-accent text-white inline-flex items-center justify-center font-bold tracking-[0.3px] flex-shrink-0 shadow-lg hover:bg-accent-hover transition-all duration-200 overflow-hidden"
           type="button"
           aria-label="Profile"
           title={user?.name ? `Profile: ${user.name}` : 'Profile'}
         >
-          <span className="text-sm leading-none">{profileInitial}</span>
+          <span className="text-sm font-bold">{profileInitial}</span>
         </button>
+
         <button
-          className="bg-accent border border-accent text-white h-10 w-10 rounded-lg cursor-pointer inline-flex items-center justify-center transition-all duration-200 shadow-[0_2px_4px_rgba(59,130,246,.2)] hover:bg-accent-hover hover:border-accent-hover hover:shadow-[0_4px_8px_rgba(59,130,246,.3)] hover:-translate-y-[1px] active:translate-y-0"
+          className="bg-panel border border-border text-text h-10 w-10 rounded-xl cursor-pointer inline-flex items-center justify-center transition-all duration-200 hover:bg-panel-2 hover:border-accent hover:text-accent"
           onClick={() => {
             logout()
-            nav('/auth/login')
+            nav(PATHS.AUTH.LOGIN)
           }}
           aria-label="Logout"
           title="Logout"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M16 17l5-5-5-5"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M21 12H9"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
           </svg>
         </button>
       </div>
-    </header>
+
+      <InviteUserModal
+        isOpen={inviteModalOpen}
+        onClose={() => setInviteModalOpen(false)}
+        onInvite={(email, role) => {
+          console.log('Inviting user:', { email, role })
+          alert(`Invitation sent to ${email} with role ${ROLE_LABELS[role]} (demo)`)
+        }}
+      />
+    </header >
   )
 }
-
