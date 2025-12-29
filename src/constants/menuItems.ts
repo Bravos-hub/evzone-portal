@@ -29,7 +29,7 @@ export const MENU_ITEMS: MenuItem[] = [
   // OPERATIONS
   // ═══════════════════════════════════════════════════════════════════════
   { path: PATHS.STATIONS.ROOT, label: 'Stations', icon: 'zap', roles: [...ROLE_GROUPS.PLATFORM_OPS, 'OWNER', 'STATION_ADMIN', 'MANAGER'] },
-  { path: PATHS.SESSIONS, label: 'Sessions', icon: 'activity', roles: 'ALL' },
+  { path: PATHS.SESSIONS, label: 'Sessions', icon: 'activity', roles: [...ROLE_GROUPS.PLATFORM_OPS, ...ROLE_GROUPS.STATION_STAFF] },
   { path: PATHS.INCIDENTS, label: 'Incidents', icon: 'alert-triangle', roles: [...ROLE_GROUPS.PLATFORM_OPS, ...ROLE_GROUPS.STATION_MANAGERS, ...ROLE_GROUPS.TECHNICIANS] },
   { path: PATHS.DISPATCHES, label: 'Dispatches', icon: 'truck', roles: [...ROLE_GROUPS.PLATFORM_OPS, 'MANAGER', ...ROLE_GROUPS.TECHNICIANS] },
 

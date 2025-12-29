@@ -45,7 +45,7 @@ export const PERMISSIONS: Record<string, FeaturePermissions> = {
   },
 
   sessions: {
-    access: 'ALL',
+    access: [...ROLE_GROUPS.PLATFORM_OPS, ...ROLE_GROUPS.STATION_STAFF],
     viewAll: ROLE_GROUPS.PLATFORM_OPS,
     export: [...ROLE_GROUPS.PLATFORM_OPS, 'OWNER'],
     refund: ROLE_GROUPS.PLATFORM_OPS,
