@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { DashboardLayout } from '@/app/layouts/DashboardLayout'
 import { useAuthStore } from '@/core/auth/authStore'
 import { hasPermission } from '@/constants/permissions'
 
@@ -60,114 +61,116 @@ export function SiteOwnerDashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      {ack && <div className="rounded-lg bg-accent/10 text-accent px-4 py-2 text-sm">{ack}</div>}
+    <DashboardLayout pageTitle="Site Owner — Overview">
+      <div className="space-y-6">
+        {ack && <div className="rounded-lg bg-accent/10 text-accent px-4 py-2 text-sm">{ack}</div>}
 
-      {/* KPIs */}
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        {KPIS.map(k => (
-          <div key={k.label} className="rounded-xl bg-surface border border-border p-5 shadow-sm">
-            <div className="text-sm text-subtle">{k.label}</div>
-            <div className="mt-2 text-2xl font-bold">{k.value}</div>
+        {/* KPIs */}
+        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {KPIS.map(k => (
+            <div key={k.label} className="rounded-xl bg-surface border border-border p-5 shadow-sm">
+              <div className="text-sm text-subtle">{k.label}</div>
+              <div className="mt-2 text-2xl font-bold">{k.value}</div>
+            </div>
+          ))}
+        </section>
+
+        {/* Quick Actions */}
+        <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <a href="/sites" className="flex items-center gap-2 p-4 rounded-xl bg-accent text-white hover:bg-accent-hover transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+            List a Site
+          </a>
+          <a href="/parking" className="flex items-center gap-2 p-4 rounded-xl bg-surface border border-border hover:bg-muted transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 17V7h6a3 3 0 010 6h-6" /></svg>
+            Manage Parking
+          </a>
+          <a href="/tenants" className="flex items-center gap-2 p-4 rounded-xl bg-surface border border-border hover:bg-muted transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+            Tenants
+          </a>
+          <a href="/earnings" className="flex items-center gap-2 p-4 rounded-xl bg-surface border border-border hover:bg-muted transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 1v22" /><path d="M17 5a4 4 0 00-4-2H9a3 3 0 000 6h6a3 3 0 010 6H9a4 4 0 01-4-2" /></svg>
+            Earnings
+          </a>
+        </section>
+
+        {/* My Sites */}
+        <section className="rounded-xl bg-surface border border-border p-5 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold">My Sites</h2>
+            <a href="/sites" className="text-sm text-accent hover:underline">View all</a>
           </div>
-        ))}
-      </section>
-
-      {/* Quick Actions */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <a href="/sites" className="flex items-center gap-2 p-4 rounded-xl bg-accent text-white hover:bg-accent-hover transition-colors">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
-          List a Site
-        </a>
-        <a href="/parking" className="flex items-center gap-2 p-4 rounded-xl bg-surface border border-border hover:bg-muted transition-colors">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 17V7h6a3 3 0 010 6h-6" /></svg>
-          Manage Parking
-        </a>
-        <a href="/tenants" className="flex items-center gap-2 p-4 rounded-xl bg-surface border border-border hover:bg-muted transition-colors">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-          Tenants
-        </a>
-        <a href="/earnings" className="flex items-center gap-2 p-4 rounded-xl bg-surface border border-border hover:bg-muted transition-colors">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 1v22" /><path d="M17 5a4 4 0 00-4-2H9a3 3 0 000 6h6a3 3 0 010 6H9a4 4 0 01-4-2" /></svg>
-          Earnings
-        </a>
-      </section>
-
-      {/* My Sites */}
-      <section className="rounded-xl bg-surface border border-border p-5 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold">My Sites</h2>
-          <a href="/sites" className="text-sm text-accent hover:underline">View all</a>
-        </div>
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="min-w-full text-sm">
-            <thead className="bg-muted text-subtle">
-              <tr>
-                <th className="px-4 py-2 text-left font-medium">Site</th>
-                <th className="px-4 py-2 text-left font-medium">City</th>
-                <th className="px-4 py-2 text-left font-medium">Status</th>
-                <th className="px-4 py-2 text-left font-medium">Bays</th>
-                <th className="px-4 py-2 text-left font-medium">Capacity</th>
-                <th className="px-4 py-2 text-left font-medium">Updated</th>
-                <th className="px-4 py-2 text-right font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {MOCK_SITES.map(r => (
-                <tr key={r.id} className="hover:bg-muted/50">
-                  <td className="px-4 py-2 font-medium">{r.name}</td>
-                  <td className="px-4 py-2">{r.city}</td>
-                  <td className="px-4 py-2"><StatusPill status={r.status} /></td>
-                  <td className="px-4 py-2">{r.bays}</td>
-                  <td className="px-4 py-2">{r.power} kW</td>
-                  <td className="px-4 py-2 text-subtle">{r.updated}</td>
-                  <td className="px-4 py-2 text-right">
-                    <div className="inline-flex items-center gap-2">
-                      <button onClick={() => toast(`Open ${r.name}`)} className="px-2 py-1 rounded border border-border hover:bg-muted text-xs">Open</button>
-                      <button onClick={() => toast(`Edit ${r.name}`)} className="px-2 py-1 rounded border border-border hover:bg-muted text-xs">Edit</button>
-                    </div>
-                  </td>
+          <div className="overflow-x-auto rounded-lg border border-border">
+            <table className="min-w-full text-sm">
+              <thead className="bg-muted text-subtle">
+                <tr>
+                  <th className="px-4 py-2 text-left font-medium">Site</th>
+                  <th className="px-4 py-2 text-left font-medium">City</th>
+                  <th className="px-4 py-2 text-left font-medium">Status</th>
+                  <th className="px-4 py-2 text-left font-medium">Bays</th>
+                  <th className="px-4 py-2 text-left font-medium">Capacity</th>
+                  <th className="px-4 py-2 text-left font-medium">Updated</th>
+                  <th className="px-4 py-2 text-right font-medium">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {MOCK_SITES.map(r => (
+                  <tr key={r.id} className="hover:bg-muted/50">
+                    <td className="px-4 py-2 font-medium">{r.name}</td>
+                    <td className="px-4 py-2">{r.city}</td>
+                    <td className="px-4 py-2"><StatusPill status={r.status} /></td>
+                    <td className="px-4 py-2">{r.bays}</td>
+                    <td className="px-4 py-2">{r.power} kW</td>
+                    <td className="px-4 py-2 text-subtle">{r.updated}</td>
+                    <td className="px-4 py-2 text-right">
+                      <div className="inline-flex items-center gap-2">
+                        <button onClick={() => toast(`Open ${r.name}`)} className="px-2 py-1 rounded border border-border hover:bg-muted text-xs">Open</button>
+                        <button onClick={() => toast(`Edit ${r.name}`)} className="px-2 py-1 rounded border border-border hover:bg-muted text-xs">Edit</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-      {/* Applications */}
-      <section className="rounded-xl bg-surface border border-border p-5 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold">Applications</h2>
-          <a href="/explore" className="text-sm text-accent hover:underline">Browse sites</a>
-        </div>
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="min-w-full text-sm">
-            <thead className="bg-muted text-subtle">
-              <tr>
-                <th className="px-4 py-2 text-left font-medium">App</th>
-                <th className="px-4 py-2 text-left font-medium">Site</th>
-                <th className="px-4 py-2 text-left font-medium">Model</th>
-                <th className="px-4 py-2 text-left font-medium">Terms</th>
-                <th className="px-4 py-2 text-left font-medium">Status</th>
-                <th className="px-4 py-2 text-left font-medium">Date</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {MOCK_APPS.map(a => (
-                <tr key={a.id} className="hover:bg-muted/50">
-                  <td className="px-4 py-2 font-medium">{a.id}</td>
-                  <td className="px-4 py-2">{a.site}</td>
-                  <td className="px-4 py-2">{a.model}</td>
-                  <td className="px-4 py-2 text-subtle">{a.terms}</td>
-                  <td className="px-4 py-2"><AppStatusPill status={a.status} /></td>
-                  <td className="px-4 py-2 text-subtle">{a.date}</td>
+        {/* Applications */}
+        <section className="rounded-xl bg-surface border border-border p-5 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold">Applications</h2>
+            <a href="/explore" className="text-sm text-accent hover:underline">Browse sites</a>
+          </div>
+          <div className="overflow-x-auto rounded-lg border border-border">
+            <table className="min-w-full text-sm">
+              <thead className="bg-muted text-subtle">
+                <tr>
+                  <th className="px-4 py-2 text-left font-medium">App</th>
+                  <th className="px-4 py-2 text-left font-medium">Site</th>
+                  <th className="px-4 py-2 text-left font-medium">Model</th>
+                  <th className="px-4 py-2 text-left font-medium">Terms</th>
+                  <th className="px-4 py-2 text-left font-medium">Status</th>
+                  <th className="px-4 py-2 text-left font-medium">Date</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </div>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {MOCK_APPS.map(a => (
+                  <tr key={a.id} className="hover:bg-muted/50">
+                    <td className="px-4 py-2 font-medium">{a.id}</td>
+                    <td className="px-4 py-2">{a.site}</td>
+                    <td className="px-4 py-2">{a.model}</td>
+                    <td className="px-4 py-2 text-subtle">{a.terms}</td>
+                    <td className="px-4 py-2"><AppStatusPill status={a.status} /></td>
+                    <td className="px-4 py-2 text-subtle">{a.date}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </DashboardLayout>
   )
 }
 

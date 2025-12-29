@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { DashboardLayout } from '@/app/layouts/DashboardLayout'
 import { useAuthStore } from '@/core/auth/authStore'
 import { hasPermission } from '@/constants/permissions'
 
@@ -64,101 +65,103 @@ export function Parking() {
   }
 
   return (
-    <div className="space-y-6">
-      {ack && <div className="rounded-lg bg-accent/10 text-accent px-4 py-2 text-sm">{ack}</div>}
+    <DashboardLayout pageTitle="Site Owner — Parking">
+      <div className="space-y-6">
+        {ack && <div className="rounded-lg bg-accent/10 text-accent px-4 py-2 text-sm">{ack}</div>}
 
-      {/* KPIs */}
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-xl bg-surface border border-border p-5 shadow-sm">
-          <div className="text-sm text-subtle">Total Bays</div>
-          <div className="mt-2 text-2xl font-bold">{kpis.total}</div>
-        </div>
-        <div className="rounded-xl bg-surface border border-border p-5 shadow-sm">
-          <div className="text-sm text-subtle">Active</div>
-          <div className="mt-2 text-2xl font-bold">{kpis.active}</div>
-        </div>
-        <div className="rounded-xl bg-surface border border-border p-5 shadow-sm">
-          <div className="text-sm text-subtle">EV Charging Bays</div>
-          <div className="mt-2 text-2xl font-bold">{kpis.evBays}</div>
-        </div>
-        <div className="rounded-xl bg-surface border border-border p-5 shadow-sm">
-          <div className="text-sm text-subtle">Avg Occupancy</div>
-          <div className="mt-2 text-2xl font-bold">{kpis.avgOccupancy}%</div>
-        </div>
-      </section>
+        {/* KPIs */}
+        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-xl bg-surface border border-border p-5 shadow-sm">
+            <div className="text-sm text-subtle">Total Bays</div>
+            <div className="mt-2 text-2xl font-bold">{kpis.total}</div>
+          </div>
+          <div className="rounded-xl bg-surface border border-border p-5 shadow-sm">
+            <div className="text-sm text-subtle">Active</div>
+            <div className="mt-2 text-2xl font-bold">{kpis.active}</div>
+          </div>
+          <div className="rounded-xl bg-surface border border-border p-5 shadow-sm">
+            <div className="text-sm text-subtle">EV Charging Bays</div>
+            <div className="mt-2 text-2xl font-bold">{kpis.evBays}</div>
+          </div>
+          <div className="rounded-xl bg-surface border border-border p-5 shadow-sm">
+            <div className="text-sm text-subtle">Avg Occupancy</div>
+            <div className="mt-2 text-2xl font-bold">{kpis.avgOccupancy}%</div>
+          </div>
+        </section>
 
-      {/* Filters */}
-      <section className="bg-surface rounded-xl border border-border p-4 grid md:grid-cols-5 gap-3">
-        <label className="relative md:col-span-2">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-subtle" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="M21 21l-3.6-3.6" /></svg>
-          <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search bay / site" className="w-full rounded-lg border border-border pl-9 pr-3 py-2 outline-none focus:ring-2 focus:ring-accent" />
-        </label>
-        <select value={site} onChange={e => setSite(e.target.value)} className="rounded-lg border border-border bg-surface px-3 py-2">
-          {['All', 'City Mall Roof', 'Business Park A', 'Airport Long-Stay'].map(o => <option key={o}>{o}</option>)}
-        </select>
-        <select value={type} onChange={e => setType(e.target.value)} className="rounded-lg border border-border bg-surface px-3 py-2">
-          {['All', 'EV Charging', 'Regular', 'Handicap', 'VIP'].map(o => <option key={o}>{o}</option>)}
-        </select>
-        <select value={status} onChange={e => setStatus(e.target.value)} className="rounded-lg border border-border bg-surface px-3 py-2">
-          {['All', 'Active', 'Maintenance', 'Reserved', 'Inactive'].map(o => <option key={o}>{o}</option>)}
-        </select>
-      </section>
+        {/* Filters */}
+        <section className="bg-surface rounded-xl border border-border p-4 grid md:grid-cols-5 gap-3">
+          <label className="relative md:col-span-2">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-subtle" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="M21 21l-3.6-3.6" /></svg>
+            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search bay / site" className="w-full rounded-lg border border-border pl-9 pr-3 py-2 outline-none focus:ring-2 focus:ring-accent" />
+          </label>
+          <select value={site} onChange={e => setSite(e.target.value)} className="rounded-lg border border-border bg-surface px-3 py-2">
+            {['All', 'City Mall Roof', 'Business Park A', 'Airport Long-Stay'].map(o => <option key={o}>{o}</option>)}
+          </select>
+          <select value={type} onChange={e => setType(e.target.value)} className="rounded-lg border border-border bg-surface px-3 py-2">
+            {['All', 'EV Charging', 'Regular', 'Handicap', 'VIP'].map(o => <option key={o}>{o}</option>)}
+          </select>
+          <select value={status} onChange={e => setStatus(e.target.value)} className="rounded-lg border border-border bg-surface px-3 py-2">
+            {['All', 'Active', 'Maintenance', 'Reserved', 'Inactive'].map(o => <option key={o}>{o}</option>)}
+          </select>
+        </section>
 
-      {/* Actions */}
-      {canEdit && (
-        <div className="flex gap-3">
-          <button onClick={() => toast('Create Parking Bay modal would open')} className="px-4 py-2 rounded-lg bg-accent text-white font-medium hover:bg-accent-hover">
-            + Add Bay
-          </button>
-        </div>
-      )}
+        {/* Actions */}
+        {canEdit && (
+          <div className="flex gap-3">
+            <button onClick={() => toast('Create Parking Bay modal would open')} className="px-4 py-2 rounded-lg bg-accent text-white font-medium hover:bg-accent-hover">
+              + Add Bay
+            </button>
+          </div>
+        )}
 
-      {/* Table */}
-      <section className="overflow-x-auto rounded-xl border border-border bg-surface">
-        <table className="min-w-full text-sm">
-          <thead className="bg-muted text-subtle">
-            <tr>
-              <th className="px-4 py-3 text-left font-medium">ID</th>
-              <th className="px-4 py-3 text-left font-medium">Site</th>
-              <th className="px-4 py-3 text-left font-medium">Bay</th>
-              <th className="px-4 py-3 text-left font-medium">Type</th>
-              <th className="px-4 py-3 text-left font-medium">Charger</th>
-              <th className="px-4 py-3 text-right font-medium">Rate/hr</th>
-              <th className="px-4 py-3 text-right font-medium">Occupancy</th>
-              <th className="px-4 py-3 text-left font-medium">Last Used</th>
-              <th className="px-4 py-3 text-left font-medium">Status</th>
-              {canEdit && <th className="px-4 py-3 text-right font-medium">Actions</th>}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {filtered.map(r => (
-              <tr key={r.id} className="hover:bg-muted/50">
-                <td className="px-4 py-3 font-medium">{r.id}</td>
-                <td className="px-4 py-3">{r.site}</td>
-                <td className="px-4 py-3">{r.bay}</td>
-                <td className="px-4 py-3"><TypePill type={r.type} /></td>
-                <td className="px-4 py-3 text-subtle">{r.charger || '—'}</td>
-                <td className="px-4 py-3 text-right">${r.rate.toFixed(2)}</td>
-                <td className="px-4 py-3 text-right">{r.occupancy}%</td>
-                <td className="px-4 py-3 text-subtle">{r.lastUsed}</td>
-                <td className="px-4 py-3"><StatusPill status={r.status} /></td>
-                {canEdit && (
-                  <td className="px-4 py-3 text-right">
-                    <div className="inline-flex items-center gap-2">
-                      <button onClick={() => toast(`Editing ${r.id}`)} className="px-2 py-1 rounded border border-border hover:bg-muted text-xs">Edit</button>
-                      {r.status === 'Active' && (
-                        <button onClick={() => toast(`Set ${r.id} to maintenance`)} className="px-2 py-1 rounded border border-border hover:bg-muted text-xs">Maintenance</button>
-                      )}
-                    </div>
-                  </td>
-                )}
+        {/* Table */}
+        <section className="overflow-x-auto rounded-xl border border-border bg-surface">
+          <table className="min-w-full text-sm">
+            <thead className="bg-muted text-subtle">
+              <tr>
+                <th className="px-4 py-3 text-left font-medium">ID</th>
+                <th className="px-4 py-3 text-left font-medium">Site</th>
+                <th className="px-4 py-3 text-left font-medium">Bay</th>
+                <th className="px-4 py-3 text-left font-medium">Type</th>
+                <th className="px-4 py-3 text-left font-medium">Charger</th>
+                <th className="px-4 py-3 text-right font-medium">Rate/hr</th>
+                <th className="px-4 py-3 text-right font-medium">Occupancy</th>
+                <th className="px-4 py-3 text-left font-medium">Last Used</th>
+                <th className="px-4 py-3 text-left font-medium">Status</th>
+                {canEdit && <th className="px-4 py-3 text-right font-medium">Actions</th>}
               </tr>
-            ))}
-          </tbody>
-        </table>
-        {filtered.length === 0 && <div className="p-8 text-center text-subtle">No parking bays match your filters.</div>}
-      </section>
-    </div>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {filtered.map(r => (
+                <tr key={r.id} className="hover:bg-muted/50">
+                  <td className="px-4 py-3 font-medium">{r.id}</td>
+                  <td className="px-4 py-3">{r.site}</td>
+                  <td className="px-4 py-3">{r.bay}</td>
+                  <td className="px-4 py-3"><TypePill type={r.type} /></td>
+                  <td className="px-4 py-3 text-subtle">{r.charger || '—'}</td>
+                  <td className="px-4 py-3 text-right">${r.rate.toFixed(2)}</td>
+                  <td className="px-4 py-3 text-right">{r.occupancy}%</td>
+                  <td className="px-4 py-3 text-subtle">{r.lastUsed}</td>
+                  <td className="px-4 py-3"><StatusPill status={r.status} /></td>
+                  {canEdit && (
+                    <td className="px-4 py-3 text-right">
+                      <div className="inline-flex items-center gap-2">
+                        <button onClick={() => toast(`Editing ${r.id}`)} className="px-2 py-1 rounded border border-border hover:bg-muted text-xs">Edit</button>
+                        {r.status === 'Active' && (
+                          <button onClick={() => toast(`Set ${r.id} to maintenance`)} className="px-2 py-1 rounded border border-border hover:bg-muted text-xs">Maintenance</button>
+                        )}
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {filtered.length === 0 && <div className="p-8 text-center text-subtle">No parking bays match your filters.</div>}
+        </section>
+      </div>
+    </DashboardLayout>
   )
 }
 
