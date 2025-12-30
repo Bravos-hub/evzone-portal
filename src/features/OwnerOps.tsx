@@ -49,7 +49,7 @@ export function OwnerOps() {
     <DashboardLayout pageTitle="Owner — Sessions">
       <div className="space-y-4">
         {/* KPIs */}
-        <div className="grid grid-cols-4 gap-3 xl:grid-cols-2">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="card">
             <div className="text-xs text-muted">Sessions</div>
             <div className="text-xl font-bold text-text">{stats.total}</div>

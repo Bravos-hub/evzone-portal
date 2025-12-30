@@ -151,7 +151,7 @@ export function UserDetail() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-4 gap-3 mb-6 xl:grid-cols-2">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <div className="card">
           <div className="text-xs text-muted">Last Login</div>
           <div className="text-lg font-semibold text-text">{userData.lastLogin}</div>
@@ -193,7 +193,7 @@ export function UserDetail() {
 
       {/* Tab Content */}
       {tab === 'profile' && (
-        <div className="grid grid-cols-2 gap-4 xl:grid-cols-1">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="card">
             <h3 className="font-semibold text-text mb-3">Profile Information</h3>
             <div className="space-y-3">
@@ -241,7 +241,7 @@ export function UserDetail() {
       )}
 
       {tab === 'security' && (
-        <div className="grid grid-cols-2 gap-4 xl:grid-cols-1">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="card">
             <h3 className="font-semibold text-text mb-3">Security Actions</h3>
             <div className="flex flex-wrap gap-2">

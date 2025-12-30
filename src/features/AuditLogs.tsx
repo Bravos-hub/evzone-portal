@@ -66,7 +66,7 @@ export function AuditLogs() {
     <DashboardLayout pageTitle="Audit Logs">
       {/* Filters */}
       <div className="card mb-4">
-        <div className="grid grid-cols-4 gap-3 xl:grid-cols-2">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}

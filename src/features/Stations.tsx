@@ -339,7 +339,7 @@ export function Stations() {
         <>
           {/* Filters */}
           <div className="card">
-            <div className="grid grid-cols-6 gap-3 xl:grid-cols-3 lg:grid-cols-2">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}

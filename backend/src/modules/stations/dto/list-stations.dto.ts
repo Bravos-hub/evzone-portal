@@ -1,4 +1,5 @@
-import { IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator'
+import { Type } from 'class-transformer'
+import { IsInt, IsOptional, IsString, Min } from 'class-validator'
 
 export class ListStationsDto {
   @IsOptional()
@@ -24,10 +25,12 @@ export class ListStationsDto {
   @IsOptional()
   @IsInt()
   @Min(1)
+  @Type(() => Number)
   page?: number
 
   @IsOptional()
   @IsInt()
   @Min(1)
+  @Type(() => Number)
   pageSize?: number
 }

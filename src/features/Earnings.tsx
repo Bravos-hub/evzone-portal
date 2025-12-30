@@ -41,7 +41,7 @@ export function Earnings() {
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-4 gap-3 mb-6 xl:grid-cols-2">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <div className="card">
           <div className="text-xs text-muted">Total Earnings</div>
           <div className="text-xl font-bold text-text">${stats.total.toLocaleString()}</div>
@@ -60,7 +60,7 @@ export function Earnings() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 xl:grid-cols-1">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Recent Payouts */}
         <div className="card">
           <h3 className="font-semibold text-text mb-3">Recent Payouts</h3>

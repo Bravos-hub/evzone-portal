@@ -143,7 +143,7 @@ export function Billing() {
   return (
     <DashboardLayout pageTitle="Billing">
       {/* Summary Stats */}
-      <div className="grid grid-cols-4 gap-3 mb-4 xl:grid-cols-2">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <div className="card">
           <div className="text-xs text-muted">Total Volume</div>
           <div className="text-xl font-bold text-text">${stats.total.toLocaleString()}</div>
@@ -164,7 +164,7 @@ export function Billing() {
 
       {/* Filters */}
       <div className="card mb-4">
-        <div className="grid grid-cols-5 gap-3 xl:grid-cols-3 lg:grid-cols-2">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}

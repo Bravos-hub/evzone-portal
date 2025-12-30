@@ -67,7 +67,7 @@ export function SystemHealth() {
   return (
     <DashboardLayout pageTitle="System Health">
       {/* Summary */}
-      <div className="grid grid-cols-4 gap-3 mb-4 xl:grid-cols-2">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <div className="card">
           <div className="text-xs text-muted">Total Services</div>
           <div className="text-xl font-bold text-text">{mockServices.length}</div>
@@ -87,7 +87,7 @@ export function SystemHealth() {
       </div>
 
       {/* Services Grid */}
-      <div className="grid grid-cols-3 gap-4 mb-6 xl:grid-cols-2 lg:grid-cols-1">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         {mockServices.map((s) => (
           <div key={s.id} className="card">
             <div className="flex items-center justify-between mb-3">

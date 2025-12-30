@@ -123,7 +123,7 @@ export function ChargePoints() {
 
       {/* Filters */}
       <div className="card mb-4">
-        <div className="grid grid-cols-4 gap-3 xl:grid-cols-2">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search charge points" className="input col-span-2 xl:col-span-1" />
           <select value={siteFilter} onChange={(e) => setSiteFilter(e.target.value)} className="select">
             {sites.map((s) => (

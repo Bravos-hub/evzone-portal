@@ -101,7 +101,7 @@ export function WidgetRow({
   scope: Scope
 }) {
   return (
-    <div className={`grid grid-cols-4 gap-4 xl:grid-cols-2 ${className ?? ''}`}>
+    <div className={`grid grid-cols-2 lg:grid-cols-4 gap-3 ${className ?? ''}`}>
       {widgets.map((w, i) => (
         <Widget key={`${w.id}-${i}`} widgetId={w.id} size={w.size} config={w.config} scope={scope} />
       ))}

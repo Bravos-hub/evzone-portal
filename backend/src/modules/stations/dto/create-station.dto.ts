@@ -1,4 +1,5 @@
-import { IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator'
+import { Type } from 'class-transformer'
+import { IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator'
 
 export class CreateStationDto {
   @IsString()
@@ -34,9 +35,13 @@ export class CreateStationDto {
   address!: string
 
   @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
   lat?: number
 
   @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
   lng?: number
 
   @IsOptional()
@@ -50,5 +55,6 @@ export class CreateStationDto {
   @IsOptional()
   @IsInt()
   @Min(0)
+  @Type(() => Number)
   maxKw?: number
 }

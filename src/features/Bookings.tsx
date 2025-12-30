@@ -84,7 +84,7 @@ export function Bookings() {
 
       {/* Filters */}
       <div className="card mb-4">
-        <div className="grid grid-cols-4 gap-3 xl:grid-cols-2">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search bookings" className="input" />
           <input type="date" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className="input" />
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as BookingStatus | 'All')} className="select">
