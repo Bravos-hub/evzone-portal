@@ -45,10 +45,10 @@ export function Sidebar({ items: overrideItems }: SidebarProps) {
             to={item.path}
             className={({ isActive }) =>
               clsx(
-                'py-3 px-4 rounded-xl text-[14px] font-semibold transition-all duration-200 flex items-center gap-3.5',
+                'py-3 px-4 text-[14px] font-semibold transition-all duration-200 flex items-center gap-3.5',
                 isActive
                   ? 'text-white bg-accent shadow-[0_4px_12px_rgba(247,127,0,0.25)]'
-                  : 'text-text-secondary hover:text-text hover:bg-white/5 dark:hover:bg-white/5'
+                  : 'text-text-secondary hover:text-text hover:bg-white/5 dark:hover:bg-white/5 rounded-xl'
               )
             }
             end={item.path === '/dashboard'}
