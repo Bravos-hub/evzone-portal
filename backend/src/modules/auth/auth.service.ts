@@ -6,7 +6,7 @@ import { RegisterDto } from './dto/register.dto'
 import { LoginDto } from './dto/login.dto'
 import { RefreshDto } from './dto/refresh.dto'
 import { Role } from '../../common/auth/types'
-import * as bcrypt from 'bcrypt'
+import * as bcrypt from 'bcryptjs'
 import { randomBytes, createHash } from 'crypto'
 
 @Injectable()
