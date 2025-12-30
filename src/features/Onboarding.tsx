@@ -205,7 +205,7 @@ export function Onboarding() {
                   <input
                     value={form.name}
                     onChange={e => updateForm('name', e.target.value)}
-                    className="rounded-lg border border-border px-3 py-2"
+                    className="input"
                     required
                   />
                 </label>
@@ -215,7 +215,7 @@ export function Onboarding() {
                     type="email"
                     value={form.email}
                     onChange={e => updateForm('email', e.target.value)}
-                    className="rounded-lg border border-border px-3 py-2"
+                    className="input"
                     required
                   />
                 </label>
@@ -224,7 +224,7 @@ export function Onboarding() {
                   <input
                     value={form.phone}
                     onChange={e => updateForm('phone', e.target.value)}
-                    className="rounded-lg border border-border px-3 py-2"
+                    className="input"
                   />
                 </label>
                 <label className="grid gap-1">
@@ -232,7 +232,7 @@ export function Onboarding() {
                   <input
                     value={form.company}
                     onChange={e => updateForm('company', e.target.value)}
-                    className="rounded-lg border border-border px-3 py-2"
+                    className="input"
                   />
                 </label>
                 <label className="grid gap-1">
@@ -240,7 +240,7 @@ export function Onboarding() {
                   <select
                     value={form.country}
                     onChange={e => updateForm('country', e.target.value)}
-                    className="rounded-lg border border-border px-3 py-2"
+                    className="select"
                   >
                     {['Uganda', 'Kenya', 'Rwanda', 'Tanzania', 'China', 'United States', 'United Kingdom'].map(c => <option key={c}>{c}</option>)}
                   </select>
@@ -251,7 +251,7 @@ export function Onboarding() {
                     <input
                       value={form.site}
                       onChange={e => updateForm('site', e.target.value)}
-                      className="rounded-lg border border-border px-3 py-2"
+                      className="input"
                       placeholder="e.g., City Mall Parking"
                     />
                   </label>

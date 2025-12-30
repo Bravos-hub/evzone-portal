@@ -64,7 +64,7 @@ export function Login() {
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="rounded-lg border border-border px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+              className="input"
               placeholder="you@example.com"
               required
             />
@@ -76,7 +76,7 @@ export function Login() {
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className="rounded-lg border border-border px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+              className="input"
               placeholder="••••••••"
               required
             />
@@ -153,7 +153,7 @@ export function Register() {
             <input
               value={form.name}
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-              className="rounded-lg border border-border px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+              className="input"
               required
             />
           </label>
@@ -164,7 +164,7 @@ export function Register() {
               type="email"
               value={form.email}
               onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-              className="rounded-lg border border-border px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+              className="input"
               required
             />
           </label>
@@ -175,7 +175,7 @@ export function Register() {
               type="password"
               value={form.password}
               onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-              className="rounded-lg border border-border px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+              className="input"
               required
             />
           </label>
@@ -186,7 +186,7 @@ export function Register() {
               type="password"
               value={form.confirmPassword}
               onChange={e => setForm(f => ({ ...f, confirmPassword: e.target.value }))}
-              className="rounded-lg border border-border px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+              className="input"
               required
             />
           </label>
@@ -253,7 +253,7 @@ export function ForgotPassword() {
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="rounded-lg border border-border px-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+              className="input"
               required
             />
           </label>

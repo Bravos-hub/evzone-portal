@@ -18,6 +18,7 @@ export default {
           DEFAULT: 'var(--app-panel)',
           '2': 'var(--app-panel-2)',
         },
+        surface: 'var(--app-panel)', // Map surface to panel for consistency
         text: {
           DEFAULT: 'var(--app-text)',
           secondary: 'var(--app-text-secondary)',

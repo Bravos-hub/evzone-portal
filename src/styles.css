@@ -32,6 +32,8 @@
 
   --app-shadow: rgba(0, 0, 0, 0.3);
   --app-shadow-accent: rgba(247, 127, 0, 0.15);
+  --app-input-bg: rgba(0, 0, 0, 0.2);
+  --app-input-border: rgba(255, 255, 255, 0.1);
 }
 
 /* Explicit Dark Theme (same as root for consistency) */
@@ -51,6 +53,8 @@ html.dark {
   --app-accent-light: rgba(247, 127, 0, 0.2);
   --app-shadow: rgba(0, 0, 0, 0.3);
   --app-shadow-accent: rgba(247, 127, 0, 0.15);
+  --app-input-bg: rgba(0, 0, 0, 0.2);
+  --app-input-border: rgba(255, 255, 255, 0.1);
 }
 
 /* Light Theme Override */
@@ -79,6 +83,8 @@ html.light-theme {
 
   --app-shadow: rgba(15, 23, 42, 0.08); /* Corporate gray-blue tint shadow */
   --app-shadow-accent: rgba(247, 127, 0, 0.15);
+  --app-input-bg: rgba(255, 255, 255, 1);
+  --app-input-border: rgba(0, 0, 0, 0.1);
 }
 
 @layer base {
@@ -109,9 +115,22 @@ html.light-theme {
     text-decoration: none;
   }
 
-  button, input, select {
+  button, input, textarea {
     font: inherit;
     outline: none;
+    background-color: transparent;
+    color: inherit;
+  }
+
+  select {
+    font: inherit;
+    outline: none;
+    color: inherit;
+  }
+
+  select, select option {
+    background-color: var(--app-panel);
+    color: var(--app-text);
   }
 }
 
@@ -147,11 +166,36 @@ html.light-theme {
   }
 
   .input {
-    @apply w-full rounded-xl border border-border-light bg-panel px-3.5 py-2.5 text-[13px] text-text transition-all duration-150 placeholder:text-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-light;
+    @apply w-full rounded-xl border px-3.5 py-2.5 text-[13px] text-text transition-all duration-200 placeholder:text-muted focus:outline-none;
+    background-color: var(--app-input-bg);
+    border-color: var(--app-input-border);
+  }
+
+  .input:focus {
+    border-color: rgba(247, 127, 0, 0.5);
+    box-shadow: 0 0 0 4px rgba(247, 127, 0, 0.1);
   }
 
   .select {
-    @apply rounded-xl border border-border-light bg-panel px-3.5 py-2.5 pr-9 text-[13px] text-text transition-all duration-150 placeholder:text-muted focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-light cursor-pointer whitespace-nowrap;
+    @apply rounded-xl border px-3.5 py-2.5 pr-9 text-[13px] text-text transition-all duration-200 placeholder:text-muted focus:outline-none cursor-pointer whitespace-nowrap;
+    background-color: var(--app-input-bg);
+    border-color: var(--app-input-border);
+  }
+
+  .select:focus {
+    border-color: rgba(247, 127, 0, 0.5);
+    box-shadow: 0 0 0 4px rgba(247, 127, 0, 0.1);
+  }
+
+  .select option {
+    background-color: var(--app-panel);
+    color: var(--app-text);
+    padding: 8px 12px;
+  }
+
+  .select option:hover,
+  .select option:checked {
+    background-color: var(--app-panel-2);
   }
 
   .card {

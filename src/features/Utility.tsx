@@ -87,25 +87,25 @@ export function Utility() {
       <section className="bg-surface rounded-xl border border-border p-4 grid md:grid-cols-7 gap-3">
         <label className="grid gap-1">
           <span className="text-xs text-subtle">Region</span>
-          <select value={region} onChange={e => setRegion(e.target.value)} className="rounded-lg border border-border px-3 py-2">
+          <select value={region} onChange={e => setRegion(e.target.value)} className="select">
             <option>All</option><option>Kampala</option><option>Wuxi</option>
           </select>
         </label>
         <label className="grid gap-1">
           <span className="text-xs text-subtle">Utility</span>
-          <select value={utility} onChange={e => setUtility(e.target.value)} className="rounded-lg border border-border px-3 py-2">
+          <select value={utility} onChange={e => setUtility(e.target.value)} className="select">
             <option>All</option><option>Umeme</option><option>KPLC</option><option>TANESCO</option>
           </select>
         </label>
         <label className="grid gap-1">
           <span className="text-xs text-subtle">Granularity</span>
-          <select value={gran} onChange={e => setGran(e.target.value)} className="rounded-lg border border-border px-3 py-2">
+          <select value={gran} onChange={e => setGran(e.target.value)} className="select">
             {['15m', '1h', '1d'].map(x => <option key={x}>{x}</option>)}
           </select>
         </label>
         <label className="grid gap-1">
           <span className="text-xs text-subtle">Signal</span>
-          <select value={signal} onChange={e => setSignal(e.target.value)} className="rounded-lg border border-border px-3 py-2">
+          <select value={signal} onChange={e => setSignal(e.target.value)} className="select">
             {['All', 'OpenADR', 'Utility Notice', 'Manual'].map(x => <option key={x}>{x}</option>)}
           </select>
         </label>
@@ -113,7 +113,7 @@ export function Utility() {
           <span className="text-xs text-subtle">Search</span>
           <div className="relative">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-subtle" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="M21 21l-3.5-3.5" /></svg>
-            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Site or city" className="w-full rounded-lg border border-border pl-9 pr-3 py-2" />
+            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Site or city" className="input pl-9" />
           </div>
         </label>
         <div className="flex items-end">

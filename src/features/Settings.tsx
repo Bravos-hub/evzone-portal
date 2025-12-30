@@ -115,33 +115,33 @@ export function Settings() {
             <div className="grid sm:grid-cols-2 gap-4">
               <label className="grid gap-1">
                 <span className="text-sm font-medium">Full Name</span>
-                <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} className="rounded-lg border border-border px-3 py-2" />
+                <input value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} className="input" />
               </label>
               <label className="grid gap-1">
                 <span className="text-sm font-medium">Email</span>
-                <input type="email" value={profile.email} onChange={e => setProfile(p => ({ ...p, email: e.target.value }))} className="rounded-lg border border-border px-3 py-2" />
+                <input type="email" value={profile.email} onChange={e => setProfile(p => ({ ...p, email: e.target.value }))} className="input" />
               </label>
               <label className="grid gap-1">
                 <span className="text-sm font-medium">Phone</span>
-                <input value={profile.phone} onChange={e => setProfile(p => ({ ...p, phone: e.target.value }))} className="rounded-lg border border-border px-3 py-2" />
+                <input value={profile.phone} onChange={e => setProfile(p => ({ ...p, phone: e.target.value }))} className="input" />
               </label>
               <label className="grid gap-1">
                 <span className="text-sm font-medium">Company</span>
-                <input value={profile.company} onChange={e => setProfile(p => ({ ...p, company: e.target.value }))} className="rounded-lg border border-border px-3 py-2" />
+                <input value={profile.company} onChange={e => setProfile(p => ({ ...p, company: e.target.value }))} className="input" />
               </label>
               <label className="grid gap-1">
                 <span className="text-sm font-medium">Title</span>
-                <input value={profile.title} onChange={e => setProfile(p => ({ ...p, title: e.target.value }))} className="rounded-lg border border-border px-3 py-2" />
+                <input value={profile.title} onChange={e => setProfile(p => ({ ...p, title: e.target.value }))} className="input" />
               </label>
               <label className="grid gap-1">
                 <span className="text-sm font-medium">Country</span>
-                <select value={profile.country} onChange={e => setProfile(p => ({ ...p, country: e.target.value }))} className="rounded-lg border border-border px-3 py-2">
+                <select value={profile.country} onChange={e => setProfile(p => ({ ...p, country: e.target.value }))} className="select">
                   {['Uganda', 'Kenya', 'Rwanda', 'Tanzania', 'China', 'United States', 'United Kingdom'].map(c => <option key={c}>{c}</option>)}
                 </select>
               </label>
               <label className="grid gap-1">
                 <span className="text-sm font-medium">City</span>
-                <input value={profile.city} onChange={e => setProfile(p => ({ ...p, city: e.target.value }))} className="rounded-lg border border-border px-3 py-2" />
+                <input value={profile.city} onChange={e => setProfile(p => ({ ...p, city: e.target.value }))} className="input" />
               </label>
             </div>
 
@@ -159,15 +159,15 @@ export function Settings() {
             <div className="grid sm:grid-cols-2 gap-4">
               <label className="grid gap-1 sm:col-span-2">
                 <span className="text-sm font-medium">Current Password</span>
-                <input type="password" value={security.currentPassword} onChange={e => setSecurity(s => ({ ...s, currentPassword: e.target.value }))} className="rounded-lg border border-border px-3 py-2" />
+                <input type="password" value={security.currentPassword} onChange={e => setSecurity(s => ({ ...s, currentPassword: e.target.value }))} className="input" />
               </label>
               <label className="grid gap-1">
                 <span className="text-sm font-medium">New Password</span>
-                <input type="password" value={security.newPassword} onChange={e => setSecurity(s => ({ ...s, newPassword: e.target.value }))} className="rounded-lg border border-border px-3 py-2" />
+                <input type="password" value={security.newPassword} onChange={e => setSecurity(s => ({ ...s, newPassword: e.target.value }))} className="input" />
               </label>
               <label className="grid gap-1">
                 <span className="text-sm font-medium">Confirm New Password</span>
-                <input type="password" value={security.confirmPassword} onChange={e => setSecurity(s => ({ ...s, confirmPassword: e.target.value }))} className="rounded-lg border border-border px-3 py-2" />
+                <input type="password" value={security.confirmPassword} onChange={e => setSecurity(s => ({ ...s, confirmPassword: e.target.value }))} className="input" />
               </label>
             </div>
 
@@ -271,19 +271,19 @@ export function Settings() {
             <div className="grid sm:grid-cols-2 gap-4">
               <label className="grid gap-1">
                 <span className="text-sm font-medium">Language</span>
-                <select value={profile.language} onChange={e => setProfile(p => ({ ...p, language: e.target.value }))} className="rounded-lg border border-border px-3 py-2">
+                <select value={profile.language} onChange={e => setProfile(p => ({ ...p, language: e.target.value }))} className="select">
                   {['EN', 'FR', 'ES', 'SW', 'AR', 'ZH'].map(l => <option key={l}>{l}</option>)}
                 </select>
               </label>
               <label className="grid gap-1">
                 <span className="text-sm font-medium">Timezone</span>
-                <select value={profile.timezone} onChange={e => setProfile(p => ({ ...p, timezone: e.target.value }))} className="rounded-lg border border-border px-3 py-2">
+                <select value={profile.timezone} onChange={e => setProfile(p => ({ ...p, timezone: e.target.value }))} className="select">
                   {['Africa/Kampala', 'Africa/Nairobi', 'Europe/London', 'America/New_York', 'Asia/Shanghai'].map(t => <option key={t}>{t}</option>)}
                 </select>
               </label>
               <label className="grid gap-1">
                 <span className="text-sm font-medium">Date Format</span>
-                <select className="rounded-lg border border-border px-3 py-2">
+                <select className="select">
                   <option>DD/MM/YYYY</option>
                   <option>MM/DD/YYYY</option>
                   <option>YYYY-MM-DD</option>
@@ -291,7 +291,7 @@ export function Settings() {
               </label>
               <label className="grid gap-1">
                 <span className="text-sm font-medium">Currency</span>
-                <select className="rounded-lg border border-border px-3 py-2">
+                <select className="select">
                   <option>USD - US Dollar</option>
                   <option>EUR - Euro</option>
                   <option>UGX - Ugandan Shilling</option>

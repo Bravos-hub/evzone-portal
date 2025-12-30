@@ -165,31 +165,31 @@ export function TechRequests() {
               <div className="grid sm:grid-cols-2 gap-4">
                 <label className="grid gap-1">
                   <span className="text-sm font-medium">Request Type</span>
-                  <select value={newRequest.type} onChange={e => setNewRequest(r => ({ ...r, type: e.target.value as RequestType }))} className="rounded-lg border border-border px-3 py-2">
+                  <select value={newRequest.type} onChange={e => setNewRequest(r => ({ ...r, type: e.target.value as RequestType }))} className="select">
                     <option>Installation</option><option>Repair</option><option>Maintenance</option><option>Inspection</option><option>Commissioning</option>
                   </select>
                 </label>
                 <label className="grid gap-1">
                   <span className="text-sm font-medium">Priority</span>
-                  <select value={newRequest.priority} onChange={e => setNewRequest(r => ({ ...r, priority: e.target.value as RequestPriority }))} className="rounded-lg border border-border px-3 py-2">
+                  <select value={newRequest.priority} onChange={e => setNewRequest(r => ({ ...r, priority: e.target.value as RequestPriority }))} className="select">
                     <option>Low</option><option>Normal</option><option>High</option><option>Urgent</option>
                   </select>
                 </label>
                 <label className="grid gap-1">
                   <span className="text-sm font-medium">Site *</span>
-                  <select value={newRequest.site} onChange={e => setNewRequest(r => ({ ...r, site: e.target.value }))} className="rounded-lg border border-border px-3 py-2">
+                  <select value={newRequest.site} onChange={e => setNewRequest(r => ({ ...r, site: e.target.value }))} className="select">
                     <option value="">Select site...</option>
                     <option>Central Hub</option><option>Airport East</option><option>Tech Park</option>
                   </select>
                 </label>
                 <label className="grid gap-1">
                   <span className="text-sm font-medium">Charger (optional)</span>
-                  <input value={newRequest.charger} onChange={e => setNewRequest(r => ({ ...r, charger: e.target.value }))} className="rounded-lg border border-border px-3 py-2" placeholder="e.g., CP-A1" />
+                  <input value={newRequest.charger} onChange={e => setNewRequest(r => ({ ...r, charger: e.target.value }))} className="input" placeholder="e.g., CP-A1" />
                 </label>
               </div>
               <label className="grid gap-1">
                 <span className="text-sm font-medium">Description *</span>
-                <textarea value={newRequest.description} onChange={e => setNewRequest(r => ({ ...r, description: e.target.value }))} className="rounded-lg border border-border px-3 py-2 h-24" placeholder="Describe the issue or work required..." />
+                <textarea value={newRequest.description} onChange={e => setNewRequest(r => ({ ...r, description: e.target.value }))} className="input h-24" placeholder="Describe the issue or work required..." />
               </label>
               <div className="flex gap-2 justify-end">
                 <button type="button" onClick={() => setShowNew(false)} className="px-4 py-2 rounded-lg border border-border hover:bg-muted">Cancel</button>

@@ -98,17 +98,17 @@ export function Payments() {
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-subtle" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="M21 21l-3.6-3.6" /></svg>
             <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search ref / site" className="w-full rounded-lg border border-border pl-9 pr-3 py-2 outline-none focus:ring-2 focus:ring-accent" />
           </label>
-          <select value={type} onChange={e => setType(e.target.value)} className="rounded-lg border border-border bg-surface px-3 py-2">
-            {['All', 'Session', 'Swap', 'Settlement', 'Fee'].map(o => <option key={o}>{o}</option>)}
-          </select>
-          <select value={status} onChange={e => setStatus(e.target.value)} className="rounded-lg border border-border bg-surface px-3 py-2">
-            {['All', 'Settled', 'Sent', 'Applied', 'Pending', 'Refunded'].map(o => <option key={o}>{o}</option>)}
-          </select>
-          <select value={site} onChange={e => setSite(e.target.value)} className="rounded-lg border border-border bg-surface px-3 py-2">
-            {['All', 'Central Hub', 'SS-701', 'Airport East', 'Tech Park'].map(o => <option key={o}>{o}</option>)}
-          </select>
-          <input type="date" value={from} onChange={e => setFrom(e.target.value)} className="rounded-lg border border-border px-3 py-2" />
-          <input type="date" value={to} onChange={e => setTo(e.target.value)} className="rounded-lg border border-border px-3 py-2" />
+        <select value={type} onChange={e => setType(e.target.value)} className="select">
+          {['All', 'Session', 'Swap', 'Settlement', 'Fee'].map(o => <option key={o}>{o}</option>)}
+        </select>
+        <select value={status} onChange={e => setStatus(e.target.value)} className="select">
+          {['All', 'Settled', 'Sent', 'Applied', 'Pending', 'Refunded'].map(o => <option key={o}>{o}</option>)}
+        </select>
+        <select value={site} onChange={e => setSite(e.target.value)} className="select">
+          {['All', 'Central Hub', 'SS-701', 'Airport East', 'Tech Park'].map(o => <option key={o}>{o}</option>)}
+        </select>
+        <input type="date" value={from} onChange={e => setFrom(e.target.value)} className="input" />
+        <input type="date" value={to} onChange={e => setTo(e.target.value)} className="input" />
         </section>
 
         {/* Export */}

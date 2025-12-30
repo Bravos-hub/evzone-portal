@@ -156,7 +156,7 @@ export function OwnerOperatorsReport() {
             <select
               value={site}
               onChange={(e) => setSite(e.target.value)}
-              className="rounded-lg border border-border bg-surface px-3 py-2"
+              className="select"
             >
               {['All Sites', 'Central Hub', 'Airport East', 'Tech Park A'].map((o) => (
                 <option key={o}>{o}</option>
@@ -169,7 +169,7 @@ export function OwnerOperatorsReport() {
               type="date"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
-              className="rounded-lg border border-border px-3 py-2"
+              className="input"
             />
           </label>
           <label className="grid gap-1">
@@ -178,7 +178,7 @@ export function OwnerOperatorsReport() {
               type="date"
               value={to}
               onChange={(e) => setTo(e.target.value)}
-              className="rounded-lg border border-border px-3 py-2"
+              className="input"
             />
           </label>
           <label className="grid gap-1">
@@ -190,7 +190,7 @@ export function OwnerOperatorsReport() {
               step="0.1"
               value={slaTarget}
               onChange={(e) => setSlaTarget(parseFloat(e.target.value) || 99.0)}
-              className="rounded-lg border border-border px-3 py-2"
+              className="input"
             />
           </label>
         </div>

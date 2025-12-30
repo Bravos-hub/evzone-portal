@@ -199,7 +199,7 @@ export function PricingRecipes() {
               <select
                 value={r.site}
                 onChange={(e) => setField(r.id, 'site', e.target.value)}
-                className="rounded-lg border border-border px-3 py-2"
+                className="select"
                 disabled={!perms.edit}
               >
                 {['Any', 'Central Hub', 'Airport East', 'Tech Park A'].map((o) => (
@@ -209,7 +209,7 @@ export function PricingRecipes() {
               <select
                 value={r.connector}
                 onChange={(e) => setField(r.id, 'connector', e.target.value)}
-                className="rounded-lg border border-border px-3 py-2"
+                className="select"
                 disabled={!perms.edit}
               >
                 {['Any', 'CCS2', 'Type 2', 'CHAdeMO'].map((o) => (
@@ -223,21 +223,21 @@ export function PricingRecipes() {
                   value={r.actions.setKwh}
                   onChange={(e) => setAction(r.id, 'setKwh', e.target.value)}
                   placeholder="set $/kWh"
-                  className="col-span-2 rounded-lg border border-border px-2 py-2"
+                  className="col-span-2 input"
                   disabled={!perms.edit}
                 />
                 <input
                   value={r.actions.addAdder}
                   onChange={(e) => setAction(r.id, 'addAdder', e.target.value)}
                   placeholder="+ $/kWh"
-                  className="col-span-2 rounded-lg border border-border px-2 py-2"
+                  className="col-span-2 input"
                   disabled={!perms.edit}
                 />
                 <input
                   value={r.actions.percent}
                   onChange={(e) => setAction(r.id, 'percent', e.target.value)}
                   placeholder="± %"
-                  className="col-span-1 rounded-lg border border-border px-2 py-2"
+                  className="col-span-1 input"
                   disabled={!perms.edit}
                 />
               </div>
@@ -246,14 +246,14 @@ export function PricingRecipes() {
                   value={r.actions.cap}
                   onChange={(e) => setAction(r.id, 'cap', e.target.value)}
                   placeholder="cap $/kWh"
-                  className="col-span-2 rounded-lg border border-border px-2 py-2"
+                  className="col-span-2 input"
                   disabled={!perms.edit}
                 />
                 <input
                   value={r.actions.floor}
                   onChange={(e) => setAction(r.id, 'floor', e.target.value)}
                   placeholder="floor $/kWh"
-                  className="col-span-2 rounded-lg border border-border px-2 py-2"
+                  className="col-span-2 input"
                   disabled={!perms.edit}
                 />
               </div>

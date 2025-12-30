@@ -93,13 +93,13 @@ export function TechnicianJobs() {
       <section className="bg-surface rounded-xl border border-border p-4 grid md:grid-cols-4 gap-3">
         <label className="relative">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-subtle" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="M21 21l-3.6-3.6" /></svg>
-          <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search jobs" className="w-full rounded-lg border border-border pl-9 pr-3 py-2 outline-none focus:ring-2 focus:ring-accent" />
+          <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search jobs" className="input" />
         </label>
-        <select value={status} onChange={e => setStatus(e.target.value)} className="rounded-lg border border-border bg-surface px-3 py-2">
+        <select value={status} onChange={e => setStatus(e.target.value)} className="select">
           <option value="All">All Status</option>
           <option>Pending</option><option>Accepted</option><option>En Route</option><option>On Site</option><option>Completed</option><option>Cancelled</option>
         </select>
-        <select value={type} onChange={e => setType(e.target.value)} className="rounded-lg border border-border bg-surface px-3 py-2">
+        <select value={type} onChange={e => setType(e.target.value)} className="select">
           <option value="All">All Types</option>
           <option>Installation</option><option>Repair</option><option>Maintenance</option><option>Inspection</option><option>Commissioning</option>
         </select>
@@ -257,20 +257,20 @@ export function TechnicianJobs() {
                   <div className="grid grid-cols-2 gap-4">
                     <label className="grid gap-1">
                       <span className="text-sm">Labor Hours</span>
-                      <input type="number" className="rounded-lg border border-border px-3 py-2" placeholder="0" defaultValue="2" />
+                      <input type="number" className="input" placeholder="0" defaultValue="2" />
                     </label>
                     <label className="grid gap-1">
                       <span className="text-sm">Hourly Rate ($)</span>
-                      <input type="number" className="rounded-lg border border-border px-3 py-2" defaultValue={selectedJob.payRate} />
+                      <input type="number" className="input" defaultValue={selectedJob.payRate} />
                     </label>
                   </div>
                   <label className="grid gap-1">
                     <span className="text-sm">Parts & Materials</span>
-                    <textarea className="rounded-lg border border-border px-3 py-2 h-20" placeholder="List any parts used..." />
+                    <textarea className="input h-20" placeholder="List any parts used..." />
                   </label>
                   <label className="grid gap-1">
                     <span className="text-sm">Parts Cost ($)</span>
-                    <input type="number" className="rounded-lg border border-border px-3 py-2" placeholder="0" />
+                    <input type="number" className="input" placeholder="0" />
                   </label>
                   <div className="border-t border-border pt-4">
                     <div className="flex justify-between text-sm">

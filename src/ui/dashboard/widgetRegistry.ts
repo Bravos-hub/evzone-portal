@@ -23,7 +23,11 @@ import {
   StationStatusTableWidget,
   ShiftBoardWidget,
   ActiveSessionsConsoleWidget,
-  ChecklistWidget
+  ChecklistWidget,
+  StationAssignmentWidget,
+  BookingsQueueWidget,
+  ChargeStartWidget,
+  SwapWorkflowWidget
 } from './widgets/panels'
 
 /** All roles for convenience */
@@ -283,6 +287,42 @@ export const WIDGET_REGISTRY: Record<WidgetId, WidgetDef> = {
     allowedRoles: ['EVZONE_ADMIN', 'EVZONE_OPERATOR', 'ATTENDANT'],
     component: ActiveSessionsConsoleWidget as any,
     defaultSize: '2',
+    category: 'panel',
+  },
+
+  'panel-station-assignment': {
+    id: 'panel-station-assignment',
+    title: 'Assigned Station',
+    allowedRoles: ['ATTENDANT'],
+    component: StationAssignmentWidget as any,
+    defaultSize: '2',
+    category: 'panel',
+  },
+
+  'panel-bookings-queue': {
+    id: 'panel-bookings-queue',
+    title: 'Station Bookings',
+    allowedRoles: ['ATTENDANT'],
+    component: BookingsQueueWidget as any,
+    defaultSize: '2',
+    category: 'panel',
+  },
+
+  'panel-charge-start': {
+    id: 'panel-charge-start',
+    title: 'Start Charge Session',
+    allowedRoles: ['ATTENDANT'],
+    component: ChargeStartWidget as any,
+    defaultSize: '2',
+    category: 'panel',
+  },
+
+  'panel-swap-flow': {
+    id: 'panel-swap-flow',
+    title: 'Swap Workflow',
+    allowedRoles: ['ATTENDANT'],
+    component: SwapWorkflowWidget as any,
+    defaultSize: 'full',
     category: 'panel',
   },
 

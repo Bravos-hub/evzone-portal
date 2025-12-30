@@ -94,21 +94,21 @@ export function Content() {
             value={q}
             onChange={e => setQ(e.target.value)}
             placeholder="Search title / ID"
-            className="w-full rounded-lg border border-border pl-9 pr-3 py-2 outline-none focus:ring-2 focus:ring-accent"
+            className="input pl-9"
           />
         </label>
-        <select value={type} onChange={e => setType(e.target.value as any)} className="rounded-lg border border-border bg-surface px-3 py-2">
+        <select value={type} onChange={e => setType(e.target.value as any)} className="select">
           {['All', 'Page', 'Announcement', 'Doc', 'Help', 'Media'].map(o => <option key={o}>{o}</option>)}
         </select>
-        <select value={state} onChange={e => setState(e.target.value as any)} className="rounded-lg border border-border bg-surface px-3 py-2">
+        <select value={state} onChange={e => setState(e.target.value as any)} className="select">
           {['All', 'Draft', 'Scheduled', 'Published', 'Archived'].map(o => <option key={o}>{o}</option>)}
         </select>
-        <select value={locale} onChange={e => setLocale(e.target.value as any)} className="rounded-lg border border-border bg-surface px-3 py-2">
+        <select value={locale} onChange={e => setLocale(e.target.value as any)} className="select">
           {['All', 'EN', 'FR', 'ES', 'SW', 'AR', 'ZH'].map(o => <option key={o}>{o}</option>)}
         </select>
         <button
           onClick={() => toast('Exported CSV (demo)')}
-          className="px-3 py-2 rounded-lg border border-border bg-surface hover:bg-muted flex items-center gap-2 justify-center"
+          className="btn secondary flex items-center gap-2 justify-center"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" />

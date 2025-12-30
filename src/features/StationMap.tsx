@@ -67,19 +67,19 @@ export function StationMap() {
               value={q}
               onChange={e => setQ(e.target.value)}
               placeholder="Search sites or address"
-              className="w-full rounded-lg border border-border px-3 py-2 pl-9 outline-none focus:ring-2 focus:ring-accent"
+              className="input pl-9"
             />
           </label>
 
           {/* Filters */}
           <div className="grid grid-cols-2 gap-2">
-            <select value={city} onChange={e => setCity(e.target.value)} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm">
+            <select value={city} onChange={e => setCity(e.target.value)} className="select text-sm">
               {['All', 'Kampala', 'Entebbe', 'Wuxi'].map(o => <option key={o}>{o}</option>)}
             </select>
-            <select value={status} onChange={e => setStatus(e.target.value)} className="rounded-lg border border-border bg-surface px-3 py-2 text-sm">
+            <select value={status} onChange={e => setStatus(e.target.value)} className="select text-sm">
               {['All', 'Active', 'Paused', 'Offline', 'Maintenance'].map(o => <option key={o}>{o}</option>)}
             </select>
-            <select value={connector} onChange={e => setConnector(e.target.value)} className="col-span-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm">
+            <select value={connector} onChange={e => setConnector(e.target.value)} className="col-span-2 select text-sm">
               {['All', 'CCS2', 'Type 2', 'CHAdeMO'].map(o => <option key={o}>{o}</option>)}
             </select>
           </div>

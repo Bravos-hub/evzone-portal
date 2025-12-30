@@ -272,7 +272,7 @@ export function LoadPolicy() {
               <input
                 value={triggers.highPrice}
                 onChange={(e) => setTriggers((t) => ({ ...t, highPrice: e.target.value }))}
-                className="rounded-lg border border-border px-3 py-2"
+                className="input"
                 disabled={!perms.configure}
               />
             </label>

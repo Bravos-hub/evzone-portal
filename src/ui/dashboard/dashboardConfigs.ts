@@ -76,13 +76,50 @@ const mockActiveSessions = [
   { id: 'SES-993', bay: 'B1', user: 'Ford F-150', carModel: 'Grey (F-2204)', soc: 92, startTime: '11:30', powerKw: 45, cost: 32.10, status: 'finishing' as const },
 ]
 
-const mockChecklistItems = [
-  { id: 'CHK-01', label: 'Inspect charger cables for wear', completed: true, critical: true },
-  { id: 'CHK-02', label: 'Clear station debris/trash', completed: true, critical: false },
-  { id: 'CHK-03', label: 'Test emergency stop buttons', completed: false, critical: true },
-  { id: 'CHK-04', label: 'Verify bay lighting function', completed: false, critical: false },
-  { id: 'CHK-05', label: 'Wipe screen surfaces', completed: false, critical: false },
+const mockAttendantStation = {
+  id: 'ST-001',
+  name: 'Central Hub',
+  location: 'Kampala - Main Ave',
+  status: 'online' as const,
+  capability: 'Both' as const,
+  shift: '08:00 - 16:00',
+  attendant: 'Alex Kato',
+}
+
+const mockAttendantMetrics = [
+  { label: 'Chargers available', value: '4 / 12', tone: 'ok' as const },
+  { label: 'Swap docks open', value: '3 / 10', tone: 'warn' as const },
+  { label: 'Queue', value: '3 waiting', tone: 'warn' as const },
+  { label: 'Last sync', value: '2m ago', tone: 'ok' as const },
 ]
+
+const mockAttendantBookings = [
+  { id: 'BK-1102', customer: 'Amina K', service: 'Charge' as const, time: '14:00', bay: 'Bay 3', status: 'Confirmed' as const },
+  { id: 'BK-1106', customer: 'Daniel M', service: 'Swap' as const, time: '14:20', bay: 'Dock 2', status: 'Pending' as const },
+  { id: 'BK-1107', customer: 'Grace N', service: 'Charge' as const, time: '14:45', bay: 'Bay 1', status: 'Confirmed' as const },
+  { id: 'BK-1109', customer: 'Joseph S', service: 'Swap' as const, time: '15:10', bay: 'Dock 4', status: 'Completed' as const },
+]
+
+const mockChargeScans = [
+  { chargerId: 'CP-A1', rfid: 'RF-2188', time: '2m ago', status: 'ready' as const },
+  { chargerId: 'CP-A4', rfid: 'RF-2196', time: '11m ago', status: 'started' as const },
+]
+
+const mockSwapWorkflow = {
+  title: 'Swap workflow',
+  subtitle: 'Scan batteries, assign docks, confirm payment',
+  steps: [
+    { id: 'swap-1', label: 'Scan returned battery', detail: 'BAT-1049', status: 'done' as const },
+    { id: 'swap-2', label: 'Check power and energy', detail: 'SOC 23% - 1.2 kWh', status: 'done' as const },
+    { id: 'swap-3', label: 'Assign return dock', detail: 'Dock R-07', status: 'done' as const },
+    { id: 'swap-4', label: 'Assign charged dock', detail: 'Dock C-12', status: 'active' as const },
+    { id: 'swap-5', label: 'Scan charged battery', detail: 'Waiting for scan', status: 'pending' as const },
+    { id: 'swap-6', label: 'Calculate amount and confirm payment', detail: 'UGX 9,200', status: 'pending' as const },
+  ],
+  returnedBattery: { id: 'BAT-1049', soc: 23, energyKwh: 1.2, dock: 'R-07' },
+  chargedBattery: { id: 'BAT-1107', soc: 98, energyKwh: 4.8, dock: 'C-12' },
+  payment: { amount: 9200, currency: 'UGX', method: 'Cash', status: 'pending' as const },
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DASHBOARD CONFIGURATIONS
@@ -193,14 +230,14 @@ export const DASHBOARD_CONFIGS: Record<DashboardKey, DashboardConfig> = {
     rows: [
       {
         widgets: [
-          { id: 'chart-bar', size: '2', config: { title: 'Sessions (7 days)', values: [420, 455, 498, 470, 512, 540, 529], color: '#f77f00', labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] } },
+          { id: 'chart-bar', size: '2', config: { title: 'Sessions (7 days)', values: [0, 342, 487, 421, 598, 612, 0], color: '#f77f00', labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] } },
           { id: 'chart-donut', size: '2', config: { title: 'Uptime', value: 99.1, label: 'Uptime', target: 99.5, secondaryLabel: 'Drivers impacted', secondaryValue: '18' } },
         ],
       },
       {
         widgets: [
-          { id: 'chart-line', size: '2', config: { title: 'Revenue (7 days)', values: [1650, 1710, 1820, 1780, 1950, 2140, 2080], stroke: '#03cd8c', labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] } },
-          { id: 'chart-bar', size: '2', config: { title: 'Utilization (7 days)', values: [58, 61, 63, 62, 66, 68, 67], color: '#f59e0b', labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] } },
+          { id: 'chart-line', size: '2', config: { title: 'Revenue (7 days)', values: [0, 1240, 1820, 1680, 2450, 2140, 0], stroke: '#03cd8c', labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] } },
+          { id: 'chart-bar', size: '2', config: { title: 'Utilization (7 days)', values: [0, 58, 63, 61, 68, 72, 0], color: '#f59e0b', labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] } },
         ],
       },
       {
@@ -255,13 +292,13 @@ export const DASHBOARD_CONFIGS: Record<DashboardKey, DashboardConfig> = {
     rows: [
       {
         widgets: [
-          { id: 'chart-bar', size: '2', config: { title: 'Charge Sessions', values: [420, 455, 498, 470, 512, 540, 529], color: '#f77f00' } },
-          { id: 'chart-bar', size: '2', config: { title: 'Swap Sessions', values: [156, 168, 172, 165, 180, 192, 187], color: '#8b5cf6' } },
+          { id: 'chart-bar', size: '2', config: { title: 'Charge Sessions', values: [0, 342, 487, 421, 598, 612, 0], color: '#f77f00', labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] } },
+          { id: 'chart-bar', size: '2', config: { title: 'Swap Sessions', values: [0, 128, 165, 142, 198, 205, 0], color: '#8b5cf6', labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] } },
         ],
       },
       {
         widgets: [
-          { id: 'chart-line', size: '2', config: { title: 'Combined Revenue', values: [5770, 5878, 5992, 5945, 6130, 6332, 6200], stroke: '#03cd8c' } },
+          { id: 'chart-line', size: '2', config: { title: 'Combined Revenue', values: [0, 4870, 6520, 6080, 7960, 8370, 0], stroke: '#03cd8c', labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] } },
           { id: 'chart-donut', size: '2', config: { title: 'Fleet Uptime', value: 98.8, label: 'Combined', target: 99.0 } },
         ],
       },
@@ -339,7 +376,7 @@ export const DASHBOARD_CONFIGS: Record<DashboardKey, DashboardConfig> = {
         sectionTitle: 'Team & Performance',
         widgets: [
           { id: 'panel-placeholder', size: '2', config: { title: 'Shift schedule', subtitle: 'Today\'s coverage' } },
-          { id: 'chart-bar', size: '2', config: { title: 'Daily Sessions', values: [120, 135, 128, 142], color: '#f77f00' } },
+          { id: 'chart-bar', size: '2', config: { title: 'Daily Sessions', values: [98, 124, 112, 138], color: '#f77f00', labels: ['Mon', 'Tue', 'Wed', 'Thu'] } },
         ],
       },
     ],
@@ -385,33 +422,32 @@ export const DASHBOARD_CONFIGS: Record<DashboardKey, DashboardConfig> = {
   // ATTENDANT DASHBOARD
   // ─────────────────────────────────────────────────────────────────────────
   ATTENDANT: {
-    title: 'Attendant Live Console',
+    title: 'Station Attendant Dashboard',
     kpiRow: [
-      { id: 'kpi-generic', config: { title: 'Active sessions', value: '8' } },
-      { id: 'kpi-generic', config: { title: 'Swaps today', value: '12' } },
-      { id: 'kpi-generic', config: { title: 'Queue length', value: '3' } },
-      { id: 'kpi-generic', config: { title: 'Shift progress', value: '3h 20m' } },
+      { id: 'kpi-generic', config: { title: 'Assigned station', value: `${mockAttendantStation.name} (${mockAttendantStation.id})` } },
+      { id: 'kpi-generic', config: { title: 'Charges today', value: '24', trend: 'up', delta: '+4 vs yesterday' } },
+      { id: 'kpi-generic', config: { title: 'Swaps today', value: '18', trend: 'up', delta: '+2 vs yesterday' } },
+      { id: 'kpi-generic', config: { title: 'Bookings today', value: String(mockAttendantBookings.length) } },
     ],
     rows: [
       {
-        sectionTitle: 'Live Operations Console',
+        sectionTitle: 'Station Overview',
         widgets: [
-          { id: 'panel-sessions-console', size: '2', config: { sessions: mockActiveSessions } },
-          { id: 'panel-placeholder', size: '2', config: { title: 'Bays/connectors status', subtitle: 'Available / busy / fault' } },
+          { id: 'panel-station-assignment', size: '2', config: { station: mockAttendantStation, metrics: mockAttendantMetrics } },
+          { id: 'panel-bookings-queue', size: '2', config: { stationName: mockAttendantStation.name, bookings: mockAttendantBookings } },
         ],
       },
       {
-        sectionTitle: 'Quick Actions',
+        sectionTitle: 'Charging Operations',
         widgets: [
-          { id: 'panel-placeholder', size: '2', config: { title: 'Start session', subtitle: 'QR / RFID / manual' } },
-          { id: 'panel-placeholder', size: '2', config: { title: 'Report incident', subtitle: 'Fault, customer issue' } },
+          { id: 'panel-sessions-console', size: '2', config: { title: 'Live charging sessions', subtitle: 'Active bays for assigned station', sessions: mockActiveSessions } },
+          { id: 'panel-charge-start', size: '2', config: { tips: ['Verify connector', 'Assign bay', 'Confirm rate'], recentScans: mockChargeScans } },
         ],
       },
       {
-        sectionTitle: 'Station Checklist & Shift Notes',
+        sectionTitle: 'Swap Operations',
         widgets: [
-          { id: 'panel-checklist', size: '2', config: { items: mockChecklistItems } },
-          { id: 'panel-placeholder', size: '2', config: { title: 'Shift handover notes', subtitle: 'Write + review' } },
+          { id: 'panel-swap-flow', size: 'full', config: mockSwapWorkflow },
         ],
       },
     ],

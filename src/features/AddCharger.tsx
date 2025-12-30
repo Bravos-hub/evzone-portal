@@ -8,14 +8,140 @@ import { hasPermission } from '@/constants/permissions'
 ───────────────────────────────────────────────────────────────────────────── */
 
 type ChargerType = 'AC' | 'DC'
-type ConnectorType = 'Type 2' | 'CCS' | 'CHAdeMO' | 'GB/T'
+
+interface ConnectorSpec {
+  key: string
+  displayName: string
+  standards: string[]
+  physicalFamily: string
+  supports: { ac: boolean; dc: boolean }
+  acRatings?: { phases: string; voltageMaxV: number; currentMaxA: number; powerMaxkW?: number }
+  dcRatings?: { voltageMaxV: number; currentMaxA?: number; powerMaxkW?: number }
+  commonRegions: string[]
+  notes?: string[]
+}
+
+const CONNECTOR_SPECS: ConnectorSpec[] = [
+  {
+    key: 'type1',
+    displayName: 'Type 1 (SAE J1772)',
+    standards: ['SAE J1772', 'IEC 62196 Type 1'],
+    physicalFamily: 'Type 1',
+    supports: { ac: true, dc: false },
+    acRatings: { phases: '1P', voltageMaxV: 240, currentMaxA: 80, powerMaxkW: 19.2 },
+    commonRegions: ['North America', 'Japan', 'Korea'],
+    notes: ['DC fast charging is typically via CCS1 or CHAdeMO, not this connector.']
+  },
+  {
+    key: 'type2',
+    displayName: 'Type 2 (IEC 62196-2)',
+    standards: ['IEC 62196-2'],
+    physicalFamily: 'Type 2',
+    supports: { ac: true, dc: false },
+    acRatings: { phases: '3P', voltageMaxV: 400, currentMaxA: 63, powerMaxkW: 43 },
+    commonRegions: ['Europe', 'UK', 'Oceania'],
+    notes: ['EU requires Type 2 for AC interoperability; DC is generally via CCS2.']
+  },
+  {
+    key: 'ccs1',
+    displayName: 'CCS Combo 1 (CCS1)',
+    standards: ['IEC 62196-3', 'CCS'],
+    physicalFamily: 'Type 1-derived (combo)',
+    supports: { ac: true, dc: true },
+    dcRatings: { voltageMaxV: 1000, currentMaxA: 500, powerMaxkW: 500 },
+    commonRegions: ['North America']
+  },
+  {
+    key: 'ccs2',
+    displayName: 'CCS Combo 2 (CCS2)',
+    standards: ['IEC 62196-3', 'CCS'],
+    physicalFamily: 'Type 2-derived (combo)',
+    supports: { ac: true, dc: true },
+    dcRatings: { voltageMaxV: 1000, currentMaxA: 500, powerMaxkW: 500 },
+    commonRegions: ['Europe', 'UK', 'Oceania']
+  },
+  {
+    key: 'nacs',
+    displayName: 'NACS (SAE J3400)',
+    standards: ['SAE J3400'],
+    physicalFamily: 'NACS',
+    supports: { ac: true, dc: true },
+    dcRatings: { voltageMaxV: 1000 },
+    commonRegions: ['North America'],
+    notes: ['Current is temperature-managed; power varies by implementation.']
+  },
+  {
+    key: 'chademo',
+    displayName: 'CHAdeMO',
+    standards: ['CHAdeMO'],
+    physicalFamily: 'CHAdeMO',
+    supports: { ac: false, dc: true },
+    dcRatings: { voltageMaxV: 1000, currentMaxA: 400, powerMaxkW: 400 },
+    commonRegions: ['Japan']
+  },
+  {
+    key: 'gbt_ac',
+    displayName: 'GB/T AC (GB/T 20234.2)',
+    standards: ['GB/T 20234.2'],
+    physicalFamily: 'GB/T',
+    supports: { ac: true, dc: false },
+    acRatings: { phases: '3P', voltageMaxV: 440, currentMaxA: 63 },
+    commonRegions: ['China']
+  },
+  {
+    key: 'gbt_dc',
+    displayName: 'GB/T DC (GB/T 20234.3)',
+    standards: ['GB/T 20234.3', 'GB/T 20234.1'],
+    physicalFamily: 'GB/T',
+    supports: { ac: false, dc: true },
+    dcRatings: { voltageMaxV: 1500, currentMaxA: 1000 },
+    commonRegions: ['China'],
+    notes: ['Earlier 2015 DC interface was 1000V/250A; newer family expands scope.']
+  },
+  {
+    key: 'type3',
+    displayName: 'Type 3 (Scame) — Legacy',
+    standards: ['IEC 62196 Type 3'],
+    physicalFamily: 'Type 3',
+    supports: { ac: true, dc: false },
+    acRatings: { phases: '3P', voltageMaxV: 480, currentMaxA: 63 },
+    commonRegions: ['Europe'],
+    notes: ['Legacy France/Italy; largely superseded by Type 2.']
+  },
+  {
+    key: 'mcs',
+    displayName: 'MCS (Megawatt Charging)',
+    standards: ['MCS (CharIN)'],
+    physicalFamily: 'MCS',
+    supports: { ac: false, dc: true },
+    dcRatings: { voltageMaxV: 1250, currentMaxA: 3000, powerMaxkW: 3750 },
+    commonRegions: ['Global'],
+    notes: ['Heavy-duty trucks; uses very high current.']
+  }
+]
+
+// Helper to get available connectors based on charger type
+const getAvailableConnectors = (chargerType: ChargerType): ConnectorSpec[] => {
+  return CONNECTOR_SPECS.filter(c => 
+    chargerType === 'AC' ? c.supports.ac : c.supports.dc
+  )
+}
+
+// Get max power for a connector based on charger type
+const getConnectorMaxPower = (connectorKey: string, chargerType: ChargerType): number => {
+  const spec = CONNECTOR_SPECS.find(c => c.key === connectorKey)
+  if (!spec) return 22
+  if (chargerType === 'DC' && spec.dcRatings?.powerMaxkW) return spec.dcRatings.powerMaxkW
+  if (chargerType === 'AC' && spec.acRatings?.powerMaxkW) return spec.acRatings.powerMaxkW
+  return chargerType === 'DC' ? 150 : 22
+}
 
 interface ChargerForm {
   name: string
   site: string
   type: ChargerType
   power: number
-  connectors: { type: ConnectorType; maxPower: number }[]
+  connectors: { type: string; maxPower: number }[]
   serialNumber: string
   manufacturer: string
   model: string
@@ -44,7 +170,7 @@ export function AddCharger() {
     site: '',
     type: 'AC',
     power: 22,
-    connectors: [{ type: 'Type 2', maxPower: 22 }],
+    connectors: [{ type: 'type2', maxPower: 22 }],
     serialNumber: '',
     manufacturer: '',
     model: '',
@@ -64,9 +190,12 @@ export function AddCharger() {
   }
 
   const addConnector = () => {
+    const available = getAvailableConnectors(form.type)
+    const defaultConnector = available[0]?.key || 'type2'
+    const defaultPower = getConnectorMaxPower(defaultConnector, form.type)
     setForm(f => ({
       ...f,
-      connectors: [...f.connectors, { type: 'Type 2', maxPower: f.power }]
+      connectors: [...f.connectors, { type: defaultConnector, maxPower: Math.min(defaultPower, f.power) }]
     }))
   }
 
@@ -134,7 +263,7 @@ export function AddCharger() {
           </p>
           <div className="flex items-center justify-center gap-4">
             <a href="/charge-points" className="px-4 py-2 rounded-lg border border-border hover:bg-muted">View All Chargers</a>
-            <button onClick={() => { setComplete(false); setStep(0); setForm({ name: '', site: '', type: 'AC', power: 22, connectors: [{ type: 'Type 2', maxPower: 22 }], serialNumber: '', manufacturer: '', model: '', firmware: '', ocppId: '', networkSSID: '', networkPassword: '' }) }} className="px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-hover">Add Another</button>
+            <button onClick={() => { setComplete(false); setStep(0); setForm({ name: '', site: '', type: 'AC', power: 22, connectors: [{ type: 'type2', maxPower: 22 }], serialNumber: '', manufacturer: '', model: '', firmware: '', ocppId: '', networkSSID: '', networkPassword: '' }) }} className="px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-hover">Add Another</button>
           </div>
         </div>
       </div>
@@ -168,7 +297,7 @@ export function AddCharger() {
             <h3 className="text-lg font-semibold">Select Installation Site</h3>
             <label className="grid gap-1">
               <span className="text-sm font-medium">Site *</span>
-              <select value={form.site} onChange={e => updateForm('site', e.target.value)} className="rounded-lg border border-border px-3 py-2">
+              <select value={form.site} onChange={e => updateForm('site', e.target.value)} className="select">
                 <option value="">Choose a site...</option>
                 <option>Central Hub</option>
                 <option>Airport East</option>
@@ -178,7 +307,7 @@ export function AddCharger() {
             </label>
             <label className="grid gap-1">
               <span className="text-sm font-medium">Charger Name (optional)</span>
-              <input value={form.name} onChange={e => updateForm('name', e.target.value)} className="rounded-lg border border-border px-3 py-2" placeholder="e.g., Charger A1" />
+              <input value={form.name} onChange={e => updateForm('name', e.target.value)} className="input" placeholder="e.g., Charger A1" />
             </label>
           </div>
         )}
@@ -190,14 +319,31 @@ export function AddCharger() {
             <div className="grid sm:grid-cols-2 gap-4">
               <label className="grid gap-1">
                 <span className="text-sm font-medium">Charger Type *</span>
-                <select value={form.type} onChange={e => updateForm('type', e.target.value as ChargerType)} className="rounded-lg border border-border px-3 py-2">
+                <select 
+                  value={form.type} 
+                  onChange={e => {
+                    const newType = e.target.value as ChargerType
+                    const available = getAvailableConnectors(newType)
+                    const defaultConnector = available[0]?.key || 'type2'
+                    const defaultPower = newType === 'DC' ? 150 : 22
+                    updateForm('type', newType)
+                    updateForm('power', defaultPower)
+                    setForm(f => ({
+                      ...f,
+                      type: newType,
+                      power: defaultPower,
+                      connectors: [{ type: defaultConnector, maxPower: defaultPower }]
+                    }))
+                  }} 
+                  className="select"
+                >
                   <option value="AC">AC (Level 2)</option>
                   <option value="DC">DC Fast Charging</option>
                 </select>
               </label>
               <label className="grid gap-1">
                 <span className="text-sm font-medium">Max Power (kW) *</span>
-                <input type="number" value={form.power} onChange={e => updateForm('power', parseInt(e.target.value) || 0)} className="rounded-lg border border-border px-3 py-2" min="1" max="350" />
+                <input type="number" value={form.power} onChange={e => updateForm('power', parseInt(e.target.value) || 0)} className="input" min="1" max={form.type === 'DC' ? 3750 : 350} />
               </label>
             </div>
             
@@ -206,24 +352,56 @@ export function AddCharger() {
                 <span className="text-sm font-medium">Connectors</span>
                 <button type="button" onClick={addConnector} className="text-sm text-accent hover:underline">+ Add Connector</button>
               </div>
-              <div className="space-y-2">
-                {form.connectors.map((c, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-muted rounded-lg p-3">
-                    <select value={c.type} onChange={e => updateConnector(i, 'type', e.target.value)} className="rounded border border-border px-2 py-1 flex-1">
-                      <option>Type 2</option>
-                      <option>CCS</option>
-                      <option>CHAdeMO</option>
-                      <option>GB/T</option>
-                    </select>
-                    <input type="number" value={c.maxPower} onChange={e => updateConnector(i, 'maxPower', parseInt(e.target.value) || 0)} className="rounded border border-border px-2 py-1 w-20" />
-                    <span className="text-sm text-subtle">kW</span>
-                    {form.connectors.length > 1 && (
-                      <button type="button" onClick={() => removeConnector(i)} className="text-red-600 hover:text-red-700">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" /></svg>
-                      </button>
-                    )}
-                  </div>
-                ))}
+              <div className="space-y-3">
+                {form.connectors.map((c, i) => {
+                  const connectorSpec = CONNECTOR_SPECS.find(cs => cs.key === c.type)
+                  const availableConnectors = getAvailableConnectors(form.type)
+                  return (
+                    <div key={i} className="bg-muted rounded-lg p-3 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <select 
+                          value={c.type} 
+                          onChange={e => {
+                            const newType = e.target.value
+                            const maxPower = getConnectorMaxPower(newType, form.type)
+                            updateConnector(i, 'type', newType)
+                            updateConnector(i, 'maxPower', Math.min(maxPower, form.power))
+                          }} 
+                          className="select flex-1"
+                        >
+                          {availableConnectors.map(conn => (
+                            <option key={conn.key} value={conn.key}>{conn.displayName}</option>
+                          ))}
+                        </select>
+                        <input 
+                          type="number" 
+                          value={c.maxPower} 
+                          onChange={e => updateConnector(i, 'maxPower', parseInt(e.target.value) || 0)} 
+                          className="input w-24" 
+                          max={getConnectorMaxPower(c.type, form.type)}
+                        />
+                        <span className="text-sm text-subtle">kW</span>
+                        {form.connectors.length > 1 && (
+                          <button type="button" onClick={() => removeConnector(i)} className="text-red-600 hover:text-red-700">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
+                        )}
+                      </div>
+                      {connectorSpec && (
+                        <div className="text-xs text-subtle flex flex-wrap gap-x-4 gap-y-1">
+                          <span>Standards: {connectorSpec.standards.join(', ')}</span>
+                          <span>Regions: {connectorSpec.commonRegions.join(', ')}</span>
+                          {form.type === 'DC' && connectorSpec.dcRatings && (
+                            <span>Max: {connectorSpec.dcRatings.voltageMaxV}V{connectorSpec.dcRatings.currentMaxA ? ` / ${connectorSpec.dcRatings.currentMaxA}A` : ''}</span>
+                          )}
+                          {form.type === 'AC' && connectorSpec.acRatings && (
+                            <span>Max: {connectorSpec.acRatings.phases} {connectorSpec.acRatings.voltageMaxV}V / {connectorSpec.acRatings.currentMaxA}A</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             </div>
           </div>
@@ -236,7 +414,7 @@ export function AddCharger() {
             <div className="grid sm:grid-cols-2 gap-4">
               <label className="grid gap-1">
                 <span className="text-sm font-medium">Manufacturer *</span>
-                <select value={form.manufacturer} onChange={e => updateForm('manufacturer', e.target.value)} className="rounded-lg border border-border px-3 py-2">
+                <select value={form.manufacturer} onChange={e => updateForm('manufacturer', e.target.value)} className="select">
                   <option value="">Select...</option>
                   <option>ABB</option>
                   <option>ChargePoint</option>
@@ -247,15 +425,15 @@ export function AddCharger() {
               </label>
               <label className="grid gap-1">
                 <span className="text-sm font-medium">Model *</span>
-                <input value={form.model} onChange={e => updateForm('model', e.target.value)} className="rounded-lg border border-border px-3 py-2" placeholder="e.g., Terra 54" />
+                <input value={form.model} onChange={e => updateForm('model', e.target.value)} className="input" placeholder="e.g., Terra 54" />
               </label>
               <label className="grid gap-1">
                 <span className="text-sm font-medium">Serial Number *</span>
-                <input value={form.serialNumber} onChange={e => updateForm('serialNumber', e.target.value)} className="rounded-lg border border-border px-3 py-2" placeholder="e.g., SN-2025-001234" />
+                <input value={form.serialNumber} onChange={e => updateForm('serialNumber', e.target.value)} className="input" placeholder="e.g., SN-2025-001234" />
               </label>
               <label className="grid gap-1">
                 <span className="text-sm font-medium">Firmware Version</span>
-                <input value={form.firmware} onChange={e => updateForm('firmware', e.target.value)} className="rounded-lg border border-border px-3 py-2" placeholder="e.g., 1.2.3" />
+                <input value={form.firmware} onChange={e => updateForm('firmware', e.target.value)} className="input" placeholder="e.g., 1.2.3" />
               </label>
             </div>
           </div>
@@ -267,17 +445,17 @@ export function AddCharger() {
             <h3 className="text-lg font-semibold">Network & OCPP Configuration</h3>
             <label className="grid gap-1">
               <span className="text-sm font-medium">OCPP Charge Point ID *</span>
-              <input value={form.ocppId} onChange={e => updateForm('ocppId', e.target.value)} className="rounded-lg border border-border px-3 py-2" placeholder="e.g., CP-CENTRALHUB-A1" />
+              <input value={form.ocppId} onChange={e => updateForm('ocppId', e.target.value)} className="input" placeholder="e.g., CP-CENTRALHUB-A1" />
               <span className="text-xs text-subtle">This ID will be used to identify the charger in the OCPP backend</span>
             </label>
             <div className="grid sm:grid-cols-2 gap-4">
               <label className="grid gap-1">
                 <span className="text-sm font-medium">WiFi SSID (optional)</span>
-                <input value={form.networkSSID} onChange={e => updateForm('networkSSID', e.target.value)} className="rounded-lg border border-border px-3 py-2" />
+                <input value={form.networkSSID} onChange={e => updateForm('networkSSID', e.target.value)} className="input" />
               </label>
               <label className="grid gap-1">
                 <span className="text-sm font-medium">WiFi Password (optional)</span>
-                <input type="password" value={form.networkPassword} onChange={e => updateForm('networkPassword', e.target.value)} className="rounded-lg border border-border px-3 py-2" />
+                <input type="password" value={form.networkPassword} onChange={e => updateForm('networkPassword', e.target.value)} className="input" />
               </label>
             </div>
             <div className="bg-muted rounded-lg p-4">
@@ -302,9 +480,14 @@ export function AddCharger() {
             <div>
               <div className="text-sm text-subtle mb-2">Connectors</div>
               <div className="flex flex-wrap gap-2">
-                {form.connectors.map((c, i) => (
-                  <span key={i} className="text-xs px-2 py-1 rounded-full bg-accent/10 text-accent">{c.type} • {c.maxPower} kW</span>
-                ))}
+                {form.connectors.map((c, i) => {
+                  const spec = CONNECTOR_SPECS.find(cs => cs.key === c.type)
+                  return (
+                    <span key={i} className="text-xs px-2 py-1 rounded-full bg-accent/10 text-accent">
+                      {spec?.displayName || c.type} • {c.maxPower} kW
+                    </span>
+                  )
+                })}
               </div>
             </div>
           </div>

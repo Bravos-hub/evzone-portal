@@ -116,19 +116,19 @@ export function Wallet() {
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-subtle" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="M21 21l-3.6-3.6" /></svg>
             <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search transactions" className="w-full rounded-lg border border-border pl-9 pr-3 py-2 outline-none focus:ring-2 focus:ring-accent" />
           </label>
-          <select value={type} onChange={e => setType(e.target.value)} className="rounded-lg border border-border bg-surface px-3 py-2">
-            <option value="All">All Types</option>
-            <option value="credit">Credit</option>
-            <option value="debit">Debit</option>
-            <option value="payout">Payout</option>
-            <option value="refund">Refund</option>
-          </select>
-          <select value={status} onChange={e => setStatus(e.target.value)} className="rounded-lg border border-border bg-surface px-3 py-2">
-            <option value="All">All Status</option>
-            <option value="completed">Completed</option>
-            <option value="pending">Pending</option>
-            <option value="failed">Failed</option>
-          </select>
+        <select value={type} onChange={e => setType(e.target.value)} className="select">
+          <option value="All">All Types</option>
+          <option value="credit">Credit</option>
+          <option value="debit">Debit</option>
+          <option value="payout">Payout</option>
+          <option value="refund">Refund</option>
+        </select>
+        <select value={status} onChange={e => setStatus(e.target.value)} className="select">
+          <option value="All">All Status</option>
+          <option value="completed">Completed</option>
+          <option value="pending">Pending</option>
+          <option value="failed">Failed</option>
+        </select>
           <div className="text-sm text-subtle self-center text-right">{filtered.length} transactions</div>
         </section>
 
@@ -180,25 +180,25 @@ export function Wallet() {
               <form onSubmit={handleWithdraw} className="space-y-4">
                 <label className="grid gap-1">
                   <span className="text-sm font-medium">Amount (USD)</span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="1"
-                    max="1842.50"
-                    value={withdrawAmount}
-                    onChange={e => setWithdrawAmount(e.target.value)}
-                    className="rounded-lg border border-border px-3 py-2"
-                    placeholder="0.00"
-                  />
-                  <span className="text-xs text-subtle">Available: $1,842.50</span>
-                </label>
-                <label className="grid gap-1">
-                  <span className="text-sm font-medium">Withdrawal Method</span>
-                  <select value={withdrawMethod} onChange={e => setWithdrawMethod(e.target.value)} className="rounded-lg border border-border px-3 py-2">
-                    <option value="bank">Bank Transfer (****1234)</option>
-                    <option value="mobile">Mobile Money (MTN)</option>
-                    <option value="paypal">PayPal</option>
-                  </select>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="1"
+                  max="1842.50"
+                  value={withdrawAmount}
+                  onChange={e => setWithdrawAmount(e.target.value)}
+                  className="input"
+                  placeholder="0.00"
+                />
+                <span className="text-xs text-subtle">Available: $1,842.50</span>
+              </label>
+              <label className="grid gap-1">
+                <span className="text-sm font-medium">Withdrawal Method</span>
+                <select value={withdrawMethod} onChange={e => setWithdrawMethod(e.target.value)} className="select">
+                  <option value="bank">Bank Transfer (****1234)</option>
+                  <option value="mobile">Mobile Money (MTN)</option>
+                  <option value="paypal">PayPal</option>
+                </select>
                 </label>
                 <div className="flex gap-2 justify-end">
                   <button type="button" onClick={() => setShowWithdraw(false)} className="px-4 py-2 rounded-lg border border-border hover:bg-muted">Cancel</button>
