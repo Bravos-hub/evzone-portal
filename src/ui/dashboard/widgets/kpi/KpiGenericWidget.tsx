@@ -1,5 +1,4 @@
 import type { WidgetProps } from '../../types'
-import { Card } from '@/ui/components/Card'
 
 export type Trend = 'up' | 'down' | 'flat'
 
@@ -20,20 +19,20 @@ export function KpiGenericWidget({ config }: WidgetProps<KpiGenericConfig>) {
   const { title = 'KPI', value = '—', delta, trend } = config ?? {}
 
   return (
-    <Card>
-      <div className="flex items-start justify-between gap-3">
+    <div className="rounded-lg border border-border-light bg-panel shadow-card p-4">
+      <div className="flex items-start justify-between gap-2">
         <div>
-          <div className="card-title mb-2.5">{title}</div>
-          <div className="kpi-value">{value}</div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.5px] text-muted mb-1.5">{title}</div>
+          <div className="text-xl font-semibold tracking-tight text-text">{value}</div>
         </div>
         {(trend || delta) && (
-          <div className="text-right">
+          <div className="text-right flex-shrink-0">
             {trend && <TrendPill trend={trend} />}
-            {delta && <div className="text-xs text-muted mt-2">{delta}</div>}
+            {delta && <div className="text-[10px] text-muted mt-1">{delta}</div>}
           </div>
         )}
       </div>
-    </Card>
+    </div>
   )
 }
 
@@ -41,10 +40,10 @@ export function KpiGenericWidget({ config }: WidgetProps<KpiGenericConfig>) {
 export function KpiSimpleWidget({ config }: WidgetProps<{ title: string; value: string }>) {
   const { title = 'KPI', value = '—' } = config ?? {}
   return (
-    <Card>
-      <p className="card-title mb-2.5">{title}</p>
-      <p className="kpi-value">{value}</p>
-    </Card>
+    <div className="rounded-lg border border-border-light bg-panel shadow-card p-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.5px] text-muted mb-1.5">{title}</p>
+      <p className="text-xl font-semibold tracking-tight text-text">{value}</p>
+    </div>
   )
 }
 
