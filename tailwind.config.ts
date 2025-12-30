@@ -36,6 +36,7 @@ export default {
         danger: 'var(--app-danger)',
         ok: 'var(--app-ok)',
         warn: 'var(--app-warn)',
+        info: 'var(--app-info)',
       },
       screens: {
         'sm': '680px',

@@ -34,7 +34,7 @@ function RowRenderer({ row, index }: { row: DashboardRowConfig; index: number })
           {row.sectionTitle}
         </div>
       )}
-      <div className={`grid grid-cols-2 lg:grid-cols-4 gap-3 ${index > 0 ? 'mt-4' : ''}`}>
+      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 ${index > 0 ? 'mt-4' : ''}`}>
         {row.widgets.map((w, i) => (
           <Widget key={`${w.id}-${i}`} widgetId={w.id} size={w.size} config={w.config} scope={scope} />
         ))}

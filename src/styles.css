@@ -29,6 +29,7 @@
   --app-danger: #ef4444;
   --app-ok: #10b981;
   --app-warn: #f59e0b;
+  --app-info: #3b82f6;
 
   --app-shadow: rgba(0, 0, 0, 0.3);
   --app-shadow-accent: rgba(247, 127, 0, 0.15);
@@ -80,6 +81,7 @@ html.light-theme {
   --app-danger: #e11d48;
   --app-ok: #03cd8c;
   --app-warn: #f59e0b;
+  --app-info: #3b82f6;
 
   --app-shadow: rgba(15, 23, 42, 0.08); /* Corporate gray-blue tint shadow */
   --app-shadow-accent: rgba(247, 127, 0, 0.15);

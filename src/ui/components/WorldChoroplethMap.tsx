@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import clsx from 'clsx'
 import { geoNaturalEarth1, geoPath, geoCentroid } from 'd3-geo'
 import { feature } from 'topojson-client'
 import countries110m from 'world-atlas/countries-110m.json'
@@ -167,7 +168,7 @@ export function WorldChoroplethMap({
   const pathGen = useMemo(() => geoPath(projection as any), [projection])
 
   const colorForRegion = (id: ChoroplethRegionId | null) => {
-    if (!id) return 'rgba(255,255,255,.06)'
+    if (!id) return t.mode === 'dark' ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)'
     const d = byId.get(id)
     const denom = range.max - range.min || 1
     const raw =
@@ -176,8 +177,8 @@ export function WorldChoroplethMap({
         : d
           ? metricValue(d, metric)
           : 0
-    const t = clamp01((raw - range.min) / denom)
-    return mixHex(low, high, t)
+    const tVal = clamp01((raw - range.min) / denom)
+    return mixHex(low, high, tVal)
   }
 
   return (
@@ -187,15 +188,19 @@ export function WorldChoroplethMap({
           <div className="text-sm font-semibold text-text">{title}</div>
           {subtitle ? <div className="text-xs text-muted">{subtitle}</div> : null}
         </div>
-        <div className="flex flex-col items-end gap-2">
-          <div className="inline-flex gap-1 rounded-xl border border-border-light bg-panel px-1 py-1">
+        <div className="flex flex-col items-end gap-2 flex-shrink-0">
+          <div className="inline-flex gap-0.5 rounded-lg border border-border-light bg-panel p-0.5">
             {(['composite', 'stations', 'sessions', 'uptime', 'revenue'] as MetricId[]).map((m) => (
               <button
                 key={m}
                 type="button"
-                className={m === metric ? 'btn ghost bg-white/5' : 'btn ghost'}
+                className={clsx(
+                  'text-[10px] font-bold px-2 py-1 rounded-md transition-all whitespace-nowrap',
+                  m === metric
+                    ? 'bg-accent text-white'
+                    : 'text-muted hover:text-text hover:bg-white/5'
+                )}
                 onClick={() => setMetric(m)}
-                style={{ padding: '6px 10px' }}
               >
                 {m === 'composite' ? 'All' : metricLabel(m)}
               </button>
@@ -217,7 +222,7 @@ export function WorldChoroplethMap({
           </defs>
 
           {/* ocean / frame */}
-          <rect x="0" y="0" width="640" height="320" rx="16" fill="rgba(255,255,255,.02)" stroke="rgba(255,255,255,.06)" />
+          <rect x="0" y="0" width="640" height="320" rx="16" fill={t.mode === 'dark' ? '#0f172a' : '#f1f5f9'} stroke={t.mode === 'dark' ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)'} />
 
           {/* countries */}
           {countries.map((f, idx) => {
@@ -231,9 +236,9 @@ export function WorldChoroplethMap({
                 key={f.id ?? idx}
                 d={dPath}
                 fill={fill}
-                stroke="rgba(255,255,255,.10)"
+                stroke={t.mode === 'dark' ? 'rgba(255,255,255,.15)' : 'rgba(0,0,0,.1)'}
                 strokeWidth="0.5"
-                opacity={hover && d && hover.id !== d.id ? 0.45 : 0.95}
+                opacity={hover && d && hover.id !== d.id ? 0.45 : 1}
                 onMouseEnter={() => setHover(d)}
                 onMouseLeave={() => setHover(null)}
                 style={{ cursor: d ? 'default' : 'default' }}

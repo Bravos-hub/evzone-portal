@@ -1,9 +1,15 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useAuthStore } from '@/core/auth/authStore'
 import { hasPermission } from '@/constants/permissions'
+import * as d3Geo from 'd3-geo'
+import * as d3Zoom from 'd3-zoom'
+import 'd3-transition'
+import { select } from 'd3-selection'
+import { feature } from 'topojson-client'
+import countries110m from 'world-atlas/countries-110m.json'
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   Station Map — Owner/Operator station map view
+   Station Map — Owner/Operator station map view with interactive world map
    RBAC: Owners, Operators, Site Owners
 ───────────────────────────────────────────────────────────────────────────── */
 
@@ -13,20 +19,22 @@ interface Station {
   id: string
   name: string
   city: string
+  country: string
+  countryCode: string
   status: StationStatus
   kW: number
   connector: string
   address: string
-  lat?: number
-  lng?: number
+  lat: number
+  lng: number
 }
 
 const MOCK_STATIONS: Station[] = [
-  { id: 'st-101', name: 'City Mall Roof', city: 'Kampala', status: 'Active', kW: 250, connector: 'CCS2', address: 'Plot 7 Jinja Rd' },
-  { id: 'st-102', name: 'Tech Park A', city: 'Entebbe', status: 'Paused', kW: 150, connector: 'Type 2', address: 'Block 4' },
-  { id: 'st-103', name: 'Airport East', city: 'Kampala', status: 'Active', kW: 300, connector: 'CCS2', address: 'Terminal C' },
-  { id: 'st-104', name: 'Central Hub', city: 'Kampala', status: 'Active', kW: 200, connector: 'CHAdeMO', address: 'Industrial Area' },
-  { id: 'st-105', name: 'Business Park', city: 'Wuxi', status: 'Maintenance', kW: 180, connector: 'CCS2', address: 'Building 5' },
+  { id: 'st-101', name: 'City Mall Roof', city: 'Kampala', country: 'Uganda', countryCode: '800', status: 'Active', kW: 250, connector: 'CCS2', address: 'Plot 7 Jinja Rd', lat: 0.3476, lng: 32.5825 },
+  { id: 'st-102', name: 'Tech Park A', city: 'Entebbe', country: 'Uganda', countryCode: '800', status: 'Paused', kW: 150, connector: 'Type 2', address: 'Block 4', lat: 0.0630, lng: 32.4631 },
+  { id: 'st-103', name: 'Airport East', city: 'Nairobi', country: 'Kenya', countryCode: '404', status: 'Active', kW: 300, connector: 'CCS2', address: 'Terminal C', lat: -1.2864, lng: 36.8172 },
+  { id: 'st-104', name: 'Central Hub', city: 'Dar es Salaam', country: 'Tanzania', countryCode: '834', status: 'Active', kW: 200, connector: 'CHAdeMO', address: 'Industrial Area', lat: -6.7924, lng: 39.2083 },
+  { id: 'st-105', name: 'Business Park', city: 'Berlin', country: 'Germany', countryCode: '276', status: 'Maintenance', kW: 180, connector: 'CCS2', address: 'Building 5', lat: 52.5200, lng: 13.4050 },
 ]
 
 export function StationMap() {
@@ -35,128 +43,163 @@ export function StationMap() {
   const canView = hasPermission(role, 'stations', 'view')
 
   const [q, setQ] = useState('')
-  const [city, setCity] = useState('All')
-  const [status, setStatus] = useState('All')
-  const [connector, setConnector] = useState('All')
+  const [countryFilter, setCountryFilter] = useState('All')
+  const [statusFilter, setStatusFilter] = useState('All')
+  const [connectorFilter, setConnectorFilter] = useState('All')
   const [selectedStation, setSelectedStation] = useState<string | null>(null)
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
+  const svgRef = useRef<SVGSVGElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const worldData = useMemo(() => {
+    try {
+      const topo = countries110m as any
+      const data = feature(topo, topo.objects.countries) as any
+      return data
+    } catch (error) {
+      console.error('StationMap: Error loading world data', error)
+      return null
+    }
+  }, [])
 
   const filtered = useMemo(() =>
     MOCK_STATIONS
       .filter(s => !q || s.name.toLowerCase().includes(q.toLowerCase()) || s.address.toLowerCase().includes(q.toLowerCase()))
-      .filter(s => city === 'All' || s.city === city)
-      .filter(s => status === 'All' || s.status === status)
-      .filter(s => connector === 'All' || s.connector === connector)
-  , [q, city, status, connector])
+      .filter(s => countryFilter === 'All' || s.country === countryFilter)
+      .filter(s => statusFilter === 'All' || s.status === statusFilter)
+      .filter(s => connectorFilter === 'All' || s.connector === connectorFilter)
+    , [q, countryFilter, statusFilter, connectorFilter])
 
-  if (!canView) {
-    return <div className="p-8 text-center text-subtle">No permission to view Station Map.</div>
-  }
+  const countriesList = useMemo(() =>
+    Array.from(new Set(MOCK_STATIONS.map(s => s.country))).sort()
+    , [])
+
+  const stationsByCountry = useMemo(() => {
+    const map = new Map<string, number>()
+    MOCK_STATIONS.forEach(s => {
+      map.set(s.countryCode, (map.get(s.countryCode) || 0) + 1)
+    })
+    return map
+  }, [])
+
+  useEffect(() => {
+    if (!worldData || !svgRef.current || !containerRef.current) return
+
+    const updateMap = () => {
+      if (!svgRef.current || !containerRef.current) return
+      const width = containerRef.current.clientWidth || 800
+      const height = containerRef.current.clientHeight || 500
+
+      const svg = select(svgRef.current)
+      svg.selectAll('*').remove()
+      svg.attr('width', width).attr('height', height)
+
+      const g = svg.append('g')
+      const projection = d3Geo.geoNaturalEarth1().fitSize([width, height], worldData)
+      const path = d3Geo.geoPath().projection(projection)
+
+      const zoom = d3Zoom.zoom<SVGSVGElement, unknown>()
+        .scaleExtent([1, 15])
+        .on('zoom', (event) => g.attr('transform', event.transform))
+      svg.call(zoom)
+
+      g.selectAll('path.country')
+        .data(worldData.features)
+        .enter()
+        .append('path')
+        .attr('class', 'country')
+        .attr('d', path as any)
+        .attr('fill', (d: any) => {
+          const id = String(d.id)
+          if (stationsByCountry.has(id)) return '#03cd8c'
+          return '#e5e7eb'
+        })
+        .attr('stroke', '#94a3b8')
+        .attr('stroke-width', 0.5)
+
+      g.selectAll('circle.station')
+        .data(filtered)
+        .enter()
+        .append('circle')
+        .attr('cx', d => projection([d.lng, d.lat])?.[0] ?? 0)
+        .attr('cy', d => projection([d.lng, d.lat])?.[1] ?? 0)
+        .attr('r', 4)
+        .attr('fill', d => {
+          if (d.status === 'Active') return '#03cd8c'
+          if (d.status === 'Paused') return '#f59e0b'
+          if (d.status === 'Offline') return '#ef4444'
+          return '#3b82f6'
+        })
+        .attr('stroke', '#fff')
+        .attr('stroke-width', 1)
+    }
+
+    updateMap()
+    window.addEventListener('resize', updateMap)
+    return () => window.removeEventListener('resize', updateMap)
+  }, [worldData, filtered, stationsByCountry])
+
+  if (!canView) return <div className="p-8 text-center">No permission.</div>
+
+  const avgHealth = Math.round((filtered.filter(s => s.status === 'Active').length / filtered.length) * 100) || 0
+  const openIncidents = filtered.filter(s => s.status === 'Offline').length
 
   return (
-    <div className="space-y-4">
-      {/* Map Layout */}
-      <div className="grid lg:grid-cols-[320px_1fr] gap-4">
-        {/* Sidebar Filters & Results */}
-        <aside className="bg-surface rounded-xl border border-border p-4 h-fit lg:sticky lg:top-6 space-y-4">
-          <h2 className="font-semibold text-lg">Stations</h2>
+    <div className="flex flex-col gap-4">
+      <div className="bg-bg-secondary border border-border-light rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-text">Stations Map</h1>
+          <p className="text-sm text-muted">{filtered.length} stations</p>
+        </div>
+        <div className="flex gap-6">
+          <div className="text-center">
+            <div className="text-xs text-muted uppercase">Avg Health</div>
+            <div className="text-lg font-bold text-ok">{avgHealth}%</div>
+          </div>
+          <div className="text-center">
+            <div className="text-xs text-muted uppercase">Incidents</div>
+            <div className="text-lg font-bold text-danger">{openIncidents}</div>
+          </div>
+        </div>
+      </div>
 
-          {/* Search */}
-          <label className="relative block">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-subtle" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="M21 21l-3.6-3.6" /></svg>
-            <input
-              value={q}
-              onChange={e => setQ(e.target.value)}
-              placeholder="Search sites or address"
-              className="input pl-9"
-            />
-          </label>
-
-          {/* Filters */}
-          <div className="grid grid-cols-2 gap-2">
-            <select value={city} onChange={e => setCity(e.target.value)} className="select text-sm">
-              {['All', 'Kampala', 'Entebbe', 'Wuxi'].map(o => <option key={o}>{o}</option>)}
+      <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4">
+        <aside className="card p-4 space-y-4 h-fit">
+          <input
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            placeholder="Search..."
+            className="input w-full"
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2">
+            <select value={countryFilter} onChange={e => setCountryFilter(e.target.value)} className="select">
+              <option value="All">All Countries</option>
+              {countriesList.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
-            <select value={status} onChange={e => setStatus(e.target.value)} className="select text-sm">
-              {['All', 'Active', 'Paused', 'Offline', 'Maintenance'].map(o => <option key={o}>{o}</option>)}
-            </select>
-            <select value={connector} onChange={e => setConnector(e.target.value)} className="col-span-2 select text-sm">
-              {['All', 'CCS2', 'Type 2', 'CHAdeMO'].map(o => <option key={o}>{o}</option>)}
+            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="select">
+              <option value="All">All Status</option>
+              {['Active', 'Paused', 'Offline', 'Maintenance'].map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
-
-          {/* Results Count */}
-          <div className="text-sm text-subtle">
-            {filtered.length} station{filtered.length !== 1 ? 's' : ''} found
-          </div>
-
-          {/* Station List */}
-          <ul className="space-y-2 max-h-[60vh] overflow-y-auto">
+          <ul className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
             {filtered.map(s => (
               <li
                 key={s.id}
+                className="p-3 border border-border-light rounded-lg hover:border-accent/40 cursor-pointer"
                 onClick={() => setSelectedStation(s.id)}
-                className={`rounded-lg border p-3 cursor-pointer transition-colors ${
-                  selectedStation === s.id
-                    ? 'border-accent bg-accent/5'
-                    : 'border-border hover:bg-muted'
-                }`}
               >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="font-medium text-sm">{s.name}</div>
-                  <StatusPill status={s.status} />
+                <div className="flex justify-between font-medium text-sm">
+                  <span>{s.name}</span>
+                  <span className={s.status === 'Active' ? 'text-ok' : 'text-danger'}>{s.status}</span>
                 </div>
-                <div className="text-xs text-subtle flex items-center gap-1 mb-1">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 22s7-6 7-12a7 7 0 10-14 0c0 6 7 12 7 12z" /><circle cx="12" cy="10" r="3" /></svg>
-                  {s.address} — {s.city}
-                </div>
-                <div className="text-xs text-subtle">
-                  {s.kW} kW • {s.connector}
-                </div>
-                <div className="mt-2 flex items-center gap-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      // Navigate to station detail
-                    }}
-                    className="text-xs text-accent hover:underline"
-                  >
-                    Open
-                  </button>
-                  <a
-                    href={`https://maps.google.com/?q=${encodeURIComponent(s.address)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-xs text-subtle hover:text-accent"
-                  >
-                    Navigate
-                  </a>
-                </div>
+                <div className="text-xs text-muted mt-1">{s.city}, {s.country}</div>
               </li>
             ))}
           </ul>
         </aside>
 
-        {/* Map Panel */}
-        <section className="bg-surface rounded-xl border border-border p-3 min-h-[60vh] relative">
-          <div className="h-full w-full rounded-lg bg-muted border border-border grid place-items-center text-subtle">
-            <div className="text-center space-y-2">
-              <svg className="w-16 h-16 mx-auto text-subtle" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M9 3l-6 2v14l6-2 6 2 6-2V3l-6 2-6-2z" /><path d="M9 3v14M15 5v14" /></svg>
-              <div className="text-sm font-medium">Station Map</div>
-              <div className="text-xs">Map integration placeholder</div>
-              <div className="text-xs text-subtle mt-4">
-                {filtered.length} station{filtered.length !== 1 ? 's' : ''} shown
-              </div>
-            </div>
-          </div>
-          <div className="absolute top-3 right-3 flex gap-2">
-            <button className="px-3 py-2 rounded-lg border border-border bg-surface hover:bg-muted text-sm">
-              QR Poster
-            </button>
-            <a href="/dashboard" className="px-3 py-2 rounded-lg bg-accent text-white hover:bg-accent-hover text-sm">
-              Open Dashboard
-            </a>
-          </div>
+        <section ref={containerRef} className="card p-2 min-h-[500px] relative bg-[#f1f5f9] dark:bg-[#0f172a] overflow-hidden">
+          <svg ref={svgRef} className="w-full h-full" />
         </section>
       </div>
     </div>
@@ -165,13 +208,12 @@ export function StationMap() {
 
 function StatusPill({ status }: { status: StationStatus }) {
   const colors: Record<StationStatus, string> = {
-    Active: 'bg-emerald-100 text-emerald-700',
-    Paused: 'bg-amber-100 text-amber-700',
-    Offline: 'bg-gray-100 text-gray-600',
-    Maintenance: 'bg-blue-100 text-blue-700',
+    Active: 'bg-ok/20 text-ok',
+    Paused: 'bg-warn/20 text-warn',
+    Offline: 'bg-danger/20 text-danger',
+    Maintenance: 'bg-info/20 text-info',
   }
-  return <span className={`text-xs px-2 py-0.5 rounded-full ${colors[status]}`}>{status}</span>
+  return <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${colors[status]}`}>{status}</span>
 }
 
 export default StationMap
-

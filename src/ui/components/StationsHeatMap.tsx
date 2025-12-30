@@ -98,15 +98,16 @@ export function StationsHeatMap({
 
       <div className="relative">
         <svg viewBox="0 0 900 420" className="w-full h-auto">
-          <rect x="0" y="0" width="900" height="420" rx="18" fill="rgba(255,255,255,.02)" stroke="rgba(255,255,255,.06)" />
+          <rect x="0" y="0" width="900" height="420" rx="18" fill={hover ? 'rgba(255,255,255,.01)' : '#f1f5f9'} className="dark:fill-[#0f172a]" stroke="rgba(255,255,255,.06)" />
 
           {/* countries */}
           {countries.map((f, idx) => (
             <path
               key={f.id ?? idx}
               d={pathGen(f) ?? ''}
-              fill="rgba(255,255,255,.02)"
-              stroke="rgba(255,255,255,.08)"
+              fill="#e5e7eb"
+              stroke="rgba(0,0,0,.05)"
+              className="dark:fill-white/5 dark:stroke-white/10"
               strokeWidth="0.6"
             />
           ))}

@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum Role {
@@ -88,6 +89,7 @@ model Organization {
   tenant    Tenant    @relation(fields: [tenantId], references: [id])
   users     User[]
   stations  Station[]
+  invoices  Invoice[]
 
   @@index([tenantId])
 }

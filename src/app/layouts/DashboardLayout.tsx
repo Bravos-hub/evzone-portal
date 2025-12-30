@@ -1,16 +1,13 @@
-import type { PropsWithChildren } from 'react'
+import { useState, type PropsWithChildren } from 'react'
 import { Sidebar } from '@/ui/components/Sidebar'
 import { Header } from '@/ui/components/Header'
 import { useAuthStore } from '@/core/auth/authStore'
+import clsx from 'clsx'
 
-/**
- * DashboardLayout - Unified layout for all dashboard pages
- * 
- * The Sidebar now automatically shows menu items based on the user's role.
- * No need to pass role-specific items - it's handled internally.
- */
 export function DashboardLayout({ children, pageTitle }: PropsWithChildren<{ pageTitle: string }>) {
   const { user } = useAuthStore()
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+
   const showHelpFab = user
     ? [
       'EVZONE_ADMIN',
@@ -27,10 +24,30 @@ export function DashboardLayout({ children, pageTitle }: PropsWithChildren<{ pag
 
   return (
     <div className="flex h-screen overflow-hidden bg-bg">
-      <Sidebar />
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-[110] lg:hidden backdrop-blur-sm transition-opacity duration-300"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar - Positioned fixed/absolute on mobile */}
+      <div className={clsx(
+        "fixed inset-y-0 left-0 z-[120] lg:relative lg:z-auto transition-transform duration-300 ease-in-out transform",
+        isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+      )}>
+        <Sidebar onClose={() => setIsSidebarOpen(false)} />
+      </div>
+
       <div className="flex-1 flex flex-col min-w-0 bg-bg">
-        <Header title={pageTitle} />
-        <main className="flex-1 p-7 overflow-y-auto bg-bg">{children}</main>
+        <Header
+          title={pageTitle}
+          onMenuClick={() => setIsSidebarOpen(true)}
+        />
+        <main className="flex-1 p-4 lg:p-7 overflow-y-auto bg-bg">
+          {children}
+        </main>
       </div>
       {showHelpFab && (
         <a
