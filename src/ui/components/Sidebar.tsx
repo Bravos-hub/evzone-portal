@@ -114,15 +114,8 @@ export function Sidebar({ items: overrideItems }: SidebarProps) {
   return (
     <aside className="w-[280px] flex-shrink-0 border-r border-white/5 p-0 bg-bg-secondary flex flex-col overflow-hidden z-[100] shadow-lg">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-6 py-8 flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-accent/20 rounded-lg flex items-center justify-center">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--app-accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-            </svg>
-          </div>
-          <span className="text-xl font-bold tracking-tight text-white">EV<span className="text-accent">zone</span></span>
-        </div>
+      <div className="flex items-center justify-center px-4 py-6 flex-shrink-0">
+        <img src="/assets/cpms.png" alt="EVzone CPMS" className="h-12 w-auto object-contain" />
       </div>
 
       {/* Navigation */}
