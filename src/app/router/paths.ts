@@ -78,6 +78,7 @@ export const PATHS = {
   // Site Owner
   SITE_OWNER: {
     SITES: '/sites',
+    SITE_DETAIL: (id: string) => `/sites/${id}`,
     MY_SITES: '/site-owner-sites',
     DASHBOARD: '/site-owner-dashboard',
     PARKING: '/parking',

@@ -4,11 +4,15 @@ import { useAuthStore } from '@/core/auth/authStore'
 import { getPermissionsForFeature } from '@/constants/permissions'
 import { AddSite } from './AddSite'
 
+import { useNavigate } from 'react-router-dom'
+import { PATHS } from '@/app/router/paths'
+
 /**
  * Sites Page - Site Owner feature
  */
 export function Sites() {
   const { user } = useAuthStore()
+  const navigate = useNavigate()
   const perms = getPermissionsForFeature(user?.role, 'sites')
 
   // Mock data - simulate empty for new users if needed, but keeping default for now
@@ -38,6 +42,7 @@ export function Sites() {
           <AddSite
             onSuccess={handleAddSite}
             onCancel={sites.length > 0 ? () => setIsAdding(false) : undefined}
+            isFirstSite={sites.length === 0}
           />
         </div>
       </DashboardLayout>
@@ -94,7 +99,7 @@ export function Sites() {
                 <td className="font-semibold">${s.revenue.toLocaleString()}</td>
                 <td><span className={`pill ${s.status === 'Active' ? 'approved' : 'pending'}`}>{s.status}</span></td>
                 <td className="text-right">
-                  <button className="btn secondary" onClick={() => alert(`View ${s.id} (demo)`)}>View</button>
+                  <button className="btn secondary" onClick={() => navigate(PATHS.SITE_OWNER.SITE_DETAIL(s.id))}>View</button>
                 </td>
               </tr>
             ))}

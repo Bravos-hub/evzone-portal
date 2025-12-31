@@ -40,6 +40,7 @@ export { Bookings } from './Bookings'
 
 // Site Owner Features
 export { Sites } from './Sites'
+export { SiteDetail } from './SiteDetail'
 export { AddSite } from './AddSite'
 export { OwnerSteps } from './onboarding/OwnerSteps'
 export { OperatorSteps } from './onboarding/OperatorSteps'
@@ -64,7 +65,7 @@ export { Settlement } from './Settlement'
 export { Plans } from './Plans'
 export { FeatureFlags } from './FeatureFlags'
 export { WebhooksLog } from './WebhooksLog'
-export { AdminHome } from './AdminHome'
+
 
 // Marketplace & Explore
 export { Marketplace } from './Marketplace'
@@ -101,8 +102,7 @@ export { NotFound, ServerError, Offline, BrowserUnsupported } from './ErrorPages
 export { Login, Register, ForgotPassword, VerifyEmail } from './Auth'
 
 // Role-specific Ops Pages
-export { OwnerOps } from './OwnerOps'
-export { OperatorOps } from './OperatorOps'
+
 export { TechnicianAvailability } from './TechnicianAvailability'
 export { SiteOwnerSites } from './SiteOwnerSites'
 
