@@ -176,9 +176,14 @@ export function Header({ title, onMenuClick }: { title?: string; onMenuClick?: (
         <div className="w-px h-6 bg-white/10 mx-0.5 lg:mx-1" />
 
         <button
-          className="h-9 w-9 lg:h-10 lg:w-10 rounded-full bg-accent text-white inline-flex items-center justify-center font-bold shadow-lg hover:bg-accent-hover transition-all duration-200 overflow-hidden flex-shrink-0"
+          onClick={() => nav(PATHS.SETTING)}
+          className="h-9 w-9 lg:h-10 lg:w-10 rounded-full bg-accent text-white inline-flex items-center justify-center font-bold shadow-lg hover:bg-accent-hover transition-all duration-200 overflow-hidden flex-shrink-0 border-2 border-white/10"
         >
-          <span className="text-xs lg:text-sm">{profileInitial}</span>
+          {user?.avatarUrl ? (
+            <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-xs lg:text-sm">{profileInitial}</span>
+          )}
         </button>
 
         <button

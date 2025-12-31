@@ -28,5 +28,6 @@ export type UserProfile = {
   name: string
   role: Role
   ownerCapability?: OwnerCapability
+  avatarUrl?: string
 }
 

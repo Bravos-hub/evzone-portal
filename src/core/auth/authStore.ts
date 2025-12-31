@@ -19,7 +19,12 @@ function load(): UserProfile | null {
   try {
     const raw = localStorage.getItem(LS_KEY)
     if (!raw) return null
-    return JSON.parse(raw) as UserProfile
+    const user = JSON.parse(raw) as UserProfile
+    // Inject mock avatar for existing sessions to demonstrate the feature
+    if (!user.avatarUrl) {
+      user.avatarUrl = 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ronald'
+    }
+    return user
   } catch {
     return null
   }
@@ -68,6 +73,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       name: name ?? 'Demo User',
       role,
       ownerCapability,
+      avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ronald',
     }
     save(user)
     saveImpersonator(null)

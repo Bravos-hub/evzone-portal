@@ -101,12 +101,16 @@ export function Settings() {
         {tab === 'profile' && (
           <form onSubmit={handleProfileSave} className="rounded-xl bg-surface border border-border p-6 space-y-6">
             <h2 className="text-lg font-semibold">Profile Information</h2>
-            
+
             {/* Avatar */}
             <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-full bg-muted grid place-items-center text-subtle text-sm">
-                {profile.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-              </div>
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.name} className="h-16 w-16 rounded-full object-cover border-2 border-accent/20" />
+              ) : (
+                <div className="h-16 w-16 rounded-full bg-muted grid place-items-center text-subtle text-sm">
+                  {profile.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                </div>
+              )}
               <button type="button" className="px-3 py-2 rounded-lg border border-border hover:bg-muted">
                 Upload avatar
               </button>
@@ -226,9 +230,11 @@ export function Settings() {
           <div className="rounded-xl bg-surface border border-border p-6 space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">API Keys</h2>
-              <button onClick={() => toast('Create API key (demo)')} className="px-4 py-2 rounded-lg bg-accent text-white font-medium hover:bg-accent-hover">
-                Create API Key
-              </button>
+              {user?.role === 'EVZONE_ADMIN' && (
+                <button onClick={() => toast('Create API key (demo)')} className="px-4 py-2 rounded-lg bg-accent text-white font-medium hover:bg-accent-hover">
+                  Create API Key
+                </button>
+              )}
             </div>
 
             <div className="overflow-x-auto rounded-lg border border-border">
@@ -237,10 +243,10 @@ export function Settings() {
                   <tr>
                     <th className="px-4 py-3 text-left font-medium">Name</th>
                     <th className="px-4 py-3 text-left font-medium">Key</th>
-                  <th className="px-4 py-3 text-left font-medium">Created</th>
-                  <th className="px-4 py-3 text-left font-medium">Last Used</th>
-                  <th className="px-4 py-3 !text-right font-medium">Actions</th>
-                </tr>
+                    <th className="px-4 py-3 text-left font-medium">Created</th>
+                    <th className="px-4 py-3 text-left font-medium">Last Used</th>
+                    <th className="px-4 py-3 !text-right font-medium">Actions</th>
+                  </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {apiKeys.map(k => (
@@ -252,7 +258,9 @@ export function Settings() {
                       <td className="px-4 py-3 text-right">
                         <div className="inline-flex gap-2">
                           <button onClick={() => toast('Copied to clipboard!')} className="px-2 py-1 rounded border border-border hover:bg-muted text-xs">Copy</button>
-                          <button onClick={() => toast('Revoked API key')} className="px-2 py-1 rounded border border-border hover:bg-muted text-xs text-red-600">Revoke</button>
+                          {user?.role === 'EVZONE_ADMIN' && (
+                            <button onClick={() => toast('Revoked API key')} className="px-2 py-1 rounded border border-border hover:bg-muted text-xs text-red-600">Revoke</button>
+                          )}
                         </div>
                       </td>
                     </tr>
