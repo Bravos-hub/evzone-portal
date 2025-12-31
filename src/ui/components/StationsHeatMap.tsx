@@ -1,7 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef, useEffect } from 'react'
 import { geoNaturalEarth1, geoPath } from 'd3-geo'
 import { feature } from 'topojson-client'
 import countries110m from 'world-atlas/countries-110m.json'
+import { select } from 'd3-selection'
+import { zoom, zoomIdentity } from 'd3-zoom'
+import 'd3-transition'
 
 export type StationMapPoint = {
   id: string
@@ -47,6 +50,9 @@ export function StationsHeatMap({
   points: StationMapPoint[]
 }) {
   const [hover, setHover] = useState<StationMapPoint | null>(null)
+  const svgRef = useRef<SVGSVGElement>(null)
+  const gRef = useRef<SVGGElement>(null)
+  const [transform, setTransform] = useState({ k: 1, x: 0, y: 0 })
 
   const countries = useMemo(() => {
     const topo = countries110m as any
@@ -59,6 +65,47 @@ export function StationsHeatMap({
     [countries],
   )
   const pathGen = useMemo(() => geoPath(projection as any), [projection])
+
+  useEffect(() => {
+    if (!svgRef.current || !gRef.current) return
+
+    const svg = select(svgRef.current)
+    const g = select(gRef.current)
+
+    const zoomBehavior = zoom<SVGSVGElement, unknown>()
+      .scaleExtent([1, 8])
+      .on('zoom', (event) => {
+        g.attr('transform', event.transform)
+        setTransform({ k: event.transform.k, x: event.transform.x, y: event.transform.y })
+      })
+
+    svg.call(zoomBehavior as any)
+  }, [])
+
+  const handleCountryClick = (f: GeoFeature) => {
+    if (!svgRef.current) return
+    const svg = select(svgRef.current)
+    const bounds = pathGen.bounds(f)
+    const dx = bounds[1][0] - bounds[0][0]
+    const dy = bounds[1][1] - bounds[0][1]
+    const x = (bounds[0][0] + bounds[1][0]) / 2
+    const y = (bounds[0][1] + bounds[1][1]) / 2
+    const scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / 900, dy / 420)))
+    const translate = [900 / 2 - scale * x, 420 / 2 - scale * y]
+
+    svg.transition().duration(750).call(
+      (zoom() as any).transform,
+      zoomIdentity.translate(translate[0], translate[1]).scale(scale)
+    )
+  }
+
+  const resetZoom = () => {
+    if (!svgRef.current) return
+    select(svgRef.current)
+      .transition()
+      .duration(750)
+      .call((zoom() as any).transform, zoomIdentity)
+  }
 
   const stats = useMemo(() => {
     const total = points.length
@@ -93,43 +140,57 @@ export function StationsHeatMap({
           <span className="pill approved">{stats.avgHealth}%</span>
           <span className="text-muted">Open incidents</span>
           <span className={stats.incidents ? 'pill sendback' : 'pill approved'}>{stats.incidents}</span>
+          {transform.k !== 1 && (
+            <button
+              onClick={resetZoom}
+              className="ml-2 text-[10px] font-bold px-2 py-1 rounded-md bg-white/5 border border-white/10 text-muted hover:text-text"
+            >
+              Reset Zoom
+            </button>
+          )}
         </div>
       </div>
 
       <div className="relative">
-        <svg viewBox="0 0 900 420" className="w-full h-auto">
+        <svg ref={svgRef} viewBox="0 0 900 420" className="w-full h-auto cursor-grab active:cursor-grabbing overflow-hidden">
           <rect x="0" y="0" width="900" height="420" rx="18" fill={hover ? 'rgba(255,255,255,.01)' : '#f1f5f9'} className="dark:fill-[#0f172a]" stroke="rgba(255,255,255,.06)" />
 
-          {/* countries */}
-          {countries.map((f, idx) => (
-            <path
-              key={f.id ?? idx}
-              d={pathGen(f) ?? ''}
-              fill="#e5e7eb"
-              stroke="rgba(0,0,0,.05)"
-              className="dark:fill-white/5 dark:stroke-white/10"
-              strokeWidth="0.6"
-            />
-          ))}
-
-          {/* dots */}
-          {projected.map((p) => {
-            const r = p.status === 'Offline' ? 5 : p.status === 'Degraded' ? 4.5 : 4
-            return (
-              <circle
-                key={p.id}
-                cx={p.x}
-                cy={p.y}
-                r={r}
-                fill={statusColor(p.status)}
-                opacity={hover && hover.id !== p.id ? 0.35 : 0.92}
-                stroke="rgba(0,0,0,.35)"
-                strokeWidth="0.8"
-                onMouseEnter={() => setHover(p)}
-                onMouseLeave={() => setHover(null)}
+          <g ref={gRef}>
+            {/* countries */}
+            {countries.map((f, idx) => (
+              <path
+                key={f.id ?? idx}
+                d={pathGen(f) ?? ''}
+                fill="#e5e7eb"
+                stroke="rgba(0,0,0,.05)"
+                className="dark:fill-white/5 dark:stroke-white/10"
+                strokeWidth="0.6"
+                onClick={() => handleCountryClick(f)}
+                style={{ cursor: 'pointer' }}
               />
-            )
-          })}
+            ))}
+
+            {/* dots */}
+            {projected.map((p) => {
+              // Scale radius down as we zoom in so they don't cover the whole map
+              const baseR = p.status === 'Offline' ? 5 : p.status === 'Degraded' ? 4.5 : 4
+              const r = baseR / Math.pow(transform.k, 0.4) // Subtle scaling
+              return (
+                <circle
+                  key={p.id}
+                  cx={p.x}
+                  cy={p.y}
+                  r={r}
+                  fill={statusColor(p.status)}
+                  opacity={hover && hover.id !== p.id ? 0.35 : 0.92}
+                  stroke="rgba(0,0,0,.35)"
+                  strokeWidth={0.8 / transform.k} // Keep stroke thin
+                  onMouseEnter={() => setHover(p)}
+                  onMouseLeave={() => setHover(null)}
+                />
+              )
+            })}
+          </g>
         </svg>
 
         {hover ? (

@@ -1,9 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef, useEffect } from 'react'
 import clsx from 'clsx'
 import { geoNaturalEarth1, geoPath, geoCentroid } from 'd3-geo'
 import { feature } from 'topojson-client'
 import countries110m from 'world-atlas/countries-110m.json'
 import { useTheme } from '@/ui/theme/provider'
+import { select } from 'd3-selection'
+import { zoom, zoomIdentity } from 'd3-zoom'
+import 'd3-transition'
 
 export type ChoroplethRegionId = 'N_AMERICA' | 'EUROPE' | 'AFRICA' | 'ASIA' | 'MIDDLE_EAST'
 
@@ -115,6 +118,10 @@ export function WorldChoroplethMap({
   const [hover, setHover] = useState<ChoroplethDatum | null>(null)
   const [metric, setMetric] = useState<MetricId>(defaultMetric)
 
+  const svgRef = useRef<SVGSVGElement>(null)
+  const gRef = useRef<SVGGElement>(null)
+  const [isZoomed, setIsZoomed] = useState(false)
+
   const low = lowColor ?? '#152033'
   const high = highColor ?? t.theme.colors.accent.DEFAULT
 
@@ -167,6 +174,47 @@ export function WorldChoroplethMap({
   const projection = useMemo(() => geoNaturalEarth1().fitSize([640, 320], { type: 'FeatureCollection', features: countries } as any), [countries])
   const pathGen = useMemo(() => geoPath(projection as any), [projection])
 
+  useEffect(() => {
+    if (!svgRef.current || !gRef.current) return
+
+    const svg = select(svgRef.current)
+    const g = select(gRef.current)
+
+    const zoomBehavior = zoom<SVGSVGElement, unknown>()
+      .scaleExtent([1, 8])
+      .on('zoom', (event) => {
+        g.attr('transform', event.transform)
+        setIsZoomed(event.transform.k !== 1 || event.transform.x !== 0 || event.transform.y !== 0)
+      })
+
+    svg.call(zoomBehavior as any)
+  }, [])
+
+  const handleCountryClick = (f: GeoFeature) => {
+    if (!svgRef.current) return
+    const svg = select(svgRef.current)
+    const bounds = pathGen.bounds(f)
+    const dx = bounds[1][0] - bounds[0][0]
+    const dy = bounds[1][1] - bounds[0][1]
+    const x = (bounds[0][0] + bounds[1][0]) / 2
+    const y = (bounds[0][1] + bounds[1][1]) / 2
+    const scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / 640, dy / 320)))
+    const translate = [640 / 2 - scale * x, 320 / 2 - scale * y]
+
+    svg.transition().duration(750).call(
+      (zoom() as any).transform,
+      zoomIdentity.translate(translate[0], translate[1]).scale(scale)
+    )
+  }
+
+  const resetZoom = () => {
+    if (!svgRef.current) return
+    select(svgRef.current)
+      .transition()
+      .duration(750)
+      .call((zoom() as any).transform, zoomIdentity)
+  }
+
   const colorForRegion = (id: ChoroplethRegionId | null) => {
     if (!id) return t.mode === 'dark' ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)'
     const d = byId.get(id)
@@ -189,22 +237,32 @@ export function WorldChoroplethMap({
           {subtitle ? <div className="text-xs text-muted">{subtitle}</div> : null}
         </div>
         <div className="flex flex-col items-end gap-2 flex-shrink-0">
-          <div className="inline-flex gap-0.5 rounded-lg border border-border-light bg-panel p-0.5">
-            {(['composite', 'stations', 'sessions', 'uptime', 'revenue'] as MetricId[]).map((m) => (
+          <div className="flex gap-2">
+            {isZoomed && (
               <button
-                key={m}
-                type="button"
-                className={clsx(
-                  'text-[10px] font-bold px-2 py-1 rounded-md transition-all whitespace-nowrap',
-                  m === metric
-                    ? 'bg-accent text-white'
-                    : 'text-muted hover:text-text hover:bg-white/5'
-                )}
-                onClick={() => setMetric(m)}
+                onClick={resetZoom}
+                className="text-[10px] font-bold px-2 py-1 rounded-md bg-white/5 border border-white/10 text-muted hover:text-text"
               >
-                {m === 'composite' ? 'All' : metricLabel(m)}
+                Reset Zoom
               </button>
-            ))}
+            )}
+            <div className="inline-flex gap-0.5 rounded-lg border border-border-light bg-panel p-0.5">
+              {(['composite', 'stations', 'sessions', 'uptime', 'revenue'] as MetricId[]).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  className={clsx(
+                    'text-[10px] font-bold px-2 py-1 rounded-md transition-all whitespace-nowrap',
+                    m === metric
+                      ? 'bg-accent text-white'
+                      : 'text-muted hover:text-text hover:bg-white/5'
+                  )}
+                  onClick={() => setMetric(m)}
+                >
+                  {m === 'composite' ? 'All' : metricLabel(m)}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="text-xs text-muted">
             {metricLabel(metric)}: {metric === 'uptime' ? `${range.min.toFixed(1)}% — ${range.max.toFixed(1)}%` : metric === 'revenue' ? `${fmtUsdShort(range.min)} — ${fmtUsdShort(range.max)}` : `${range.min.toFixed(0)} — ${range.max.toFixed(0)}`}
@@ -213,7 +271,7 @@ export function WorldChoroplethMap({
       </div>
 
       <div className="relative">
-        <svg viewBox="0 0 640 320" className="w-full h-auto">
+        <svg ref={svgRef} viewBox="0 0 640 320" className="w-full h-auto cursor-grab active:cursor-grabbing overflow-hidden">
           <defs>
             <linearGradient id="wmLegend" x1="0" x2="1" y1="0" y2="0">
               <stop offset="0" stopColor={lowColor} />
@@ -224,27 +282,30 @@ export function WorldChoroplethMap({
           {/* ocean / frame */}
           <rect x="0" y="0" width="640" height="320" rx="16" fill={t.mode === 'dark' ? '#0f172a' : '#f1f5f9'} stroke={t.mode === 'dark' ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)'} />
 
-          {/* countries */}
-          {countries.map((f, idx) => {
-            const c = geoCentroid(f) as [number, number]
-            const rid = regionForCentroid(c)
-            const d = rid ? byId.get(rid) ?? null : null
-            const fill = colorForRegion(rid)
-            const dPath = pathGen(f) ?? ''
-            return (
-              <path
-                key={f.id ?? idx}
-                d={dPath}
-                fill={fill}
-                stroke={t.mode === 'dark' ? 'rgba(255,255,255,.15)' : 'rgba(0,0,0,.1)'}
-                strokeWidth="0.5"
-                opacity={hover && d && hover.id !== d.id ? 0.45 : 1}
-                onMouseEnter={() => setHover(d)}
-                onMouseLeave={() => setHover(null)}
-                style={{ cursor: d ? 'default' : 'default' }}
-              />
-            )
-          })}
+          {/* wrap countries in g */}
+          <g ref={gRef}>
+            {countries.map((f, idx) => {
+              const c = geoCentroid(f) as [number, number]
+              const rid = regionForCentroid(c)
+              const d = rid ? byId.get(rid) ?? null : null
+              const fill = colorForRegion(rid)
+              const dPath = pathGen(f) ?? ''
+              return (
+                <path
+                  key={f.id ?? idx}
+                  d={dPath}
+                  fill={fill}
+                  stroke={t.mode === 'dark' ? 'rgba(255,255,255,.15)' : 'rgba(0,0,0,.1)'}
+                  strokeWidth="0.5"
+                  opacity={hover && d && hover.id !== d.id ? 0.45 : 1}
+                  onMouseEnter={() => setHover(d)}
+                  onMouseLeave={() => setHover(null)}
+                  onClick={() => handleCountryClick(f)}
+                  style={{ cursor: 'pointer' }}
+                />
+              )
+            })}
+          </g>
         </svg>
 
         {hover ? (

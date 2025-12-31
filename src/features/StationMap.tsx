@@ -48,8 +48,10 @@ export function StationMap() {
   const [connectorFilter, setConnectorFilter] = useState('All')
   const [selectedStation, setSelectedStation] = useState<string | null>(null)
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
+  const [isZoomed, setIsZoomed] = useState(false)
   const svgRef = useRef<SVGSVGElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const gRef = useRef<SVGGElement>(null)
 
   const worldData = useMemo(() => {
     try {
@@ -82,6 +84,37 @@ export function StationMap() {
     return map
   }, [])
 
+  const resetZoom = () => {
+    if (!svgRef.current) return
+    select(svgRef.current)
+      .transition()
+      .duration(750)
+      .call((d3Zoom.zoom() as any).transform, d3Zoom.zoomIdentity)
+  }
+
+  const handleCountryClick = (f: any, projection: any) => {
+    if (!svgRef.current) return
+    const svg = select(svgRef.current)
+    const container = containerRef.current
+    if (!container) return
+
+    const width = container.clientWidth
+    const height = container.clientHeight
+    const path = d3Geo.geoPath().projection(projection)
+    const bounds = path.bounds(f)
+    const dx = bounds[1][0] - bounds[0][0]
+    const dy = bounds[1][1] - bounds[0][1]
+    const x = (bounds[0][0] + bounds[1][0]) / 2
+    const y = (bounds[0][1] + bounds[1][1]) / 2
+    const scale = Math.max(1, Math.min(15, 0.9 / Math.max(dx / width, dy / height)))
+    const translate = [width / 2 - scale * x, height / 2 - scale * y]
+
+    svg.transition().duration(750).call(
+      (d3Zoom.zoom() as any).transform,
+      d3Zoom.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
+    )
+  }
+
   useEffect(() => {
     if (!worldData || !svgRef.current || !containerRef.current) return
 
@@ -94,13 +127,17 @@ export function StationMap() {
       svg.selectAll('*').remove()
       svg.attr('width', width).attr('height', height)
 
-      const g = svg.append('g')
       const projection = d3Geo.geoNaturalEarth1().fitSize([width, height], worldData)
       const path = d3Geo.geoPath().projection(projection)
 
+      const g = svg.append('g')
+
       const zoom = d3Zoom.zoom<SVGSVGElement, unknown>()
         .scaleExtent([1, 15])
-        .on('zoom', (event) => g.attr('transform', event.transform))
+        .on('zoom', (event) => {
+          g.attr('transform', event.transform)
+          setIsZoomed(event.transform.k !== 1 || event.transform.x !== 0 || event.transform.y !== 0)
+        })
       svg.call(zoom)
 
       g.selectAll('path.country')
@@ -116,6 +153,11 @@ export function StationMap() {
         })
         .attr('stroke', '#94a3b8')
         .attr('stroke-width', 0.5)
+        .style('cursor', 'pointer')
+        .on('click', (event, d) => {
+          event.stopPropagation()
+          handleCountryClick(d, projection)
+        })
 
       g.selectAll('circle.station')
         .data(filtered)
@@ -199,7 +241,15 @@ export function StationMap() {
         </aside>
 
         <section ref={containerRef} className="card p-2 min-h-[500px] relative bg-[#f1f5f9] dark:bg-[#0f172a] overflow-hidden">
-          <svg ref={svgRef} className="w-full h-full" />
+          {isZoomed && (
+            <button
+              onClick={resetZoom}
+              className="absolute top-4 right-4 z-10 text-[10px] font-bold px-2 py-1 rounded-md bg-white/5 border border-white/10 text-muted hover:text-text backdrop-blur-sm"
+            >
+              Reset Zoom
+            </button>
+          )}
+          <svg ref={svgRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
         </section>
       </div>
     </div>
