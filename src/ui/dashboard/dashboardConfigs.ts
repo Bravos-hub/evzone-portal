@@ -121,6 +121,22 @@ const mockSwapWorkflow = {
   payment: { amount: 9200, currency: 'UGX', method: 'Cash', status: 'pending' as const },
 }
 
+const mockSites = [
+  { id: 'st-401', name: 'Business Park A', city: 'Wuxi', status: 'Active', bays: 14, power: 150, updated: '2025-10-20 11:45' },
+  { id: 'st-402', name: 'City Mall Roof', city: 'Kampala', status: 'Approved', bays: 25, power: 250, updated: '2025-10-19 16:10' },
+  { id: 'st-403', name: 'Airport Long-Stay', city: 'Nairobi', status: 'Pending', bays: 30, power: 300, updated: '2025-10-18 09:30' },
+]
+
+const mockApps = [
+  { id: 'APP-2201', site: 'Airport Long‑Stay', model: 'Revenue share', terms: '12%', status: 'Under Review', date: '2025-10-18' },
+  { id: 'APP-2200', site: 'Warehouse West', model: 'Fixed rent', terms: '$500/mo', status: 'Applied', date: '2025-10-12' },
+  { id: 'APP-2199', site: 'Tech Campus', model: 'Hybrid', terms: '8% + $200/mo', status: 'Approved', date: '2025-10-05' },
+]
+
+const mockOperatorContext = {
+  initialNotes: 'Night shift reported minor OCPP instability on CP-B4. Grid voltage stable.',
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // DASHBOARD CONFIGURATIONS
 // ═══════════════════════════════════════════════════════════════════════════
@@ -197,6 +213,12 @@ export const DASHBOARD_CONFIGS: Record<DashboardKey, DashboardConfig> = {
         widgets: [
           { id: 'map-world', size: '2', config: { title: 'Regional Map', subtitle: 'Online/offline by region', data: mockChoropleth } },
           { id: 'list-incidents', size: '2', config: { title: 'Top Incidents', incidents: mockIncidents } },
+        ],
+      },
+      {
+        sectionTitle: 'Handoff & Ops',
+        widgets: [
+          { id: 'panel-shift-handoff', size: 'full', config: mockOperatorContext },
         ],
       },
       {
@@ -330,17 +352,31 @@ export const DASHBOARD_CONFIGS: Record<DashboardKey, DashboardConfig> = {
     ],
     rows: [
       {
+        sectionTitle: 'Quick Actions',
+        widgets: [
+          {
+            id: 'panel-quick-actions', size: 'full', config: {
+              title: 'Site Management Actions',
+              actions: [
+                { label: 'List a Site', path: '/sites', variant: 'primary' },
+                { label: 'Manage Parking', path: '/parking', variant: 'secondary' },
+                { label: 'Tenants', path: '/tenants', variant: 'secondary' },
+                { label: 'View Earnings', path: '/earnings', variant: 'secondary' },
+              ]
+            }
+          }
+        ]
+      },
+      {
         sectionTitle: 'My Sites & Availability',
         widgets: [
-          { id: 'panel-placeholder', size: '2', config: { title: 'Map + site cards', subtitle: 'Availability, utilities, access' } },
-          { id: 'panel-placeholder', size: '2', config: { title: 'Site status table', subtitle: 'Draft / listed / leased' } },
+          { id: 'panel-sites-table', size: 'full', config: { sites: mockSites } },
         ],
       },
       {
         sectionTitle: 'Applications Pipeline',
         widgets: [
-          { id: 'panel-placeholder', size: '2', config: { title: 'New applications', subtitle: 'Leads by region/site' } },
-          { id: 'panel-placeholder', size: '2', config: { title: 'Decision queue', subtitle: 'Approve / reject / renegotiate' } },
+          { id: 'panel-apps-table', size: 'full', config: { apps: mockApps } },
         ],
       },
       {

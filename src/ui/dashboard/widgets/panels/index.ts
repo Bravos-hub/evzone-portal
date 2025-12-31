@@ -11,4 +11,8 @@ export { StationAssignmentWidget, type StationAssignment, type StationAssignment
 export { BookingsQueueWidget, type BookingItem, type BookingStatus, type BookingsQueueConfig } from './BookingsQueueWidget'
 export { ChargeStartWidget, type ChargeScan, type ChargeStartConfig } from './ChargeStartWidget'
 export { SwapWorkflowWidget, type SwapBattery, type SwapPayment, type SwapWorkflowConfig, type SwapWorkflowStep } from './SwapWorkflowWidget'
+export { SitesTableWidget } from './SitesTableWidget'
+export { ApplicationsTableWidget } from './ApplicationsTableWidget'
+export { ShiftHandoffWidget } from './ShiftHandoffWidget'
+export { QuickActionsWidget, type QuickAction } from './QuickActionsWidget'
 

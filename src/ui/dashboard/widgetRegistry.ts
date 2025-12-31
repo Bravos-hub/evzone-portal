@@ -27,7 +27,11 @@ import {
   StationAssignmentWidget,
   BookingsQueueWidget,
   ChargeStartWidget,
-  SwapWorkflowWidget
+  SwapWorkflowWidget,
+  SitesTableWidget,
+  ApplicationsTableWidget,
+  ShiftHandoffWidget,
+  QuickActionsWidget
 } from './widgets/panels'
 
 /** All roles for convenience */
@@ -332,6 +336,42 @@ export const WIDGET_REGISTRY: Record<WidgetId, WidgetDef> = {
     allowedRoles: ['EVZONE_ADMIN', 'EVZONE_OPERATOR', 'ATTENDANT'],
     component: ChecklistWidget as any,
     defaultSize: '1',
+    category: 'panel',
+  },
+
+  'panel-sites-table': {
+    id: 'panel-sites-table',
+    title: 'My Sites Table',
+    allowedRoles: ['SITE_OWNER', 'EVZONE_ADMIN'],
+    component: SitesTableWidget as any,
+    defaultSize: '2',
+    category: 'panel',
+  },
+
+  'panel-apps-table': {
+    id: 'panel-apps-table',
+    title: 'Applications Table',
+    allowedRoles: ['SITE_OWNER', 'EVZONE_ADMIN'],
+    component: ApplicationsTableWidget as any,
+    defaultSize: '2',
+    category: 'panel',
+  },
+
+  'panel-shift-handoff': {
+    id: 'panel-shift-handoff',
+    title: 'Shift Handoff',
+    allowedRoles: ['EVZONE_OPERATOR', 'EVZONE_ADMIN'],
+    component: ShiftHandoffWidget as any,
+    defaultSize: '2',
+    category: 'panel',
+  },
+
+  'panel-quick-actions': {
+    id: 'panel-quick-actions',
+    title: 'Quick Actions',
+    allowedRoles: ALL_ROLES,
+    component: QuickActionsWidget as any,
+    defaultSize: 'full',
     category: 'panel',
   },
 }

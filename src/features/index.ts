@@ -96,12 +96,6 @@ export { NotFound, ServerError, Offline, BrowserUnsupported } from './ErrorPages
 // Auth Pages
 export { Login, Register, ForgotPassword, VerifyEmail } from './Auth'
 
-// Role-specific Dashboards
-export { OwnerDashboardCharge, OwnerDashboardSwap, OwnerDashboardBoth } from './OwnerDashboards'
-export { ManagerDashboard } from './ManagerDashboard'
-export { AttendantDashboard } from './AttendantDashboard'
-export { TechnicianOrgDashboard, TechnicianPublicDashboard } from './TechnicianDashboard'
-
 // Role-specific Ops Pages
 export { OwnerOps } from './OwnerOps'
 export { OperatorOps } from './OperatorOps'
@@ -122,10 +116,6 @@ export { Payouts } from './Payouts'
 // Site Owner Features
 export { Parking } from './Parking'
 export { Tenants } from './Tenants'
-
-// Role-specific Dashboards (enhanced)
-export { OperatorDashboard } from './OperatorDashboard'
-export { SiteOwnerDashboard } from './SiteOwnerDashboard'
 
 // Owner Features (additional)
 export { Discounts } from './Discounts'
