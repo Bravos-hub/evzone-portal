@@ -40,6 +40,10 @@ export { Bookings } from './Bookings'
 
 // Site Owner Features
 export { Sites } from './Sites'
+export { AddSite } from './AddSite'
+export { OwnerSteps } from './onboarding/OwnerSteps'
+export { OperatorSteps } from './onboarding/OperatorSteps'
+export { TechnicianSteps } from './onboarding/TechnicianSteps'
 
 // Technician Features
 export { Jobs } from './Jobs'

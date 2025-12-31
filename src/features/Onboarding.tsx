@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
+import { AddSite, OwnerSteps, OperatorSteps, TechnicianSteps } from '@/features'
 
 /* ─────────────────────────────────────────────────────────────────────────────
    Onboarding — Role selection, plan selection, and onboarding flows
@@ -43,15 +44,6 @@ export function Onboarding() {
   const [step, setStep] = useState<OnboardingStep>('role')
   const [selectedRole, setSelectedRole] = useState<OnboardingRole | null>(null)
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
-  const [form, setForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    company: '',
-    country: 'Uganda',
-    site: '',
-  })
-  const [ack, setAck] = useState('')
 
   // Initialize from query params
   useEffect(() => {
@@ -64,8 +56,6 @@ export function Onboarding() {
     if (stepParam) setStep(stepParam)
   }, [searchParams])
 
-  const toast = (m: string) => { setAck(m); setTimeout(() => setAck(''), 3000) }
-
   const handleRoleSelect = (role: OnboardingRole) => {
     setSelectedRole(role)
     setStep('plan')
@@ -74,23 +64,6 @@ export function Onboarding() {
   const handlePlanSelect = (planCode: string) => {
     setSelectedPlan(planCode)
     setStep('info')
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!form.name || !form.email) {
-      toast('Please fill in required fields.')
-      return
-    }
-    // Mock submit
-    localStorage.setItem('onb.role', selectedRole || '')
-    localStorage.setItem('onb.plan', selectedPlan || '')
-    localStorage.setItem('onb.status', 'Pending')
-    setStep('pending')
-  }
-
-  const updateForm = (key: keyof typeof form, value: string) => {
-    setForm(f => ({ ...f, [key]: value }))
   }
 
   return (
@@ -108,12 +81,6 @@ export function Onboarding() {
         </div>
       </header>
 
-      {/* Toast */}
-      {ack && (
-        <div className="max-w-5xl mx-auto px-4 mt-4">
-          <div className="rounded-lg bg-accent/10 text-accent px-4 py-2 text-sm">{ack}</div>
-        </div>
-      )}
 
       <main className="max-w-5xl mx-auto px-4 py-8">
         {/* Step: Role Selection */}
@@ -186,7 +153,7 @@ export function Onboarding() {
           </>
         )}
 
-        {/* Step: Information Form */}
+        {/* Step: Information Form (Role Specific) */}
         {step === 'info' && selectedRole && selectedPlan && (
           <>
             <button onClick={() => setStep('plan')} className="text-sm text-accent hover:underline mb-4 flex items-center gap-1">
@@ -198,71 +165,25 @@ export function Onboarding() {
               Role: <strong>{ROLES.find(r => r.code === selectedRole)?.label}</strong> •
               Plan: <strong>{selectedPlan}</strong>
             </p>
-            <form onSubmit={handleSubmit} className="rounded-xl bg-surface border border-border p-6 space-y-4">
-              <div className="grid sm:grid-cols-2 gap-4">
-                <label className="grid gap-1">
-                  <span className="text-sm font-medium">Full Name *</span>
-                  <input
-                    value={form.name}
-                    onChange={e => updateForm('name', e.target.value)}
-                    className="input"
-                    required
-                  />
-                </label>
-                <label className="grid gap-1">
-                  <span className="text-sm font-medium">Email *</span>
-                  <input
-                    type="email"
-                    value={form.email}
-                    onChange={e => updateForm('email', e.target.value)}
-                    className="input"
-                    required
-                  />
-                </label>
-                <label className="grid gap-1">
-                  <span className="text-sm font-medium">Phone</span>
-                  <input
-                    value={form.phone}
-                    onChange={e => updateForm('phone', e.target.value)}
-                    className="input"
-                  />
-                </label>
-                <label className="grid gap-1">
-                  <span className="text-sm font-medium">Company / Organization</span>
-                  <input
-                    value={form.company}
-                    onChange={e => updateForm('company', e.target.value)}
-                    className="input"
-                  />
-                </label>
-                <label className="grid gap-1">
-                  <span className="text-sm font-medium">Country</span>
-                  <select
-                    value={form.country}
-                    onChange={e => updateForm('country', e.target.value)}
-                    className="select"
-                  >
-                    {['Uganda', 'Kenya', 'Rwanda', 'Tanzania', 'China', 'United States', 'United Kingdom'].map(c => <option key={c}>{c}</option>)}
-                  </select>
-                </label>
-                {selectedRole === 'site-owner' && (
-                  <label className="grid gap-1">
-                    <span className="text-sm font-medium">Site Name</span>
-                    <input
-                      value={form.site}
-                      onChange={e => updateForm('site', e.target.value)}
-                      className="input"
-                      placeholder="e.g., City Mall Parking"
-                    />
-                  </label>
-                )}
-              </div>
-              <div className="flex justify-end">
-                <button type="submit" className="px-6 py-2 rounded-lg bg-accent text-white font-medium hover:bg-accent-hover">
-                  Submit Application
-                </button>
-              </div>
-            </form>
+
+            <div className="rounded-xl bg-surface border border-border p-6 shadow-sm">
+              {selectedRole === 'owner' && (
+                <OwnerSteps onComplete={() => setStep('pending')} onBack={() => setStep('plan')} />
+              )}
+              {selectedRole === 'operator' && (
+                <OperatorSteps onComplete={() => setStep('pending')} onBack={() => setStep('plan')} />
+              )}
+              {selectedRole === 'technician' && (
+                <TechnicianSteps onComplete={() => setStep('pending')} onBack={() => setStep('plan')} />
+              )}
+              {selectedRole === 'site-owner' && (
+                <AddSite
+                  isOnboarding
+                  onSuccess={() => setStep('pending')}
+                  onCancel={() => setStep('plan')}
+                />
+              )}
+            </div>
           </>
         )}
 

@@ -33,8 +33,8 @@ const MOCK_TENANTS: Tenant[] = [
 export function Tenants() {
   const { user } = useAuthStore()
   const role = user?.role ?? 'SITE_OWNER'
-  const canView = hasPermission(role, 'sites', 'view')
-  const canEdit = hasPermission(role, 'sites', 'edit')
+  const canView = hasPermission(role, 'tenants', 'view')
+  const canEdit = hasPermission(role, 'tenants', 'edit')
 
   const [site, setSite] = useState('All')
   const [type, setType] = useState('All')
@@ -50,7 +50,7 @@ export function Tenants() {
       .filter(r => type === 'All' || r.type === type)
       .filter(r => status === 'All' || r.status === status)
       .filter(r => !q || (r.id + ' ' + r.name + ' ' + r.site).toLowerCase().includes(q.toLowerCase()))
-  , [site, type, status, q])
+    , [site, type, status, q])
 
   const kpis = useMemo(() => ({
     total: filtered.length,
@@ -109,18 +109,18 @@ export function Tenants() {
         <section className="overflow-x-auto rounded-xl border border-border bg-surface">
           <table className="min-w-full text-sm">
             <thead className="bg-muted text-subtle">
-            <tr>
-              <th className="w-24">ID</th>
-              <th className="w-32">Tenant</th>
-              <th className="w-24">Type</th>
-              <th className="w-32">Site</th>
-              <th className="w-32">Model</th>
-              <th className="w-24">Terms</th>
-              <th className="w-24">Start Date</th>
-              <th className="w-20 px-4 py-3 !text-right font-medium">Earnings</th>
-              <th className="w-24">Status</th>
-              {canEdit && <th className="w-24 px-4 py-3 !text-right font-medium">Actions</th>}
-            </tr>
+              <tr>
+                <th className="w-24">ID</th>
+                <th className="w-32">Tenant</th>
+                <th className="w-24">Type</th>
+                <th className="w-32">Site</th>
+                <th className="w-32">Model</th>
+                <th className="w-24">Terms</th>
+                <th className="w-24">Start Date</th>
+                <th className="w-20 px-4 py-3 !text-right font-medium">Earnings</th>
+                <th className="w-24">Status</th>
+                {canEdit && <th className="w-24 px-4 py-3 !text-right font-medium">Actions</th>}
+              </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {filtered.map(r => (

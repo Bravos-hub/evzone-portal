@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { DashboardLayout } from '@/app/layouts/DashboardLayout'
 import { useAuthStore } from '@/core/auth/authStore'
 import { getPermissionsForFeature } from '@/constants/permissions'
+import { AddSite } from './AddSite'
 
 /**
  * Sites Page - Site Owner feature
@@ -10,17 +11,38 @@ export function Sites() {
   const { user } = useAuthStore()
   const perms = getPermissionsForFeature(user?.role, 'sites')
 
-  const mockSites = [
+  // Mock data - simulate empty for new users if needed, but keeping default for now
+  const [sites, setSites] = useState<any[]>([
     { id: 'SITE-001', name: 'City Mall Rooftop', address: 'Kampala Road, Kampala', stations: 3, revenue: 4520, status: 'Active' },
     { id: 'SITE-002', name: 'Tech Park Lot', address: 'Innovation Dr, Kampala', stations: 2, revenue: 2890, status: 'Active' },
     { id: 'SITE-003', name: 'Airport Terminal', address: 'Entebbe Airport', stations: 5, revenue: 8450, status: 'Pending' },
-  ]
+  ])
 
+  const [isAdding, setIsAdding] = useState(false)
   const [q, setQ] = useState('')
 
   const filtered = useMemo(() => {
-    return mockSites.filter((s) => (q ? (s.name + ' ' + s.address).toLowerCase().includes(q.toLowerCase()) : true))
-  }, [q])
+    return sites.filter((s) => (q ? (s.name + ' ' + s.address).toLowerCase().includes(q.toLowerCase()) : true))
+  }, [sites, q])
+
+  const handleAddSite = (newSite: any) => {
+    setSites([...sites, { ...newSite, id: `SITE-${sites.length + 1}`, stations: 0, revenue: 0, status: 'Pending' }])
+    setIsAdding(false)
+  }
+
+  // Empty state or Add mode
+  if (sites.length === 0 || isAdding) {
+    return (
+      <DashboardLayout pageTitle={sites.length === 0 ? 'Welcome to EVzone' : 'Add New Site'}>
+        <div className="max-w-3xl mx-auto">
+          <AddSite
+            onSuccess={handleAddSite}
+            onCancel={sites.length > 0 ? () => setIsAdding(false) : undefined}
+          />
+        </div>
+      </DashboardLayout>
+    )
+  }
 
   return (
     <DashboardLayout pageTitle="My Sites">
@@ -28,15 +50,15 @@ export function Sites() {
       <div className="grid grid-cols-3 gap-3 mb-4">
         <div className="card">
           <div className="text-xs text-muted">Total Sites</div>
-          <div className="text-xl font-bold text-text">{mockSites.length}</div>
+          <div className="text-xl font-bold text-text">{sites.length}</div>
         </div>
         <div className="card">
           <div className="text-xs text-muted">Stations Hosted</div>
-          <div className="text-xl font-bold text-accent">{mockSites.reduce((a, s) => a + s.stations, 0)}</div>
+          <div className="text-xl font-bold text-accent">{sites.reduce((a, s) => a + s.stations, 0)}</div>
         </div>
         <div className="card">
           <div className="text-xs text-muted">This Month Revenue</div>
-          <div className="text-xl font-bold text-ok">${mockSites.reduce((a, s) => a + s.revenue, 0).toLocaleString()}</div>
+          <div className="text-xl font-bold text-ok">${sites.reduce((a, s) => a + s.revenue, 0).toLocaleString()}</div>
         </div>
       </div>
 
@@ -45,7 +67,7 @@ export function Sites() {
         <div className="flex gap-3">
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search sites" className="input flex-1" />
           {perms.create && (
-            <button className="btn secondary" onClick={() => alert('Add site (demo)')}>+ Add Site</button>
+            <button className="btn secondary" onClick={() => setIsAdding(true)}>+ Add Site</button>
           )}
         </div>
       </div>

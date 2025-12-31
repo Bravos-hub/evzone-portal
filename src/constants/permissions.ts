@@ -30,7 +30,7 @@ export const PERMISSIONS: Record<string, FeaturePermissions> = {
   // ═══════════════════════════════════════════════════════════════════════
   // CORE FEATURES (Multiple roles use these)
   // ═══════════════════════════════════════════════════════════════════════
-  
+
   dashboard: {
     access: 'ALL',
   },
@@ -295,6 +295,18 @@ export const PERMISSIONS: Record<string, FeaturePermissions> = {
     edit: ['SITE_OWNER'],
   },
 
+  parking: {
+    access: ['SITE_OWNER', ...ROLE_GROUPS.PLATFORM_OPS],
+    view: ['SITE_OWNER', ...ROLE_GROUPS.PLATFORM_OPS],
+    edit: ['SITE_OWNER', ...ROLE_GROUPS.PLATFORM_OPS],
+  },
+
+  tenants: {
+    access: ['SITE_OWNER', ...ROLE_GROUPS.PLATFORM_OPS],
+    view: ['SITE_OWNER', ...ROLE_GROUPS.PLATFORM_OPS],
+    edit: ['SITE_OWNER', ...ROLE_GROUPS.PLATFORM_OPS],
+  },
+
   // ═══════════════════════════════════════════════════════════════════════
   // TECHNICIAN FEATURES
   // ═══════════════════════════════════════════════════════════════════════
@@ -407,14 +419,14 @@ export function hasPermission(
   permission: string = 'access'
 ): boolean {
   if (!role) return false
-  
+
   const featurePerms = PERMISSIONS[feature]
   if (!featurePerms) return false
-  
+
   const perm = featurePerms[permission]
   if (!perm) return false
   if (perm === 'ALL') return true
-  
+
   return (perm as Role[]).includes(role)
 }
 
@@ -424,10 +436,10 @@ export function getPermissionsForFeature(
   feature: keyof typeof PERMISSIONS
 ): Record<string, boolean> {
   if (!role) return {}
-  
+
   const featurePerms = PERMISSIONS[feature]
   if (!featurePerms) return {}
-  
+
   const result: Record<string, boolean> = {}
   for (const [key, perm] of Object.entries(featurePerms)) {
     if (perm === undefined) continue
