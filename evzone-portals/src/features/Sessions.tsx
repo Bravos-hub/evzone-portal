@@ -44,7 +44,8 @@ export function Sessions() {
     
     return historyData.sessions.map((session: any) => ({
       id: session.id,
-      chargePointId: session.connectorId || 'N/A',
+      chargePointId: session.stationId || session.chargePointId || 'N/A',
+      connectorId: session.connectorId || 'N/A',
       site: session.station?.name || 'Unknown',
       start: new Date(session.startedAt),
       end: session.endedAt ? new Date(session.endedAt) : undefined,
@@ -52,6 +53,7 @@ export function Sessions() {
       energyKwh: session.energyDelivered || 0,
       amount: session.cost || 0,
       paymentMethod: 'Wallet' as PaymentMethod, // API doesn't provide payment method
+      tariffName: session.tariff?.name || session.tariffName || 'Standard', // Default to 'Standard' if not provided
     }))
       .filter((r: any) => (site === 'All Sites' ? true : r.site === site))
       .filter((r: any) => (paymentMethod === 'All' ? true : r.paymentMethod === paymentMethod))

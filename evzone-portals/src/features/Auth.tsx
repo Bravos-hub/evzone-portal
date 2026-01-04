@@ -22,26 +22,14 @@ export function Login() {
     setError('')
     setLoading(true)
 
-    // Mock login - in real app, call API
-    await new Promise(r => setTimeout(r, 500))
-    
-    if (email && password) {
-      // Mock user based on email
-      const role = email.includes('admin') ? 'EVZONE_ADMIN' :
-                   email.includes('operator') ? 'EVZONE_OPERATOR' :
-                   email.includes('owner') ? 'OWNER' :
-                   email.includes('technician') ? 'TECHNICIAN_PUBLIC' :
-                   'OWNER'
-      
-      login({
-        name: email.split('@')[0],
-        role: role as any,
-      })
+    try {
+      await login({ email, password })
       navigate(returnTo)
-    } else {
-      setError('Please enter email and password')
+    } catch (err: any) {
+      setError(err?.message || 'Login failed. Please check your credentials.')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
