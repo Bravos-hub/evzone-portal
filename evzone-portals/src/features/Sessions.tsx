@@ -7,6 +7,24 @@ import { getErrorMessage } from '@/core/api/errors'
 import type { SessionStatus, PaymentMethod } from '@/core/types/domain'
 
 // ═══════════════════════════════════════════════════════════════════════════
+// TYPES
+// ═══════════════════════════════════════════════════════════════════════════
+
+type SessionRow = {
+  id: string
+  chargePointId: string
+  connectorId: string
+  site: string
+  start: Date
+  end?: Date
+  status: SessionStatus
+  energyKwh: number
+  amount: number
+  paymentMethod: PaymentMethod
+  tariffName: string
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -39,10 +57,10 @@ export function Sessions() {
   })
 
   // Map API sessions to the format expected by the component
-  const rows = useMemo(() => {
+  const rows = useMemo<SessionRow[]>(() => {
     if (!historyData?.sessions) return []
     
-    return historyData.sessions.map((session: any) => ({
+    return historyData.sessions.map((session: any): SessionRow => ({
       id: session.id,
       chargePointId: session.stationId || session.chargePointId || 'N/A',
       connectorId: session.connectorId || 'N/A',
@@ -55,13 +73,13 @@ export function Sessions() {
       paymentMethod: 'Wallet' as PaymentMethod, // API doesn't provide payment method
       tariffName: session.tariff?.name || session.tariffName || 'Standard', // Default to 'Standard' if not provided
     }))
-      .filter((r: any) => (site === 'All Sites' ? true : r.site === site))
-      .filter((r: any) => (paymentMethod === 'All' ? true : r.paymentMethod === paymentMethod))
-      .filter((r: any) => {
+      .filter((r) => (site === 'All Sites' ? true : r.site === site))
+      .filter((r) => (paymentMethod === 'All' ? true : r.paymentMethod === paymentMethod))
+      .filter((r) => {
         const date = r.start
         return date >= new Date(from) && date <= new Date(to)
       })
-      .filter((r: any) =>
+      .filter((r) =>
         q
           ? (r.id + ' ' + r.chargePointId + ' ' + r.site).toLowerCase().includes(q.toLowerCase())
           : true
