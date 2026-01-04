@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DashboardLayout } from '@/app/layouts/DashboardLayout'
 import { useAuthStore } from '@/core/auth/authStore'
@@ -7,6 +7,8 @@ import { ROLE_LABELS, ALL_ROLES } from '@/constants/roles'
 import type { Role } from '@/core/auth/types'
 import { RolePill } from '@/ui/components/RolePill'
 import { InviteUserModal } from '@/modals/InviteUserModal'
+import { useUsers, useUpdateUser, useDeleteUser } from '@/core/api/hooks/useUsers'
+import { getErrorMessage } from '@/core/api/errors'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -32,80 +34,21 @@ type UserRow = {
 // MOCK DATA
 // ═══════════════════════════════════════════════════════════════════════════
 
-const mockUsers: UserRow[] = [
-  {
-    id: 'USR-001',
-    name: 'Sarah Chen',
-    email: 'sarah@evzone.com',
-    role: 'EVZONE_ADMIN',
-    status: 'Active',
-    region: 'ALL',
-    orgId: 'EVZONE',
-    lastLogin: '2m ago',
-    createdAt: '2024-01-15',
-    mfaEnabled: true,
-  },
-  {
-    id: 'USR-002',
-    name: 'John Operator',
-    email: 'john.op@evzone.com',
-    role: 'EVZONE_OPERATOR',
-    status: 'Active',
-    region: 'AFRICA',
-    orgId: 'EVZONE',
-    lastLogin: '1h ago',
-    createdAt: '2024-02-20',
-    mfaEnabled: true,
-  },
-  {
-    id: 'USR-003',
-    name: 'James Owner',
-    email: 'james@voltmobility.com',
-    role: 'OWNER',
-    status: 'Active',
-    region: 'AFRICA',
-    orgId: 'Volt Mobility',
-    lastLogin: '3h ago',
-    createdAt: '2024-03-01',
-    mfaEnabled: false,
-  },
-  {
-    id: 'USR-004',
-    name: 'Grace Manager',
-    email: 'grace@gridcity.com',
-    role: 'MANAGER',
-    status: 'Pending',
-    region: 'AFRICA',
-    orgId: 'GridCity Ltd',
-    lastLogin: 'Never',
-    createdAt: '2024-12-20',
-    mfaEnabled: false,
-  },
-  {
-    id: 'USR-005',
-    name: 'Allan Tech',
-    email: 'allan@techs.co',
-    role: 'TECHNICIAN_ORG',
-    status: 'Active',
-    region: 'AFRICA',
-    orgId: 'Volt Mobility',
-    lastLogin: '30m ago',
-    createdAt: '2024-06-10',
-    mfaEnabled: false,
-  },
-  {
-    id: 'USR-006',
-    name: 'Suspended User',
-    email: 'suspended@example.com',
-    role: 'ATTENDANT',
-    status: 'Suspended',
-    region: 'EUROPE',
-    orgId: 'Mall Holdings',
-    lastLogin: '7d ago',
-    createdAt: '2024-04-15',
-    mfaEnabled: false,
-  },
-]
+// Helper function to map API user to UserRow
+function mapUserToRow(user: any): UserRow {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email || '',
+    role: user.role as Role,
+    status: 'Active' as UserStatus, // API doesn't provide status, defaulting to Active
+    region: 'ALL' as Region, // API doesn't provide region, defaulting to ALL
+    orgId: user.orgId || 'N/A',
+    lastLogin: 'N/A', // API doesn't provide lastLogin
+    createdAt: user.createdAt || new Date().toISOString().split('T')[0],
+    mfaEnabled: false, // API doesn't provide mfaEnabled
+  }
+}
 
 const regions: Array<{ id: Region; label: string }> = [
   { id: 'ALL', label: 'All Regions' },
@@ -133,16 +76,22 @@ export function Users() {
   const perms = getPermissionsForFeature(user?.role, 'users')
   const [inviteModalOpen, setInviteModalOpen] = useState(false)
 
-  const [rows, setRows] = useState<UserRow[]>([])
+  const { data: usersData, isLoading, error } = useUsers()
+  const updateUserMutation = useUpdateUser()
+  const deleteUserMutation = useDeleteUser()
+
   const [q, setQ] = useState('')
   const [role, setRole] = useState<Role | 'All'>('All')
   const [status, setStatus] = useState<UserStatus | 'All'>('All')
   const [region, setRegion] = useState<Region>('ALL')
   const [openId, setOpenId] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string>('')
 
-  useEffect(() => {
-    setRows(mockUsers)
-  }, [])
+  // Map API users to UserRow format
+  const rows = useMemo(() => {
+    if (!usersData) return []
+    return usersData.map(mapUserToRow)
+  }, [usersData])
 
   const orgs = useMemo(() => {
     const set = new Set(rows.map((r) => r.orgId))
@@ -249,24 +198,48 @@ export function Users() {
         }}
       />
 
+      {/* Error Message */}
+      {(error || errorMessage) && (
+        <div className="card mb-4 bg-red-50 border border-red-200">
+          <div className="text-red-700 text-sm">
+            {errorMessage || (error ? getErrorMessage(error) : 'An error occurred')}
+          </div>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {isLoading && (
+        <div className="card mb-4">
+          <div className="text-center py-8 text-muted">Loading users...</div>
+        </div>
+      )}
+
       {/* Users Table */}
-      <div className="table-wrap">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Org</th>
-              <th>Region</th>
-              <th>Status</th>
-              <th>Last Login</th>
-              <th>MFA</th>
-              <th className="text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((r) => (
+      {!isLoading && (
+        <div className="table-wrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Org</th>
+                <th>Region</th>
+                <th>Status</th>
+                <th>Last Login</th>
+                <th>MFA</th>
+                <th className="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="text-center py-8 text-muted">
+                    No users found
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((r) => (
               <tr key={r.id}>
                 <td>
                   <button className="font-semibold text-text hover:underline text-left" onClick={() => nav(`/users/${r.id}`)}>
@@ -309,10 +282,12 @@ export function Users() {
                   </div>
                 </td>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </DashboardLayout>
   )
 }

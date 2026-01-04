@@ -3,6 +3,8 @@ import { DashboardLayout } from '@/app/layouts/DashboardLayout'
 import { useAuthStore } from '@/core/auth/authStore'
 import { getPermissionsForFeature } from '@/constants/permissions'
 import { AddSite } from './AddSite'
+import { useStations, useCreateStation } from '@/core/api/hooks/useStations'
+import { getErrorMessage } from '@/core/api/errors'
 
 import { useNavigate } from 'react-router-dom'
 import { PATHS } from '@/app/router/paths'
@@ -15,23 +17,45 @@ export function Sites() {
   const navigate = useNavigate()
   const perms = getPermissionsForFeature(user?.role, 'sites')
 
-  // Mock data - simulate empty for new users if needed, but keeping default for now
-  const [sites, setSites] = useState<any[]>([
-    { id: 'SITE-001', name: 'City Mall Rooftop', address: 'Kampala Road, Kampala', stations: 3, revenue: 4520, status: 'Active' },
-    { id: 'SITE-002', name: 'Tech Park Lot', address: 'Innovation Dr, Kampala', stations: 2, revenue: 2890, status: 'Active' },
-    { id: 'SITE-003', name: 'Airport Terminal', address: 'Entebbe Airport', stations: 5, revenue: 8450, status: 'Pending' },
-  ])
+  const { data: stationsData, isLoading, error } = useStations()
+  const createStationMutation = useCreateStation()
 
   const [isAdding, setIsAdding] = useState(false)
   const [q, setQ] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
+
+  // Map stations to sites format (sites are essentially stations grouped by location)
+  const sites = useMemo(() => {
+    if (!stationsData) return []
+    // Group stations by location or treat each station as a site
+    return stationsData.map((station) => ({
+      id: station.id,
+      name: station.name,
+      address: station.address,
+      stations: 1, // Each "site" has 1 station for now
+      revenue: 0, // Revenue would come from analytics
+      status: station.status === 'ACTIVE' ? 'Active' : station.status === 'INACTIVE' ? 'Inactive' : 'Pending',
+    }))
+  }, [stationsData])
 
   const filtered = useMemo(() => {
     return sites.filter((s) => (q ? (s.name + ' ' + s.address).toLowerCase().includes(q.toLowerCase()) : true))
   }, [sites, q])
 
-  const handleAddSite = (newSite: any) => {
-    setSites([...sites, { ...newSite, id: `SITE-${sites.length + 1}`, stations: 0, revenue: 0, status: 'Pending' }])
-    setIsAdding(false)
+  const handleAddSite = async (newSite: any) => {
+    try {
+      await createStationMutation.mutateAsync({
+        code: newSite.code || `ST-${Date.now()}`,
+        name: newSite.name,
+        address: newSite.address,
+        latitude: newSite.latitude || 0,
+        longitude: newSite.longitude || 0,
+        type: newSite.type || 'CHARGING',
+      })
+      setIsAdding(false)
+    } catch (err) {
+      setErrorMessage(getErrorMessage(err))
+    }
   }
 
   // Empty state or Add mode
@@ -51,19 +75,28 @@ export function Sites() {
 
   return (
     <DashboardLayout pageTitle="My Sites">
+      {/* Error Message */}
+      {(error || errorMessage) && (
+        <div className="card mb-4 bg-red-50 border border-red-200">
+          <div className="text-red-700 text-sm">
+            {errorMessage || (error ? getErrorMessage(error) : 'An error occurred')}
+          </div>
+        </div>
+      )}
+
       {/* Summary */}
       <div className="grid grid-cols-3 gap-3 mb-4">
         <div className="card">
           <div className="text-xs text-muted">Total Sites</div>
-          <div className="text-xl font-bold text-text">{sites.length}</div>
+          <div className="text-xl font-bold text-text">{isLoading ? '...' : sites.length}</div>
         </div>
         <div className="card">
           <div className="text-xs text-muted">Stations Hosted</div>
-          <div className="text-xl font-bold text-accent">{sites.reduce((a, s) => a + s.stations, 0)}</div>
+          <div className="text-xl font-bold text-accent">{isLoading ? '...' : sites.reduce((a, s) => a + s.stations, 0)}</div>
         </div>
         <div className="card">
           <div className="text-xs text-muted">This Month Revenue</div>
-          <div className="text-xl font-bold text-ok">${sites.reduce((a, s) => a + s.revenue, 0).toLocaleString()}</div>
+          <div className="text-xl font-bold text-ok">${isLoading ? '...' : sites.reduce((a, s) => a + s.revenue, 0).toLocaleString()}</div>
         </div>
       </div>
 
@@ -77,35 +110,52 @@ export function Sites() {
         </div>
       </div>
 
+      {/* Loading State */}
+      {isLoading && (
+        <div className="card mb-4">
+          <div className="text-center py-8 text-muted">Loading sites...</div>
+        </div>
+      )}
+
       {/* Sites Table */}
-      <div className="table-wrap">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Site</th>
-              <th>Address</th>
-              <th>Stations</th>
-              <th>Monthly Revenue</th>
-              <th>Status</th>
-              <th className="text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((s) => (
-              <tr key={s.id}>
-                <td className="font-semibold text-text">{s.name}</td>
-                <td className="text-muted">{s.address}</td>
-                <td>{s.stations}</td>
-                <td className="font-semibold">${s.revenue.toLocaleString()}</td>
-                <td><span className={`pill ${s.status === 'Active' ? 'approved' : 'pending'}`}>{s.status}</span></td>
-                <td className="text-right">
-                  <button className="btn secondary" onClick={() => navigate(PATHS.SITE_OWNER.SITE_DETAIL(s.id))}>View</button>
-                </td>
+      {!isLoading && (
+        <div className="table-wrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Site</th>
+                <th>Address</th>
+                <th>Stations</th>
+                <th>Monthly Revenue</th>
+                <th>Status</th>
+                <th className="text-right">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-8 text-muted">
+                    No sites found
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((s) => (
+                  <tr key={s.id}>
+                    <td className="font-semibold text-text">{s.name}</td>
+                    <td className="text-muted">{s.address}</td>
+                    <td>{s.stations}</td>
+                    <td className="font-semibold">${s.revenue.toLocaleString()}</td>
+                    <td><span className={`pill ${s.status === 'Active' ? 'approved' : 'pending'}`}>{s.status}</span></td>
+                    <td className="text-right">
+                      <button className="btn secondary" onClick={() => navigate(PATHS.SITE_OWNER.SITE_DETAIL(s.id))}>View</button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </DashboardLayout>
   )
 }

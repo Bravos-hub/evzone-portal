@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { DashboardLayout } from '@/app/layouts/DashboardLayout'
 import { useAuthStore } from '@/core/auth/authStore'
 import { getPermissionsForFeature } from '@/constants/permissions'
-import { mockChargingSessions } from '@/data/mockDb'
+import { useSessionHistory, useActiveSessions } from '@/core/api/hooks/useSessions'
+import { getErrorMessage } from '@/core/api/errors'
 import type { SessionStatus, PaymentMethod } from '@/core/types/domain'
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -30,20 +31,40 @@ export function Sessions() {
   const [q, setQ] = useState('')
   const [sel, setSel] = useState<Record<string, boolean>>({})
 
-  // Filter sessions - in real app, API would filter by user's access level
-  const rows = mockChargingSessions
-    .filter((r) => (site === 'All Sites' ? true : r.site === site))
-    .filter((r) => (status === 'All' ? true : r.status === status))
-    .filter((r) => (paymentMethod === 'All' ? true : r.paymentMethod === paymentMethod))
-    .filter((r) => {
-      const date = r.start
-      return date >= new Date(from) && date <= new Date(to)
-    })
-    .filter((r) =>
-      q
-        ? (r.id + ' ' + r.chargePointId + ' ' + r.site).toLowerCase().includes(q.toLowerCase())
-        : true
-    )
+  // Fetch session history
+  const { data: historyData, isLoading, error } = useSessionHistory({
+    page: 1,
+    limit: 100,
+    status: status !== 'All' ? status.toUpperCase() : undefined,
+  })
+
+  // Map API sessions to the format expected by the component
+  const rows = useMemo(() => {
+    if (!historyData?.sessions) return []
+    
+    return historyData.sessions.map((session: any) => ({
+      id: session.id,
+      chargePointId: session.connectorId || 'N/A',
+      site: session.station?.name || 'Unknown',
+      start: new Date(session.startedAt),
+      end: session.endedAt ? new Date(session.endedAt) : undefined,
+      status: session.status === 'COMPLETED' ? 'Completed' : session.status === 'ACTIVE' ? 'Active' : 'Failed' as SessionStatus,
+      energyKwh: session.energyDelivered || 0,
+      amount: session.cost || 0,
+      paymentMethod: 'Wallet' as PaymentMethod, // API doesn't provide payment method
+    }))
+      .filter((r: any) => (site === 'All Sites' ? true : r.site === site))
+      .filter((r: any) => (paymentMethod === 'All' ? true : r.paymentMethod === paymentMethod))
+      .filter((r: any) => {
+        const date = r.start
+        return date >= new Date(from) && date <= new Date(to)
+      })
+      .filter((r: any) =>
+        q
+          ? (r.id + ' ' + r.chargePointId + ' ' + r.site).toLowerCase().includes(q.toLowerCase())
+          : true
+      )
+  }, [historyData, site, status, paymentMethod, from, to, q])
 
   const duration = (start: Date, end?: Date) => {
     if (!end) return '—'

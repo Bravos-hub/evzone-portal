@@ -2,6 +2,8 @@ import { useState, useMemo } from 'react'
 import { DashboardLayout } from '@/app/layouts/DashboardLayout'
 import { useAuthStore } from '@/core/auth/authStore'
 import { ROLE_GROUPS } from '@/constants/roles'
+import { useWalletBalance, useWalletTransactions, useTopUp } from '@/core/api/hooks/useWallet'
+import { getErrorMessage } from '@/core/api/errors'
 
 /* ─────────────────────────────────────────────────────────────────────────────
    Wallet — Balance, transactions, payouts
@@ -22,21 +24,19 @@ interface Transaction {
   reference?: string
 }
 
-const MOCK_TRANSACTIONS: Transaction[] = [
-  { id: 'TXN-001', type: 'credit', amount: 245.00, currency: 'USD', description: 'Session revenue (Oct 28)', date: '2025-10-28 18:30', status: 'completed', reference: 'EVZ-21853' },
-  { id: 'TXN-002', type: 'credit', amount: 189.50, currency: 'USD', description: 'Session revenue (Oct 27)', date: '2025-10-27 23:59', status: 'completed' },
-  { id: 'TXN-003', type: 'payout', amount: -500.00, currency: 'USD', description: 'Payout to bank ****1234', date: '2025-10-25 10:00', status: 'completed' },
-  { id: 'TXN-004', type: 'debit', amount: -15.00, currency: 'USD', description: 'Platform fee (Oct)', date: '2025-10-01 00:00', status: 'completed' },
-  { id: 'TXN-005', type: 'refund', amount: -12.50, currency: 'USD', description: 'Refund for session EVZ-21800', date: '2025-10-20 14:22', status: 'completed', reference: 'EVZ-21800' },
-  { id: 'TXN-006', type: 'payout', amount: -300.00, currency: 'USD', description: 'Payout to mobile money', date: '2025-10-15 09:00', status: 'pending' },
-]
-
-const WALLET_KPIS = [
-  { label: 'Available Balance', value: '$1,842.50', highlight: true },
-  { label: 'Pending', value: '$300.00' },
-  { label: 'Total Earned (30d)', value: '$2,156.00' },
-  { label: 'Total Paid Out (30d)', value: '$800.00' },
-]
+// Helper function to map API transaction to Transaction type
+function mapApiTransactionToTransaction(apiTxn: any): Transaction {
+  return {
+    id: apiTxn.id,
+    type: apiTxn.type === 'CREDIT' ? 'credit' : 'debit' as TransactionType,
+    amount: apiTxn.type === 'CREDIT' ? apiTxn.amount : -apiTxn.amount,
+    currency: apiTxn.currency || 'USD',
+    description: apiTxn.description || 'Transaction',
+    date: apiTxn.createdAt || new Date().toISOString(),
+    status: 'completed' as TransactionStatus, // API doesn't provide status
+    reference: apiTxn.reference,
+  }
+}
 
 export function Wallet() {
   const { user } = useAuthStore()
@@ -45,6 +45,10 @@ export function Wallet() {
   // Anyone authenticated can view wallet
   const canView = ROLE_GROUPS.ALL_AUTHENTICATED.includes(role as any)
 
+  const { data: balanceData, isLoading: balanceLoading, error: balanceError } = useWalletBalance()
+  const { data: transactionsData, isLoading: transactionsLoading, error: transactionsError } = useWalletTransactions()
+  const topUpMutation = useTopUp()
+
   const [type, setType] = useState('All')
   const [status, setStatus] = useState('All')
   const [q, setQ] = useState('')
@@ -52,50 +56,103 @@ export function Wallet() {
   const [withdrawAmount, setWithdrawAmount] = useState('')
   const [withdrawMethod, setWithdrawMethod] = useState('bank')
   const [ack, setAck] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
 
   const toast = (m: string) => { setAck(m); setTimeout(() => setAck(''), 2000) }
 
+  // Map API transactions
+  const transactions = useMemo(() => {
+    if (!transactionsData) return []
+    return transactionsData.map(mapApiTransactionToTransaction)
+  }, [transactionsData])
+
   const filtered = useMemo(() =>
-    MOCK_TRANSACTIONS
+    transactions
       .filter(t => !q || (t.id + ' ' + t.description).toLowerCase().includes(q.toLowerCase()))
       .filter(t => type === 'All' || t.type === type)
       .filter(t => status === 'All' || t.status === status)
-  , [q, type, status])
+  , [transactions, q, type, status])
 
-  const handleWithdraw = (e: React.FormEvent) => {
+  // Calculate KPIs from data
+  const walletKpis = useMemo(() => {
+    const balance = balanceData?.balance || 0
+    const currency = balanceData?.currency || 'USD'
+    const pending = transactions.filter(t => t.status === 'pending').reduce((sum, t) => sum + Math.abs(t.amount), 0)
+    const totalEarned = transactions.filter(t => t.type === 'credit').reduce((sum, t) => sum + t.amount, 0)
+    const totalPaidOut = transactions.filter(t => t.type === 'payout').reduce((sum, t) => sum + Math.abs(t.amount), 0)
+
+    return [
+      { label: 'Available Balance', value: `${currency}${balance.toFixed(2)}`, highlight: true },
+      { label: 'Pending', value: `${currency}${pending.toFixed(2)}` },
+      { label: 'Total Earned (30d)', value: `${currency}${totalEarned.toFixed(2)}` },
+      { label: 'Total Paid Out (30d)', value: `${currency}${totalPaidOut.toFixed(2)}` },
+    ]
+  }, [balanceData, transactions])
+
+  const handleWithdraw = async (e: React.FormEvent) => {
     e.preventDefault()
     const amt = parseFloat(withdrawAmount)
     if (!amt || amt <= 0) {
       toast('Please enter a valid amount')
       return
     }
-    if (amt > 1842.50) {
+    const currentBalance = balanceData?.balance || 0
+    if (amt > currentBalance) {
       toast('Insufficient balance')
       return
     }
+    // Withdrawal would be handled by a separate endpoint
     toast(`Withdrawal of $${amt.toFixed(2)} initiated via ${withdrawMethod}`)
     setShowWithdraw(false)
     setWithdrawAmount('')
+  }
+
+  const handleTopUp = async (amount: number) => {
+    try {
+      await topUpMutation.mutateAsync({ amount })
+      toast(`Top-up of $${amount.toFixed(2)} successful`)
+    } catch (err) {
+      setErrorMessage(getErrorMessage(err))
+    }
   }
 
   if (!canView) {
     return <div className="p-8 text-center text-subtle">No permission to view Wallet.</div>
   }
 
+  const error = balanceError || transactionsError
+  const isLoading = balanceLoading || transactionsLoading
+
   return (
     <DashboardLayout pageTitle="Wallet">
       <div className="space-y-6">
         {ack && <div className="rounded-lg bg-accent/10 text-accent px-4 py-2 text-sm">{ack}</div>}
+        
+        {/* Error Message */}
+        {(error || errorMessage) && (
+          <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-2 text-sm text-red-700">
+            {errorMessage || (error ? getErrorMessage(error) : 'An error occurred')}
+          </div>
+        )}
+
+        {/* Loading State */}
+        {isLoading && (
+          <div className="card">
+            <div className="text-center py-8 text-muted">Loading wallet data...</div>
+          </div>
+        )}
 
         {/* KPIs */}
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {WALLET_KPIS.map(k => (
+        {!isLoading && (
+          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {walletKpis.map(k => (
             <div key={k.label} className={`rounded-xl border p-5 shadow-sm ${k.highlight ? 'bg-accent text-white border-accent' : 'bg-surface border-border'}`}>
               <div className={`text-sm ${k.highlight ? 'text-white/80' : 'text-subtle'}`}>{k.label}</div>
               <div className="mt-2 text-2xl font-bold">{k.value}</div>
             </div>
           ))}
-        </section>
+          </section>
+        )}
 
         {/* Actions */}
         <section className="flex gap-3">

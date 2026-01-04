@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { DashboardLayout } from '@/app/layouts/DashboardLayout'
 import { useAuthStore } from '@/core/auth/authStore'
@@ -9,6 +9,8 @@ import { ChargePoints } from './ChargePoints'
 import { SwapStations } from './SwapStations'
 import { SmartCharging } from './SmartCharging'
 import { Bookings } from './Bookings'
+import { useStations } from '@/core/api/hooks/useStations'
+import { getErrorMessage } from '@/core/api/errors'
 
 // ... types and mock data omitted for brevity ...
 type StationType = 'Charge' | 'Swap' | 'Both'
@@ -33,93 +35,26 @@ type Station = {
   gps: string
 }
 
-const mockStations: Station[] = [
-  {
-    id: 'ST-001',
-    name: 'Downtown Hub A',
-    region: 'AFRICA',
-    country: 'Uganda',
-    org: 'EVzone',
-    type: 'Both',
-    status: 'Online',
-    healthScore: 98,
-    utilization: 85,
-    connectors: 12,
-    swapBays: 10,
-    openIncidents: 0,
-    lastHeartbeat: '2m ago',
-    address: 'Commercial St 12, Kampala',
-    gps: '0.3476, 32.5825',
-  },
-  {
-    id: 'ST-002',
-    name: 'Westside Supercharge',
-    region: 'AFRICA',
-    country: 'Kenya',
-    org: 'Volt Mobility',
-    type: 'Charge',
-    status: 'Degraded',
-    healthScore: 72,
-    utilization: 40,
-    connectors: 8,
-    swapBays: 0,
-    openIncidents: 1,
-    lastHeartbeat: '5m ago',
-    address: 'Highway Exit 4, Nairobi',
-    gps: '-1.286389, 36.817223',
-  },
-  {
-    id: 'ST-003',
-    name: 'Berlin Mitte',
-    region: 'EUROPE',
-    country: 'Germany',
-    org: 'EVzone EU',
-    type: 'Charge',
-    status: 'Online',
-    healthScore: 99,
-    utilization: 62,
-    connectors: 16,
-    swapBays: 0,
-    openIncidents: 0,
-    lastHeartbeat: '1m ago',
-    address: 'Alexanderplatz, Berlin',
-    gps: '52.5219, 13.4132',
-  },
-  {
-    id: 'ST-004',
-    name: 'Dubai Mall East',
-    region: 'MIDDLE_EAST',
-    country: 'UAE',
-    org: 'Desert Power',
-    type: 'Both',
-    status: 'Offline',
-    healthScore: 0,
-    utilization: 0,
-    connectors: 24,
-    swapBays: 12,
-    openIncidents: 3,
-    lastHeartbeat: '2h ago',
-    address: 'Downtown Dubai',
-    gps: '25.2048, 55.2708',
-  },
-  {
-    id: 'ST-005',
-    name: 'Singapore Hub',
-    region: 'ASIA',
-    country: 'Singapore',
-    org: 'Asia EV',
-    type: 'Swap',
-    status: 'Online',
-    healthScore: 96,
-    utilization: 75,
-    connectors: 0,
-    swapBays: 20,
-    openIncidents: 0,
-    lastHeartbeat: '4m ago',
-    address: 'Orchard Rd',
-    gps: '1.3521, 103.8198',
-  },
-]
+// Helper function to map API station to Station type
+function mapApiStationToStation(apiStation: any): Station {
+  return {
+    id: apiStation.id,
+    name: apiStation.name,
+    region: 'AFRICA' as Region, // API doesn't provide region, defaulting
+    country: '', // API doesn't provide country
+    org: apiStation.orgId || 'N/A',
+    type: apiStation.type === 'BOTH' ? 'Both' : apiStation.type === 'SWAP' ? 'Swap' : 'Charge',
+    status: apiStation.status === 'ACTIVE' ? 'Online' : apiStation.status === 'INACTIVE' ? 'Offline' : 'Degraded',
+    healthScore: 0, // Would come from stats endpoint
+    utilization: 0, // Would come from analytics
+    connectors: 0, // Would come from charge points
+    swapBays: 0, // Would come from swap stations
+    openIncidents: 0, // Would come from incidents
+    lastHeartbeat: 'N/A', // Would come from real-time data
+    address: apiStation.address || '',
+    gps: `${apiStation.latitude || 0}, ${apiStation.longitude || 0}`,
+  }
+}
 
 const regions: Array<{ id: Region | 'ALL'; label: string }> = [
   { id: 'ALL', label: 'All Regions' },
@@ -136,6 +71,8 @@ export function Stations() {
   const { user } = useAuthStore()
   const perms = getPermissionsForFeature(user?.role, 'stations')
 
+  const { data: stationsData, isLoading, error } = useStations()
+
   const activeTab = useMemo<StationsTab>(() => {
     const path = location.pathname
     if (path.includes('/charge-points')) return 'charge-points'
@@ -149,12 +86,18 @@ export function Stations() {
   const [region, setRegion] = useState<Region | 'ALL'>('ALL')
   const [status, setStatus] = useState<StationStatus | 'All'>('All')
 
+  // Map API stations to Station format
+  const stations = useMemo(() => {
+    if (!stationsData) return []
+    return stationsData.map(mapApiStationToStation)
+  }, [stationsData])
+
   const rows = useMemo(() => {
-    return mockStations
+    return stations
       .filter(s => (region === 'ALL' ? true : s.region === region))
       .filter(s => (status === 'All' ? true : s.status === status))
       .filter(s => (q ? (s.name + ' ' + s.id + ' ' + s.country).toLowerCase().includes(q.toLowerCase()) : true))
-  }, [q, region, status])
+  }, [stations, q, region, status])
 
   // Available tabs based on permissions
   const availableTabs = useMemo(() => {
@@ -187,51 +130,69 @@ export function Stations() {
         ))}
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="card mb-4 bg-red-50 border border-red-200">
+          <div className="text-red-700 text-sm">
+            {getErrorMessage(error)}
+          </div>
+        </div>
+      )}
+
       {activeTab === 'overview' && (
         <div className="space-y-4">
+          {/* Loading State */}
+          {isLoading && (
+            <div className="card">
+              <div className="text-center py-8 text-muted">Loading stations...</div>
+            </div>
+          )}
+
           {/* Filters - Stacked on mobile */}
-          <div className="card p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Search..."
-                className="input sm:col-span-2 lg:col-span-1"
-              />
-              <select className="select" value={region} onChange={e => setRegion(e.target.value as any)}>
-                <option value="ALL">All Regions</option>
-                {regions.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
-              </select>
-              <select className="select" value={status} onChange={e => setStatus(e.target.value as any)}>
-                <option value="All">All Status</option>
-                <option value="Online">Online</option>
-                <option value="Offline">Offline</option>
-                <option value="Degraded">Degraded</option>
-              </select>
-              <select className="select">
-                <option>All Orgs</option>
-              </select>
-              <select className="select">
-                <option>All Stations</option>
-              </select>
-              <select className="select">
-                <option>Last 7d</option>
-              </select>
-            </div>
-          </div>
+          {!isLoading && (
+            <>
+              <div className="card p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+                  <input
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                    placeholder="Search..."
+                    className="input sm:col-span-2 lg:col-span-1"
+                  />
+                  <select className="select" value={region} onChange={e => setRegion(e.target.value as any)}>
+                    <option value="ALL">All Regions</option>
+                    {regions.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
+                  </select>
+                  <select className="select" value={status} onChange={e => setStatus(e.target.value as any)}>
+                    <option value="All">All Status</option>
+                    <option value="Online">Online</option>
+                    <option value="Offline">Offline</option>
+                    <option value="Degraded">Degraded</option>
+                  </select>
+                  <select className="select">
+                    <option>All Orgs</option>
+                  </select>
+                  <select className="select">
+                    <option>All Stations</option>
+                  </select>
+                  <select className="select">
+                    <option>Last 7d</option>
+                  </select>
+                </div>
+              </div>
 
-          {/* Map Section */}
-          <div className="card p-0 overflow-hidden">
-            <div className="border-b border-border-light p-4">
-              <h3 className="font-semibold">Station Map</h3>
-            </div>
-            <div className="p-4">
-              <StationsHeatMap title="Stations Map" subtitle={`${rows.length} stations`} points={mapPoints} />
-            </div>
-          </div>
+              {/* Map Section */}
+              <div className="card p-0 overflow-hidden">
+                <div className="border-b border-border-light p-4">
+                  <h3 className="font-semibold">Station Map</h3>
+                </div>
+                <div className="p-4">
+                  <StationsHeatMap title="Stations Map" subtitle={`${rows.length} stations`} points={mapPoints} />
+                </div>
+              </div>
 
-          {/* Table Container - Horizontal scroll */}
-          <div className="overflow-x-auto rounded-xl border border-white/5 bg-panel">
+              {/* Table Container - Horizontal scroll */}
+              <div className="overflow-x-auto rounded-xl border border-white/5 bg-panel">
             <table className="w-full text-left text-sm">
               <thead className="bg-white/5 text-muted uppercase text-[11px] font-black tracking-wider">
                 <tr>
@@ -248,7 +209,14 @@ export function Stations() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {rows.map(r => (
+                {rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="px-6 py-8 text-center text-muted">
+                      No stations found
+                    </td>
+                  </tr>
+                ) : (
+                  rows.map(r => (
                   <tr key={r.id} className="hover:bg-white/5 transition-colors">
                     <td className="px-6 py-4"><input type="checkbox" className="rounded border-white/10 bg-white/5" /></td>
                     <td className="px-6 py-4">
@@ -292,10 +260,13 @@ export function Stations() {
                       <button className="btn secondary sm:px-4 sm:py-2 px-3 py-1.5 text-xs sm:text-sm">Open</button>
                     </td>
                   </tr>
-                ))}
+                  ))
+                )}
               </tbody>
             </table>
           </div>
+            </>
+          )}
         </div>
       )}
 
