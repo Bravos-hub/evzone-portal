@@ -45,3 +45,13 @@ Thumbs.db
 # Extracted / imported sources (your workspace artifacts)
 extracted_src/
 extracted_zip/
+
+# Other project directories (do not commit)
+ev-charging-attendant/
+FleetPartnerAPP/
+evzone-swap-attendant/
+My-vehicles/
+evz-swap-client/
+evzone-ml-service/
+evzone-public-charging-vite/
+evzone-private-charge/
