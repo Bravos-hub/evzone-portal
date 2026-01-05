@@ -36,6 +36,7 @@ import {
 
 /** All roles for convenience */
 const ALL_ROLES: Role[] = [
+  'SUPER_ADMIN',
   'EVZONE_ADMIN',
   'EVZONE_OPERATOR',
   'SITE_OWNER',
@@ -48,13 +49,13 @@ const ALL_ROLES: Role[] = [
 ]
 
 /** Admin + Operator roles */
-const ADMIN_OPS: Role[] = ['EVZONE_ADMIN', 'EVZONE_OPERATOR']
+const ADMIN_OPS: Role[] = ['SUPER_ADMIN', 'EVZONE_ADMIN', 'EVZONE_OPERATOR']
 
 /** Roles that manage stations */
-const STATION_MANAGERS: Role[] = ['EVZONE_ADMIN', 'EVZONE_OPERATOR', 'OWNER', 'STATION_ADMIN', 'MANAGER']
+const STATION_MANAGERS: Role[] = ['SUPER_ADMIN', 'EVZONE_ADMIN', 'EVZONE_OPERATOR', 'OWNER', 'STATION_ADMIN', 'MANAGER']
 
 /** Roles that see incidents */
-const INCIDENT_VIEWERS: Role[] = ['EVZONE_ADMIN', 'EVZONE_OPERATOR', 'OWNER', 'STATION_ADMIN', 'MANAGER', 'TECHNICIAN_ORG']
+const INCIDENT_VIEWERS: Role[] = ['SUPER_ADMIN', 'EVZONE_ADMIN', 'EVZONE_OPERATOR', 'OWNER', 'STATION_ADMIN', 'MANAGER', 'TECHNICIAN_ORG']
 
 /** Widget registry - all available widgets with RBAC */
 export const WIDGET_REGISTRY: Record<WidgetId, WidgetDef> = {
@@ -385,11 +386,13 @@ export function getWidget(id: WidgetId): WidgetDef | undefined {
 export function canAccessWidget(widgetId: WidgetId, role: Role): boolean {
   const def = WIDGET_REGISTRY[widgetId]
   if (!def) return false
+  if (role === 'SUPER_ADMIN') return true
   return def.allowedRoles.length === 0 || def.allowedRoles.includes(role)
 }
 
 /** Get all widgets accessible by a role */
 export function getWidgetsForRole(role: Role): WidgetDef[] {
+  if (role === 'SUPER_ADMIN') return Object.values(WIDGET_REGISTRY)
   return Object.values(WIDGET_REGISTRY).filter(
     (w) => w.allowedRoles.length === 0 || w.allowedRoles.includes(role)
   )

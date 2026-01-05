@@ -45,6 +45,7 @@ export function DispatchDetailModal({ isOpen, onClose, dispatch, onStatusChange,
   if (!isOpen || !dispatch) return null
 
   const isTechnician = ['TECHNICIAN_ORG', 'TECHNICIAN_PUBLIC'].includes(user?.role ?? '')
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN'
   const isAdmin = ['EVZONE_ADMIN', 'EVZONE_OPERATOR'].includes(user?.role ?? '')
   const isOwner = ['OWNER', 'STATION_ADMIN', 'MANAGER'].includes(user?.role ?? '')
 
@@ -52,7 +53,7 @@ export function DispatchDetailModal({ isOpen, onClose, dispatch, onStatusChange,
   const canReject = isTechnician && dispatch.status === 'Assigned'
   const canStart = isTechnician && dispatch.status === 'Assigned'
   const canComplete = isTechnician && dispatch.status === 'In Progress'
-  const canCancel = (isAdmin || isOwner) && ['Pending', 'Assigned'].includes(dispatch.status)
+  const canCancel = (isSuperAdmin || isAdmin || isOwner) && ['Pending', 'Assigned'].includes(dispatch.status)
 
   const handleAccept = () => {
     if (onStatusChange) {

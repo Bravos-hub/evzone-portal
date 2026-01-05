@@ -12,6 +12,7 @@ export function RequireAuth({ children }: PropsWithChildren) {
 export function RequireRole({ roles, children }: PropsWithChildren<{ roles: Role[] }>) {
   const { user } = useAuthStore()
   if (!user) return <Navigate to="/auth/login" replace />
+  if (user.role === 'SUPER_ADMIN') return <>{children}</>
   if (!roles.includes(user.role)) return <Navigate to="/unauthorized" replace />
   return <>{children}</>
 }

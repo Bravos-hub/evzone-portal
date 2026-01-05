@@ -3,7 +3,7 @@
  * Base API client with JWT token handling, refresh logic, and error handling
  */
 
-import { API_CONFIG, TOKEN_STORAGE_KEYS } from './config'
+import { API_CONFIG, DEMO_MODE, TOKEN_STORAGE_KEYS } from './config'
 import { ApiException, handleApiError, getErrorMessage } from './errors'
 import type { AuthResponse } from './types'
 
@@ -107,6 +107,9 @@ class ApiClient {
     options: RequestOptions = {}
   ): Promise<T> {
     const { skipAuth = false, skipRefresh = false, ...fetchOptions } = options
+    if (DEMO_MODE) {
+      throw new ApiException('Backend API disabled in demo mode.', 503)
+    }
 
     // Build full URL
     const url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}${endpoint}`

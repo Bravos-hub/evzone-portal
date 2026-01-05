@@ -2,6 +2,7 @@ import type { Role, OwnerCapability } from '@/core/auth/types'
 
 /** All available roles in the system */
 export const ALL_ROLES: Role[] = [
+  'SUPER_ADMIN',
   'EVZONE_ADMIN',
   'EVZONE_OPERATOR',
   'SITE_OWNER',
@@ -15,6 +16,7 @@ export const ALL_ROLES: Role[] = [
 
 /** Role display names */
 export const ROLE_LABELS: Record<Role, string> = {
+  SUPER_ADMIN: 'Super Admin',
   EVZONE_ADMIN: 'EVzone Admin',
   EVZONE_OPERATOR: 'EVzone Operator',
   SITE_OWNER: 'Site Owner',
@@ -36,10 +38,10 @@ export const CAPABILITY_LABELS: Record<OwnerCapability, string> = {
 /** Role groups for common permission patterns */
 export const ROLE_GROUPS = {
   /** Platform admins with full access */
-  PLATFORM_ADMINS: ['EVZONE_ADMIN'] as Role[],
+  PLATFORM_ADMINS: ['SUPER_ADMIN', 'EVZONE_ADMIN'] as Role[],
   
   /** Platform operators with regional/operational access */
-  PLATFORM_OPS: ['EVZONE_ADMIN', 'EVZONE_OPERATOR'] as Role[],
+  PLATFORM_OPS: ['SUPER_ADMIN', 'EVZONE_ADMIN', 'EVZONE_OPERATOR'] as Role[],
   
   /** Station managers (owners, admins, managers) */
   STATION_MANAGERS: ['OWNER', 'STATION_ADMIN', 'MANAGER'] as Role[],
@@ -51,13 +53,14 @@ export const ROLE_GROUPS = {
   TECHNICIANS: ['TECHNICIAN_ORG', 'TECHNICIAN_PUBLIC'] as Role[],
   
   /** Roles that can view financial data */
-  FINANCIAL_VIEWERS: ['EVZONE_ADMIN', 'EVZONE_OPERATOR', 'OWNER', 'SITE_OWNER'] as Role[],
+  FINANCIAL_VIEWERS: ['SUPER_ADMIN', 'EVZONE_ADMIN', 'EVZONE_OPERATOR', 'OWNER', 'SITE_OWNER'] as Role[],
   
   /** Roles that can manage incidents */
-  INCIDENT_MANAGERS: ['EVZONE_ADMIN', 'EVZONE_OPERATOR', 'MANAGER'] as Role[],
+  INCIDENT_MANAGERS: ['SUPER_ADMIN', 'EVZONE_ADMIN', 'EVZONE_OPERATOR', 'MANAGER'] as Role[],
 
   /** All authenticated users */
   ALL_AUTHENTICATED: [
+    'SUPER_ADMIN',
     'EVZONE_ADMIN',
     'EVZONE_OPERATOR',
     'SITE_OWNER',

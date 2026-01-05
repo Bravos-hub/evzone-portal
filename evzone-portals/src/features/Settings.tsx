@@ -230,7 +230,7 @@ export function Settings() {
           <div className="rounded-xl bg-surface border border-border p-6 space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">API Keys</h2>
-              {user?.role === 'EVZONE_ADMIN' && (
+              {(user?.role === 'EVZONE_ADMIN' || user?.role === 'SUPER_ADMIN') && (
                 <button onClick={() => toast('Create API key (demo)')} className="px-4 py-2 rounded-lg bg-accent text-white font-medium hover:bg-accent-hover">
                   Create API Key
                 </button>
@@ -258,7 +258,7 @@ export function Settings() {
                       <td className="px-4 py-3 text-right">
                         <div className="inline-flex gap-2">
                           <button onClick={() => toast('Copied to clipboard!')} className="px-2 py-1 rounded border border-border hover:bg-muted text-xs">Copy</button>
-                          {user?.role === 'EVZONE_ADMIN' && (
+                          {(user?.role === 'EVZONE_ADMIN' || user?.role === 'SUPER_ADMIN') && (
                             <button onClick={() => toast('Revoked API key')} className="px-2 py-1 rounded border border-border hover:bg-muted text-xs text-red-600">Revoke</button>
                           )}
                         </div>

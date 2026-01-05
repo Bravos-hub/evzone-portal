@@ -4,6 +4,7 @@ export type MenuItem = { label: string; path: string }
 
 export function menuFor(role: Role, ownerCapability?: 'CHARGE' | 'SWAP' | 'BOTH'): MenuItem[] {
   switch (role) {
+    case 'SUPER_ADMIN':
     case 'EVZONE_ADMIN':
       return [
         { label: 'Overview', path: '/admin' },

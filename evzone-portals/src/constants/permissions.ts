@@ -419,6 +419,7 @@ export function hasPermission(
   permission: string = 'access'
 ): boolean {
   if (!role) return false
+  if (role === 'SUPER_ADMIN') return true
 
   const featurePerms = PERMISSIONS[feature]
   if (!featurePerms) return false
@@ -436,6 +437,15 @@ export function getPermissionsForFeature(
   feature: keyof typeof PERMISSIONS
 ): Record<string, boolean> {
   if (!role) return {}
+  if (role === 'SUPER_ADMIN') {
+    const featurePerms = PERMISSIONS[feature]
+    if (!featurePerms) return {}
+    const result: Record<string, boolean> = {}
+    for (const key of Object.keys(featurePerms)) {
+      result[key] = true
+    }
+    return result
+  }
 
   const featurePerms = PERMISSIONS[feature]
   if (!featurePerms) return {}

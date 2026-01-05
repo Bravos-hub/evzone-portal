@@ -64,6 +64,7 @@ const SKILLS_LIST = ['OCPP', 'Electrical', 'Firmware', 'HVAC', 'Mechanical', 'Ne
 
 export function DispatchModal({ isOpen, onClose, onSubmit, mode, dispatchId, stationId: initialStationId, incidentId }: DispatchModalProps) {
   const { user } = useAuthStore()
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN'
   const isOwner = ['OWNER', 'STATION_ADMIN', 'MANAGER'].includes(user?.role ?? '')
   const isAdmin = ['EVZONE_ADMIN', 'EVZONE_OPERATOR'].includes(user?.role ?? '')
 
@@ -83,6 +84,7 @@ export function DispatchModal({ isOpen, onClose, onSubmit, mode, dispatchId, sta
 
   // Filter technicians based on role and selection
   const availableTechnicians = MOCK_TECHNICIANS.filter(tech => {
+    if (isSuperAdmin) return true
     if (isAdmin) return tech.type === 'public' // Admin can only assign public
     if (isOwner) {
       if (showTechnicianType === 'org') return tech.type === 'org'

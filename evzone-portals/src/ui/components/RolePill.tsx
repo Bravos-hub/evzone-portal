@@ -3,7 +3,9 @@ import type { Role } from '@/core/auth/types'
 
 export function RolePill({ role }: { role: Role }) {
   const label =
-    role === 'EVZONE_ADMIN'
+    role === 'SUPER_ADMIN'
+      ? 'Super Admin'
+      : role === 'EVZONE_ADMIN'
       ? 'EVzone Admin'
       : role === 'EVZONE_OPERATOR'
         ? 'EVzone Operator'
@@ -22,7 +24,7 @@ export function RolePill({ role }: { role: Role }) {
                     : 'Technician (Public)'
 
   const colorClass =
-    role === 'EVZONE_ADMIN'
+    role === 'SUPER_ADMIN' || role === 'EVZONE_ADMIN'
       ? 'bg-[rgba(16,185,129,.15)] border-[rgba(16,185,129,.3)] text-[#34d399]'
       : role === 'EVZONE_OPERATOR'
         ? 'bg-[rgba(59,130,246,.15)] border-[rgba(59,130,246,.3)] text-[#93c5fd]'

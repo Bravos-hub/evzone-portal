@@ -59,7 +59,7 @@ export function Widget({ widgetId, config, size, className, scope }: WidgetProps
   }
 
   // Check role permission (empty allowedRoles means all roles)
-  if (def.allowedRoles.length > 0 && !def.allowedRoles.includes(user.role)) {
+  if (user.role !== 'SUPER_ADMIN' && def.allowedRoles.length > 0 && !def.allowedRoles.includes(user.role)) {
     return null
   }
 

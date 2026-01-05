@@ -33,7 +33,7 @@ export function Header({ title, onMenuClick }: { title?: string; onMenuClick?: (
     const addChargePoint = '/add-charger'
     const addSwapStation = '/add-charger'
     const requestTechnician =
-      user?.role === 'EVZONE_ADMIN'
+      user?.role === 'SUPER_ADMIN' || user?.role === 'EVZONE_ADMIN'
         ? '/dispatches'
         : user?.role === 'EVZONE_OPERATOR'
           ? '/operator-jobs'

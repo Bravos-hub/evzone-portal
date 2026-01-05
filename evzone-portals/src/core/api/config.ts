@@ -9,6 +9,8 @@ export const API_CONFIG = {
   retryAttempts: 1,
 } as const
 
+export const DEMO_MODE = true
+
 export const TOKEN_STORAGE_KEYS = {
   accessToken: 'evzone:accessToken',
   refreshToken: 'evzone:refreshToken',

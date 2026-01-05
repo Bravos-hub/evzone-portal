@@ -1,6 +1,7 @@
 export type RegionId = 'AFRICA' | 'EUROPE' | 'AMERICAS' | 'ASIA' | 'MIDDLE_EAST'
 
 export type Role =
+  | 'SUPER_ADMIN'
   | 'EVZONE_ADMIN'
   | 'EVZONE_OPERATOR'
   | 'SITE_OWNER'

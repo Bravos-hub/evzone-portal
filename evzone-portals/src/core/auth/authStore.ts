@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { OwnerCapability, Role, UserProfile } from './types'
 import { TOKEN_STORAGE_KEYS } from '@/core/api/config'
+import { ROLE_GROUPS } from '@/constants/roles'
 import { authService } from '@/core/api/services/authService'
 import type { AuthResponse } from '@/core/api/types'
 
@@ -137,7 +138,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const current = load()
     if (!current) return
     // only allow admins to impersonate in this demo
-    if (current.role !== 'EVZONE_ADMIN') return
+    if (!ROLE_GROUPS.PLATFORM_ADMINS.includes(current.role)) return
 
     const next: UserProfile = {
       id: target.id,

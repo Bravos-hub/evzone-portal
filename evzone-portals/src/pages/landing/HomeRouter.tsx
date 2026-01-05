@@ -6,6 +6,7 @@ export function HomeRouter() {
   if (!user) return <Navigate to="/auth/login" replace />
 
   switch (user.role) {
+    case 'SUPER_ADMIN': return <Navigate to="/dashboard" replace />
     case 'EVZONE_ADMIN': return <Navigate to="/admin" replace />
     case 'EVZONE_OPERATOR': return <Navigate to="/operator" replace />
     case 'SITE_OWNER': return <Navigate to="/site-owner" replace />

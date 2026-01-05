@@ -123,6 +123,7 @@ export const MENU_ITEMS: MenuItem[] = [
 /** Get menu items visible to a specific role */
 export function getMenuItemsForRole(role: Role | undefined): MenuItem[] {
   if (!role) return []
+  if (role === 'SUPER_ADMIN') return MENU_ITEMS
 
   return MENU_ITEMS.filter(item => {
     if (item.roles === 'ALL') return true
@@ -133,6 +134,7 @@ export function getMenuItemsForRole(role: Role | undefined): MenuItem[] {
 /** Check if a role can access a specific path */
 export function canAccessPath(role: Role | undefined, path: string): boolean {
   if (!role) return false
+  if (role === 'SUPER_ADMIN') return true
 
   const item = MENU_ITEMS.find(m => m.path === path)
   if (!item) return true // Allow paths not in menu (like detail pages)

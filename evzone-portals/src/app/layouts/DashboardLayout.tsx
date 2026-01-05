@@ -11,6 +11,7 @@ export function DashboardLayout({ children, pageTitle }: PropsWithChildren<{ pag
   const showHelpFab = user
     ? [
       'EVZONE_ADMIN',
+      'SUPER_ADMIN',
       'EVZONE_OPERATOR',
       'SITE_OWNER',
       'OWNER',

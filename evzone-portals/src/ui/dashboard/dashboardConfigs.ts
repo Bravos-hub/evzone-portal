@@ -141,59 +141,65 @@ const mockOperatorContext = {
 // DASHBOARD CONFIGURATIONS
 // ═══════════════════════════════════════════════════════════════════════════
 
+const ADMIN_DASHBOARD_CONFIG: DashboardConfig = {
+  title: 'Admin Overview',
+  kpiRow: [
+    { id: 'kpi-stations', config: { total: 1316, online: 1284, offline: 32, variant: 'total' } },
+    { id: 'kpi-stations', config: { total: 1316, online: 1284, variant: 'online' } },
+    { id: 'kpi-incidents', config: { count: 47, period: '24h' } },
+    { id: 'kpi-stations', config: { offline: 32, variant: 'offline' } },
+  ],
+  rows: [
+    {
+      sectionTitle: 'Global Operations',
+      widgets: [
+        { id: 'map-world', size: '3', config: { title: 'Live Hotspots', subtitle: 'Regional metrics by station density', data: mockChoropleth } },
+        {
+          id: 'panel-alerts', size: '1', config: {
+            title: 'Vulnerabilities & Alerts', metrics: [
+              { label: 'Critical', value: 3, max: 20, color: '#ef4444' },
+              { label: 'High', value: 12, max: 50, color: '#f59e0b' },
+              { label: 'Medium', value: 28, max: 100, color: '#f77f00' },
+            ]
+          }
+        },
+      ],
+    },
+    {
+      widgets: [
+        { id: 'list-incidents', size: '2', config: { title: 'Incidents', incidents: mockIncidents } },
+        { id: 'list-dispatch', size: '2', config: { title: 'Dispatch Queue', items: mockDispatches } },
+      ],
+    },
+    {
+      widgets: [
+        {
+          id: 'panel-settlement', size: '2', config: {
+            title: 'Exchange & Settlement', issues: mockPaymentIssues, exports: [
+              { label: 'Ledger export (EU)', status: 'queued', when: '3m ago' },
+              { label: 'Disputes aging', status: 'running', when: '11m ago' },
+            ]
+          }
+        },
+        { id: 'panel-health', size: '2', config: { title: 'System Health', items: mockHealth } },
+      ],
+    },
+    {
+      widgets: [
+        { id: 'panel-performance', size: 'full', config: { title: 'Performance Distribution', regions: mockRegions } },
+      ],
+    },
+  ],
+}
+
 export const DASHBOARD_CONFIGS: Record<DashboardKey, DashboardConfig> = {
   // ─────────────────────────────────────────────────────────────────────────
   // ADMIN DASHBOARD
   // ─────────────────────────────────────────────────────────────────────────
-  EVZONE_ADMIN: {
-    title: 'Admin Overview',
-    kpiRow: [
-      { id: 'kpi-stations', config: { total: 1316, online: 1284, offline: 32, variant: 'total' } },
-      { id: 'kpi-stations', config: { total: 1316, online: 1284, variant: 'online' } },
-      { id: 'kpi-incidents', config: { count: 47, period: '24h' } },
-      { id: 'kpi-stations', config: { offline: 32, variant: 'offline' } },
-    ],
-    rows: [
-      {
-        sectionTitle: 'Global Operations',
-        widgets: [
-          { id: 'map-world', size: '3', config: { title: 'Live Hotspots', subtitle: 'Regional metrics by station density', data: mockChoropleth } },
-          {
-            id: 'panel-alerts', size: '1', config: {
-              title: 'Vulnerabilities & Alerts', metrics: [
-                { label: 'Critical', value: 3, max: 20, color: '#ef4444' },
-                { label: 'High', value: 12, max: 50, color: '#f59e0b' },
-                { label: 'Medium', value: 28, max: 100, color: '#f77f00' },
-              ]
-            }
-          },
-        ],
-      },
-      {
-        widgets: [
-          { id: 'list-incidents', size: '2', config: { title: 'Incidents', incidents: mockIncidents } },
-          { id: 'list-dispatch', size: '2', config: { title: 'Dispatch Queue', items: mockDispatches } },
-        ],
-      },
-      {
-        widgets: [
-          {
-            id: 'panel-settlement', size: '2', config: {
-              title: 'Exchange & Settlement', issues: mockPaymentIssues, exports: [
-                { label: 'Ledger export (EU)', status: 'queued', when: '3m ago' },
-                { label: 'Disputes aging', status: 'running', when: '11m ago' },
-              ]
-            }
-          },
-          { id: 'panel-health', size: '2', config: { title: 'System Health', items: mockHealth } },
-        ],
-      },
-      {
-        widgets: [
-          { id: 'panel-performance', size: 'full', config: { title: 'Performance Distribution', regions: mockRegions } },
-        ],
-      },
-    ],
+  EVZONE_ADMIN: ADMIN_DASHBOARD_CONFIG,
+  SUPER_ADMIN: {
+    ...ADMIN_DASHBOARD_CONFIG,
+    title: 'Super Admin Overview',
   },
 
   // ─────────────────────────────────────────────────────────────────────────
